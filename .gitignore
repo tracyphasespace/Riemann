@@ -1,0 +1,26 @@
+# Lake build artifacts
+.lake/
+lake-packages/
+
+# Compiled Lean files
+*.olean
+*.ilean
+*.trace
+*.c
+*.h
+
+# IDE files
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.swp
+*~
+
+# Build artifacts
+build/
