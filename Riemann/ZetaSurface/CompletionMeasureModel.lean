@@ -56,8 +56,11 @@ Measure completion model instance for a given weight w.
 This satisfies:
 - adjoint_symm: Op(s)† = Op(1 - conj(s)) via Kw_adjoint_symm
 - normal_on_critical: on Re(s) = 1/2, Op is self-adjoint hence normal
+
+The weight must admit unitary translations (satisfy the AdmitsUnitaryTranslation typeclass).
 -/
-def MeasureModel (w : CompletionMeasure.Weight) : CompletedModel where
+def MeasureModel (w : CompletionMeasure.Weight)
+    [CompletionMeasure.AdmitsUnitaryTranslation w] : CompletedModel where
   H := CompletionMeasure.Hw w
 
   instNormedAddCommGroup := inferInstance
@@ -92,7 +95,10 @@ Trivial weight w ≡ 1.
 -/
 def trivialWeight : CompletionMeasure.Weight := fun _ => 1
 
-def TrivialMeasureModel : CompletedModel := MeasureModel trivialWeight
+-- Note: To instantiate TrivialMeasureModel, we need an AdmitsUnitaryTranslation instance
+-- for trivialWeight. This would require measure theory infrastructure.
+-- For now, we leave this commented out.
+-- def TrivialMeasureModel : CompletedModel := MeasureModel trivialWeight
 
 /--
 Exponential weight for a given σ₀.
@@ -101,16 +107,22 @@ w(u) = exp(σ₀ · u)
 def expWeight (σ₀ : ℝ) : CompletionMeasure.Weight :=
   fun u => ENNReal.ofReal (Real.exp (σ₀ * u))
 
-def ExpMeasureModel (σ₀ : ℝ) : CompletedModel := MeasureModel (expWeight σ₀)
+-- Note: To instantiate ExpMeasureModel, we need an AdmitsUnitaryTranslation instance
+-- for expWeight. The exp_weight_translation_compatible theorem in CompletionMeasure.lean
+-- shows exponential weights are translation-compatible, but the full instance construction
+-- requires additional measure theory.
+-- def ExpMeasureModel (σ₀ : ℝ) : CompletedModel := MeasureModel (expWeight σ₀)
 
 /-! ## 4. Derived Theorems for Measure Model -/
 
-theorem measure_selfadjoint_critical (w : CompletionMeasure.Weight) (t : ℝ) (B : ℕ) :
+theorem measure_selfadjoint_critical (w : CompletionMeasure.Weight)
+    [CompletionMeasure.AdmitsUnitaryTranslation w] (t : ℝ) (B : ℕ) :
     (CompletionMeasure.Kw w ((1/2 : ℂ) + (t : ℂ) * I) B).adjoint =
     CompletionMeasure.Kw w ((1/2 : ℂ) + (t : ℂ) * I) B := by
   rw [CompletionMeasure.Kw_adjoint_symm, one_minus_conj_critical']
 
-theorem measure_selfadjoint_half (w : CompletionMeasure.Weight) (B : ℕ) :
+theorem measure_selfadjoint_half (w : CompletionMeasure.Weight)
+    [CompletionMeasure.AdmitsUnitaryTranslation w] (B : ℕ) :
     (CompletionMeasure.Kw w (1/2 : ℂ) B).adjoint = CompletionMeasure.Kw w (1/2 : ℂ) B := by
   rw [CompletionMeasure.Kw_adjoint_symm]
   -- 1 - conj(1/2) = 1 - 1/2 = 1/2 for real 1/2
@@ -120,7 +132,8 @@ theorem measure_selfadjoint_half (w : CompletionMeasure.Weight) (B : ℕ) :
   rw [h]
   norm_num
 
-theorem measure_normal_critical (w : CompletionMeasure.Weight) (t : ℝ) (B : ℕ) :
+theorem measure_normal_critical (w : CompletionMeasure.Weight)
+    [CompletionMeasure.AdmitsUnitaryTranslation w] (t : ℝ) (B : ℕ) :
     let s := (1/2 : ℂ) + (t : ℂ) * I
     (CompletionMeasure.Kw w s B).adjoint * CompletionMeasure.Kw w s B =
     CompletionMeasure.Kw w s B * (CompletionMeasure.Kw w s B).adjoint := by

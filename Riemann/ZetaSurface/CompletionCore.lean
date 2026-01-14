@@ -166,7 +166,7 @@ theorem adjoint_off_critical (σ t : ℝ) (B : ℕ) :
   -- 1 - conj(σ + t*I) = 1 - (σ - t*I) = (1-σ) + t*I
   congr 1
   have hconj : conj ((σ : ℂ) + (t : ℂ) * I) = (σ : ℂ) + (t : ℂ) * (-I) := by
-    apply Complex.ext <;> simp [Complex.conj_re, Complex.conj_im]
+    apply Complex.ext <;> simp
   simp only [hconj]
   ring
 
@@ -184,13 +184,14 @@ end CompletedModel
 /--
 Self-adjoint at s = 1/2 (typeclass version).
 -/
-theorem selfadjoint_half_tc {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+theorem selfadjoint_half_tc {H : Type*}
+    [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
     (K : ℂ → ℕ → H →L[ℂ] H) [CompletedOpFamily H K] (B : ℕ) :
     (K (1/2 : ℂ) B).adjoint = K (1/2 : ℂ) B := by
   rw [CompletedOpFamily.adjoint_symm]
   congr 1
   have hconj : conj (1/2 : ℂ) = (1/2 : ℂ) := by
-    apply Complex.ext <;> simp [Complex.conj_re, Complex.conj_im]
+    apply Complex.ext <;> simp
   simp only [hconj]
   norm_num
 
@@ -198,38 +199,41 @@ theorem selfadjoint_half_tc {H : Type*} [NormedAddCommGroup H] [InnerProductSpac
 Off critical line symmetry (typeclass version).
 For s = σ + t*I: K(s)† = K((1-σ) + t*I)
 -/
-theorem adjoint_off_critical_tc {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+theorem adjoint_off_critical_tc {H : Type*}
+    [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
     (K : ℂ → ℕ → H →L[ℂ] H) [CompletedOpFamily H K] (σ t : ℝ) (B : ℕ) :
-    (K ((σ : ℂ) + (t : ℂ) * I) B).adjoint = K (((1 - σ) : ℂ) + (t : ℂ) * I) B := by
+    (K ((σ : ℂ) + (t : ℂ) * I) B).adjoint =
+    K (((1 - σ) : ℂ) + (t : ℂ) * I) B := by
   rw [CompletedOpFamily.adjoint_symm]
   congr 1
   have hconj : conj ((σ : ℂ) + (t : ℂ) * I) = (σ : ℂ) + (t : ℂ) * (-I) := by
-    apply Complex.ext <;> simp [Complex.conj_re, Complex.conj_im]
+    apply Complex.ext <;> simp
   simp only [hconj]
   ring
 
 /--
 Functional equation symmetry (typeclass version).
 -/
-theorem functional_eq_symmetry_tc {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+theorem functional_eq_symmetry_tc {H : Type*}
+    [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
     (K : ℂ → ℕ → H →L[ℂ] H) [CompletedOpFamily H K] (s : ℂ) (B : ℕ) :
     (K s B).adjoint = K (1 - conj s) B :=
   CompletedOpFamily.adjoint_symm s B
 
 /-! ## 6. Spectral Implications -/
 
-/--
+/-
+**Future Work: Spectral Reality at Critical Line**
+
 For self-adjoint operators, spectrum is real.
 At s = 1/2, Op is self-adjoint, so its spectrum ⊆ ℝ.
+
+Target: spectrum(Op M (1/2 + t*I) B) ⊆ ℝ using M.selfadjoint_half
 
 This is a key constraint: if zeta zeros correspond to spectral values,
 and the operator is self-adjoint on the critical line, then zeros
 must correspond to real spectral values.
 -/
-theorem spectrum_real_at_half (M : CompletedModel) (B : ℕ) :
-    True := by  -- Placeholder for spectral theorem application
-  -- Future: use M.selfadjoint_half to invoke spectral theorem
-  trivial
 
 /-! ## 7. Usage Notes -/
 

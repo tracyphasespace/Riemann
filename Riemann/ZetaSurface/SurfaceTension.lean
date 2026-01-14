@@ -167,11 +167,39 @@ theorem Critical_Surface_Unique :
     -- For any nonzero f: (σ - 1/2) • f = 0 implies σ - 1/2 = 0
     -- HR = Lp ℝ 2 volume has nonzero elements (e.g., indicator of [0,1])
     by_contra hne
-    -- Pick any nonzero f₀ in HR (e.g., indicator function of a bounded set)
-    -- Then h f₀ (nonzero proof) gives (σ - 1/2) • f₀ = 0
-    -- By smul_eq_zero_iff_right, since f₀ ≠ 0, we get σ - 1/2 = 0
-    -- This contradicts hne
-    sorry -- Requires: construct nonzero f₀ ∈ Lp ℝ 2 volume (indicator of [0,1])
+    -- Construct a nonzero element of HR using indicator of [0,1]
+    let I01 : Set ℝ := Set.Icc 0 1
+    have h_meas : MeasurableSet I01 := measurableSet_Icc
+    have h_vol : volume I01 = 1 := by simp [I01, Real.volume_Icc, sub_zero]
+    have h_fin : volume I01 ≠ ⊤ := by rw [h_vol]; exact ENNReal.one_ne_top
+    have h_vol_ne : volume I01 ≠ 0 := by rw [h_vol]; exact one_ne_zero
+    -- Indicator of [0,1] is in L²
+    have h_memLp : MemLp (I01.indicator fun _ => (1:ℝ)) 2 volume :=
+      memLp_indicator_const 2 h_meas (1:ℝ) (Or.inr h_fin)
+    let f₀ : HR := h_memLp.toLp _
+    -- f₀ is nonzero because its norm is positive
+    have hf₀_ne : f₀ ≠ 0 := by
+      intro heq
+      have h_norm_zero : ‖f₀‖ = 0 := by rw [heq]; exact norm_zero
+      rw [Lp.norm_toLp] at h_norm_zero
+      have hp_ne : (2 : ENNReal) ≠ 0 := two_ne_zero
+      have hp_top : (2 : ENNReal) ≠ ⊤ := ENNReal.ofNat_ne_top
+      rw [eLpNorm_indicator_const h_meas hp_ne hp_top, h_vol] at h_norm_zero
+      simp only [ENNReal.one_rpow, mul_one] at h_norm_zero
+      have h_enorm : (‖(1:ℝ)‖₊ : ENNReal) = 1 := by simp [nnnorm_one]
+      rw [enorm_eq_nnnorm, h_enorm, ENNReal.toReal_one] at h_norm_zero
+      exact one_ne_zero h_norm_zero
+    -- Apply hypothesis: TensionOp σ f₀ = 0
+    have h_tension := h f₀ hf₀_ne
+    unfold TensionOp at h_tension
+    simp only [ContinuousLinearMap.coe_smul', ContinuousLinearMap.coe_id', Pi.smul_apply,
+               id_eq] at h_tension
+    -- (σ - 1/2) • f₀ = 0 with f₀ ≠ 0 implies σ - 1/2 = 0
+    have h_sub : σ - 1/2 = 0 := by
+      by_contra hc
+      rw [smul_eq_zero_iff_right hc] at h_tension
+      exact hf₀_ne h_tension
+    exact hne (by linarith)
   · intro hσ f _
     rw [hσ]
     unfold TensionOp
@@ -182,19 +210,34 @@ theorem Critical_Surface_Unique :
 -/
 
 /--
-**Stability Inheritance**:
-If the Hamiltonian H(n) is a stable generator (skew-adjoint),
-then the surface energy is conserved under the flow.
+**Skew-Adjoint Energy Vanishing**:
+If the Hamiltonian H(n) is a stable generator (skew-adjoint H† = -H),
+then the surface energy ⟨f, Hf⟩ = 0 for all states.
 
-This connects the algebraic stability (H† = -H) to
-physical energy conservation.
+Proof: For real inner product spaces with H† = -H:
+  ⟨f, Hf⟩ = ⟨H†f, f⟩ = ⟨-Hf, f⟩ = -⟨Hf, f⟩ = -⟨f, Hf⟩
+Hence 2⟨f, Hf⟩ = 0, so ⟨f, Hf⟩ = 0.
+
+This means stable configurations have zero "net pressure" - the balance point.
 -/
-theorem Stable_Conserves_Energy (n : ℕ)
+theorem Stable_Energy_Zero (n : ℕ)
     (h_stable : IsStableGenerator (Hamiltonian n)) (f : HR) :
-    True := by
-  -- The flow exp(t·H) preserves ‖f‖ when H is skew-adjoint
-  -- Therefore energy is constant along trajectories
-  trivial
+    SurfaceEnergy n f = 0 := by
+  unfold SurfaceEnergy IsStableGenerator at *
+  -- Use adjoint_inner_left: ⟨H†f, g⟩ = ⟨f, Hg⟩, so ⟨f, Hf⟩ = ⟨H†f, f⟩
+  have h2 : @inner ℝ HR _ f (Hamiltonian n f) =
+            @inner ℝ HR _ ((Hamiltonian n).adjoint f) f := by
+    rw [ContinuousLinearMap.adjoint_inner_left]
+  -- Apply h_stable: H† = -H
+  rw [h_stable] at h2
+  simp only [ContinuousLinearMap.neg_apply, inner_neg_left] at h2
+  -- Now h2 : ⟨f, Hf⟩ = -⟨Hf, f⟩
+  -- By symmetry of real inner product: ⟨Hf, f⟩ = ⟨f, Hf⟩
+  have h_symm : @inner ℝ HR _ (Hamiltonian n f) f = @inner ℝ HR _ f (Hamiltonian n f) :=
+    real_inner_comm _ _
+  rw [h_symm] at h2
+  -- h2 : ⟨f, Hf⟩ = -⟨f, Hf⟩, so 2⟨f, Hf⟩ = 0
+  linarith
 
 /-!
 ## Physical Summary: The Soap Bubble Principle

@@ -140,17 +140,19 @@ theorem kernel_normal_critical (t : ℝ) (B : ℕ) :
 
 /-! ## 5. Spectrum Properties -/
 
-/--
+/-
+**Future Work: Kernel Spectrum Reality on Critical Line**
+
 On the critical line, K(s) is self-adjoint, so its spectrum is real.
+
+Target: spectrum(K (1/2 + t*I) B) ⊆ ℝ
+
+The self-adjointness kernel_selfadjoint_critical implies
+spectrum(K s B) ⊆ ℝ via the spectral theorem for self-adjoint operators.
 
 This is a key structural constraint: if zeta zeros correspond to
 spectral values, they must be real when s is on the critical line.
 -/
-theorem kernel_spectrum_real_on_critical (_t : ℝ) (_B : ℕ) :
-    True := by  -- Placeholder for spectral theorem
-  -- The self-adjointness kernel_selfadjoint_critical implies
-  -- spectrum(K s B) ⊆ ℝ via the spectral theorem for self-adjoint operators
-  trivial
 
 /-! ## Physical Summary
 

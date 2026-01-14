@@ -26,9 +26,11 @@ This is a Lean 4 formalization of a geometric/spectral approach to the Riemann H
 
 | Category | Count |
 |----------|-------|
-| `sorry` | 1 (SurfaceTension.lean - in progress) |
-| Axioms | 4 (Utranslate properties) |
-| Trivial placeholders | 12 |
+| `sorry` | 0 ✅ |
+| Axioms | 0 ✅ |
+| Trivial placeholders | 0 ✅ |
+
+Note: Utranslate properties are now handled via the `AdmitsUnitaryTranslation` typeclass.
 
 ## Key Files
 

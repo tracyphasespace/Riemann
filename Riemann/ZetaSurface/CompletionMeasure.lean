@@ -35,6 +35,8 @@ Same adjoint symmetry as kernel completion, but achieved differently.
 
 import Riemann.ZetaSurface.TransferOperator
 import Mathlib.MeasureTheory.Measure.WithDensity
+import Mathlib.MeasureTheory.Function.L2Space
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
 
 noncomputable section
 open scoped Real ENNReal ComplexConjugate
@@ -113,21 +115,138 @@ theorem RN_deriv_explicit (w : Weight) (a : ℝ)
 /-! ## 4. Corrected Unitary Translation -/
 
 /--
+The correction factor for translation: √(w(u)/w(u-a)).
+This is the pointwise multiplier that makes translation unitary on L²(μ_w).
+-/
+def correctionFactor (w : Weight) (a : ℝ) (u : ℝ) : ℂ :=
+  (Real.sqrt (ENNReal.toReal (RN_deriv w a u)) : ℂ)
+
+/--
+The corrected translation as a pointwise function.
+(U_a f)(u) = √(RN(w,a)(u)) · f(u + a)
+-/
+def UtranslateAux (w : Weight) (a : ℝ) (f : ℝ → ℂ) : ℝ → ℂ :=
+  fun u => correctionFactor w a u * f (u + a)
+
+/--
+RN_deriv at zero shift is 1 (the ratio w(u)/w(u) = 1).
+-/
+theorem RN_deriv_zero (w : Weight) (u : ℝ) (hw : w u ≠ 0) (hw_top : w u ≠ ⊤) :
+    RN_deriv w 0 u = 1 := by
+  unfold RN_deriv
+  simp only [sub_zero]
+  exact ENNReal.div_self hw hw_top
+
+/--
+Correction factor at zero shift is 1.
+-/
+theorem correctionFactor_zero (w : Weight) (u : ℝ) (hw : w u ≠ 0) (hw_top : w u ≠ ⊤) :
+    correctionFactor w 0 u = 1 := by
+  unfold correctionFactor
+  rw [RN_deriv_zero w u hw hw_top, ENNReal.toReal_one, Real.sqrt_one, Complex.ofReal_one]
+
+/--
+A weight is *translation-compatible* if the RN derivative composition
+identity holds: RN(a,u) · RN(b,u+a) = RN(a+b,u) almost everywhere.
+
+This property holds for exponential weights w(x) = e^(cx), which are
+the natural choice for encoding Gamma factors in the completion.
+
+For general weights, this is an additional structural assumption.
+-/
+structure TranslationCompatible (w : Weight) : Prop where
+  rn_mul_ae : ∀ a b : ℝ, ∀ᵐ u ∂volume,
+    RN_deriv w a u * RN_deriv w b (u + a) = RN_deriv w (a + b) u
+
+/--
+For exponential weights, the RN_deriv has a simple form.
+If w(x) = e^(cx), then RN_deriv w a u = e^(ca).
+-/
+theorem RN_deriv_exp (c : ℝ) (a u : ℝ) :
+    let w : Weight := fun x => ENNReal.ofReal (Real.exp (c * x))
+    RN_deriv w a u = ENNReal.ofReal (Real.exp (c * a)) := by
+  simp only [RN_deriv]
+  rw [← ENNReal.ofReal_div_of_pos (Real.exp_pos _)]
+  congr 1
+  rw [div_eq_iff (Real.exp_ne_zero _)]
+  rw [← Real.exp_add]
+  congr 1
+  ring
+
+/--
+Exponential weights are translation-compatible.
+-/
+theorem exp_weight_translation_compatible (c : ℝ) :
+    let w : Weight := fun x => ENNReal.ofReal (Real.exp (c * x))
+    TranslationCompatible w := by
+  constructor
+  intro a b
+  filter_upwards with u
+  simp only [RN_deriv_exp]
+  rw [← ENNReal.ofReal_mul (Real.exp_nonneg _)]
+  rw [← Real.exp_add]
+  ring_nf
+
+/--
+Pointwise action of UtranslateAux at zero shift is identity.
+-/
+theorem UtranslateAux_zero (w : Weight) (f : ℝ → ℂ) (u : ℝ)
+    (hw : w u ≠ 0) (hw' : w u ≠ ⊤) :
+    UtranslateAux w 0 f u = f u := by
+  unfold UtranslateAux
+  rw [correctionFactor_zero w u hw hw', one_mul, add_zero]
+
+/-! ### Unitary Translation Typeclass
+
+We define a typeclass that bundles a weight with its unitary translation operator.
+This allows us to state and prove theorems about weights that admit such operators,
+without requiring a general construction for all weights.
+-/
+
+/--
+A weight admits unitary translations if there exists a family of linear isometries
+U_a : Hw → Hw satisfying the group properties and acting as corrected translation.
+
+This is a typeclass so that instances can be resolved automatically.
+-/
+class AdmitsUnitaryTranslation (w : Weight) where
+  /-- The unitary translation operator for shift a -/
+  U : ℝ → (Hw w →ₗᵢ[ℂ] Hw w)
+  /-- U_a acts as √RN · (f ∘ τ_a) almost everywhere -/
+  spec : ∀ a : ℝ, ∀ f : Hw w, ∀ᵐ u ∂(μw w),
+    (U a f : ℝ → ℂ) u = correctionFactor w a u * (f : ℝ → ℂ) (u + a)
+  /-- U_0 is the identity -/
+  zero : U 0 = LinearIsometry.id
+  /-- U_a ∘ U_b = U_{a+b} -/
+  add : ∀ a b : ℝ, (U a).comp (U b) = U (a + b)
+  /-- (U_a)† = U_{-a} -/
+  adjoint : ∀ a : ℝ, (U a).toContinuousLinearMap.adjoint = (U (-a)).toContinuousLinearMap
+
+/--
 The corrected translation operator on L²(μ_w).
 
 (U_a f)(u) = √(RN(w,a)(u)) · f(u + a)
 
 The √(RN) factor corrects for the measure change, making U_a unitary.
+
+For weights that admit unitary translations (via the `AdmitsUnitaryTranslation` typeclass),
+this is the bundled operator satisfying all required properties.
 -/
-opaque Utranslate (w : Weight) (a : ℝ) : Hw w →ₗᵢ[ℂ] Hw w
+noncomputable def Utranslate (w : Weight) [hw : AdmitsUnitaryTranslation w] (a : ℝ) :
+    Hw w →ₗᵢ[ℂ] Hw w :=
+  hw.U a
 
 /--
 Utranslate specification: acts as corrected pullback.
 -/
-axiom Utranslate_spec (w : Weight) (a : ℝ) :
+theorem Utranslate_spec (w : Weight) [hw : AdmitsUnitaryTranslation w] (a : ℝ) :
     ∀ f : Hw w, ∀ᵐ u ∂(μw w),
       (Utranslate w a f : ℝ → ℂ) u =
-      (Real.sqrt (ENNReal.toReal (RN_deriv w a u)) : ℂ) * (f : ℝ → ℂ) (u + a)
+      (Real.sqrt (ENNReal.toReal (RN_deriv w a u)) : ℂ) * (f : ℝ → ℂ) (u + a) := by
+  intro f
+  have h := hw.spec a f
+  simp only [correctionFactor] at h
+  exact h
 
 /--
 **Key Property**: Adjoint of corrected translation is inverse translation.
@@ -137,18 +256,24 @@ axiom Utranslate_spec (w : Weight) (a : ℝ) :
 This is the analog of (T_a)† = T_{-a} for standard translations,
 but now on the weighted space.
 -/
-axiom Utranslate_adjoint (w : Weight) (a : ℝ) :
+theorem Utranslate_adjoint (w : Weight) [hw : AdmitsUnitaryTranslation w] (a : ℝ) :
     (Utranslate w a).toContinuousLinearMap.adjoint =
-    (Utranslate w (-a)).toContinuousLinearMap
+    (Utranslate w (-a)).toContinuousLinearMap :=
+  hw.adjoint a
 
 /--
-Utranslate forms a group action.
+Utranslate forms a group action: U_a ∘ U_b = U_{a+b}.
 -/
-axiom Utranslate_add (w : Weight) (a b : ℝ) :
-    (Utranslate w a).comp (Utranslate w b) = Utranslate w (a + b)
+theorem Utranslate_add (w : Weight) [hw : AdmitsUnitaryTranslation w] (a b : ℝ) :
+    (Utranslate w a).comp (Utranslate w b) = Utranslate w (a + b) :=
+  hw.add a b
 
-axiom Utranslate_zero (w : Weight) :
-    Utranslate w 0 = LinearIsometry.id
+/--
+Zero translation is the identity: U_0 = id.
+-/
+theorem Utranslate_zero (w : Weight) [hw : AdmitsUnitaryTranslation w] :
+    Utranslate w 0 = LinearIsometry.id :=
+  hw.zero
 
 /-! ## 5. Weighted Prime Shifts -/
 
@@ -156,20 +281,20 @@ axiom Utranslate_zero (w : Weight) :
 Prime shift on the weighted Hilbert space.
 T^w_p := U_{log p}
 -/
-def Twprime (w : Weight) (p : ℕ) : Hw w →ₗᵢ[ℂ] Hw w :=
+def Twprime (w : Weight) [AdmitsUnitaryTranslation w] (p : ℕ) : Hw w →ₗᵢ[ℂ] Hw w :=
   Utranslate w (logShift p)
 
 /--
 Inverse prime shift on the weighted Hilbert space.
 (T^w_p)⁻¹ := U_{-log p}
 -/
-def TwprimeInv (w : Weight) (p : ℕ) : Hw w →ₗᵢ[ℂ] Hw w :=
+def TwprimeInv (w : Weight) [AdmitsUnitaryTranslation w] (p : ℕ) : Hw w →ₗᵢ[ℂ] Hw w :=
   Utranslate w (-logShift p)
 
 /--
 Adjoint equals inverse for weighted prime shifts.
 -/
-theorem Twprime_adjoint (w : Weight) (p : ℕ) :
+theorem Twprime_adjoint (w : Weight) [AdmitsUnitaryTranslation w] (p : ℕ) :
     (Twprime w p).toContinuousLinearMap.adjoint =
     (TwprimeInv w p).toContinuousLinearMap := by
   unfold Twprime TwprimeInv
@@ -191,14 +316,14 @@ def β (s : ℂ) (p : ℕ) : ℂ := conj (α (1 - conj s) p)
 /--
 One completed summand on Hw(w).
 -/
-def Kwterm (w : Weight) (s : ℂ) (p : ℕ) : Hw w →L[ℂ] Hw w :=
+def Kwterm (w : Weight) [AdmitsUnitaryTranslation w] (s : ℂ) (p : ℕ) : Hw w →L[ℂ] Hw w :=
   (α s p) • (Twprime w p).toContinuousLinearMap +
   (β s p) • (TwprimeInv w p).toContinuousLinearMap
 
 /--
 Completed finite operator over primes up to B on Hw(w).
 -/
-def Kw (w : Weight) (s : ℂ) (B : ℕ) : Hw w →L[ℂ] Hw w := by
+def Kw (w : Weight) [AdmitsUnitaryTranslation w] (s : ℂ) (B : ℕ) : Hw w →L[ℂ] Hw w := by
   classical
   exact (primesUpTo B).sum (fun p => Kwterm w s p)
 
@@ -240,7 +365,7 @@ theorem alpha_conj_eq_beta_symm (s : ℂ) (p : ℕ) :
 **Fixed**: Adjoint of Kwterm.
 Uses the coefficient identities to match terms.
 -/
-theorem Kwterm_adjoint (w : Weight) (s : ℂ) (p : ℕ) :
+theorem Kwterm_adjoint (w : Weight) [AdmitsUnitaryTranslation w] (s : ℂ) (p : ℕ) :
     (Kwterm w s p).adjoint = Kwterm w (1 - conj s) p := by
   unfold Kwterm
   -- Distribute adjoint over addition and scalar multiplication
@@ -275,7 +400,7 @@ theorem Kwterm_adjoint (w : Weight) (s : ℂ) (p : ℕ) :
 
   K_w(s)† = K_w(1 - conj(s))
 -/
-theorem Kw_adjoint_symm (w : Weight) (s : ℂ) (B : ℕ) :
+theorem Kw_adjoint_symm (w : Weight) [AdmitsUnitaryTranslation w] (s : ℂ) (B : ℕ) :
     (Kw w s B).adjoint = Kw w (1 - conj s) B := by
   classical
   unfold Kw
@@ -292,7 +417,7 @@ theorem Kw_adjoint_symm (w : Weight) (s : ℂ) (B : ℕ) :
 /--
 Self-adjoint at s = 1/2 on weighted space.
 -/
-theorem Kw_selfadjoint_half (w : Weight) (B : ℕ) :
+theorem Kw_selfadjoint_half (w : Weight) [AdmitsUnitaryTranslation w] (B : ℕ) :
     (Kw w (1/2 : ℂ) B).adjoint = Kw w (1/2 : ℂ) B := by
   rw [Kw_adjoint_symm]
   have h : conj (1/2 : ℂ) = 1/2 := by

@@ -195,7 +195,7 @@ theorem BaseGenerator_stable : IsStableGenerator BaseGenerator := by
   unfold IsStableGenerator BaseGenerator
   -- Adjoint of scalar • A is conj(scalar) • A†
   rw [map_smulₛₗ ContinuousLinearMap.adjoint]
-  simp only [RingHomCompTriple.comp_apply, starRingEnd_apply, star_trivial]
+  simp only [starRingEnd_apply, star_trivial]
   -- Adjoint of (T_plus - T_minus) is (T_plus† - T_minus†)
   rw [map_sub]
   -- Use L2TranslateR_adjoint: T_a† = T_{-a}
@@ -215,7 +215,7 @@ theorem Stability_scalar (r : ℝ) (H : HR →L[ℝ] HR) (h_stable : IsStableGen
     IsStableGenerator (r • H) := by
   unfold IsStableGenerator at *
   rw [map_smulₛₗ ContinuousLinearMap.adjoint]
-  simp only [RingHomCompTriple.comp_apply, starRingEnd_apply, star_trivial]
+  simp only [starRingEnd_apply, star_trivial]
   rw [h_stable, smul_neg]
 
 /--

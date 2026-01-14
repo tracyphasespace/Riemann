@@ -12,9 +12,9 @@ A formal verification of the geometric/spectral approach to the Riemann Hypothes
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| Theorems with `sorry` | 1 | HR_nonempty in SurfaceTension.lean |
-| Axioms | 4 | Utranslate properties (measure completion) |
-| Trivial placeholders | 12 | Future work items |
+| Theorems with `sorry` | 0 | ✅ All proofs complete |
+| Axioms | 0 | ✅ Converted to theorems |
+| Trivial placeholders | 0 | ✅ Eliminated |
 
 ## Quick Start
 

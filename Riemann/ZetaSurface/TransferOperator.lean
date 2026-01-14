@@ -100,7 +100,7 @@ theorem α_modulus_critical (p : ℕ) (hp : Nat.Prime p) (t : ℝ) :
   -- re(-(1/2 + t*I)) = -1/2 - re(t*I) = -1/2 - 0 = -1/2
   congr 1
   simp only [neg_add_rev, add_re, neg_re, mul_re, ofReal_re, I_re, ofReal_im, I_im,
-             mul_zero, sub_zero, mul_one, zero_add, one_div, div_re]
+             mul_zero, sub_zero, mul_one, one_div]
   norm_num
 
 /--
@@ -159,20 +159,19 @@ theorem Aterm_adjoint (s : ℂ) (p : ℕ) :
     (conj (α s p)) • (TprimeInv p).toContinuousLinearMap := by
   unfold Aterm
   rw [map_smulₛₗ ContinuousLinearMap.adjoint]
-  simp only [RingHomCompTriple.comp_apply, starRingEnd_apply]
+  simp only [starRingEnd_apply]
   rw [Tprime_adjoint]
 
-/--
-Adjoint of the basic operator is NOT A(s) for any s.
+/-
+**Note: Adjoint Asymmetry**
+
+The adjoint of the basic operator is NOT A(s) for any s.
 This shows completion is necessary.
 
 A(s)† = Σ_p conj(α(s,p)) · T_p⁻¹ ≠ A(s') for any s'
 
 The forward-only operator lacks the symmetry for the functional equation.
 -/
-theorem A_adjoint_not_symmetric (s : ℂ) (B : ℕ) :
-    True := by  -- Placeholder: we just note the asymmetry
-  trivial
 
 /-! ## 4. Critical Line Properties -/
 
