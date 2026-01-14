@@ -21,25 +21,44 @@ This document tracks incomplete proofs and placeholder statements in the Riemann
 
 ## Priority 1: Sorry Statements (Blocking Full Verification)
 
-### 1.1 `HR_nonempty` - Hardy Space Non-emptiness
+### 1.1 `Critical_Surface_Unique` - Nontriviality of HR
 
-**File**: `Riemann/ZetaSurface/SurfaceTension.lean:167`
+**File**: `Riemann/ZetaSurface/SurfaceTension.lean:174`
 
 **Current State**:
 ```lean
-/--
-HR is nonempty (contains at least non-constant functions).
--/
-theorem HR_nonempty : ∃ f : HR, f ≠ 0 := by
-  sorry  -- Requires showing HR has nonzero elements
+theorem Critical_Surface_Unique :
+    ∀ σ : ℝ, (∀ f : HR, f ≠ 0 → TensionOp σ f = 0) ↔ σ = 1/2 := by
+  intro σ
+  constructor
+  · intro h
+    by_contra hne
+    -- Pick any nonzero f₀ in HR (e.g., indicator function of a bounded set)
+    -- Then h f₀ (nonzero proof) gives (σ - 1/2) • f₀ = 0
+    -- By smul_eq_zero_iff_right, since f₀ ≠ 0, we get σ - 1/2 = 0
+    sorry -- Requires: construct nonzero f₀ ∈ Lp ℝ 2 volume (indicator of [0,1])
+  · intro hσ f _
+    rw [hσ]; unfold TensionOp; simp
 ```
 
-**What's Needed**: Construct an explicit nonzero element of the Hardy space HR.
+**What's Needed**: Construct an explicit nonzero element of HR = Lp ℝ 2 volume.
+
+**Context**: `HR` is defined as `Lp ℝ 2 volume` (real-valued L² functions on ℝ with Lebesgue measure).
 
 **Suggested Approach**:
-1. HR is defined as a subtype of holomorphic functions on the right half-plane
-2. Show that constant functions or specific analytic functions are in HR
-3. Use `⟨explicit_element, proof_of_membership, proof_nonzero⟩`
+1. Use `memLp_indicator_const` with the set `[0,1]`
+2. Show indicator of [0,1] has positive L² norm (volume [0,1] = 1 > 0)
+3. Apply `smul_eq_zero_iff_right` to conclude σ - 1/2 = 0
+
+**Key Mathlib Lemmas**:
+```lean
+-- Indicator of bounded set is in Lp
+lemma memLp_indicator_const (p : ℝ≥0∞) (hs : MeasurableSet s) (c : E)
+    (hμsc : c = 0 ∨ μ s ≠ ∞) : MemLp (s.indicator fun _ => c) p μ
+
+-- Scalar multiple is zero iff scalar or vector is zero
+theorem smul_eq_zero_iff_right (hc : c ≠ 0) : c • x = 0 ↔ x = 0
+```
 
 ---
 

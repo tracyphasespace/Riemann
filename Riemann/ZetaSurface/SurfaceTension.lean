@@ -163,10 +163,16 @@ theorem Critical_Surface_Unique :
   constructor
   · intro h
     -- If tension vanishes for all nonzero f, then σ = 1/2
-    -- Pick any nonzero f and use Equilibrium_Condition
-    sorry  -- Requires showing HR has nonzero elements
-  · intro hσ
-    intro f _hf
+    -- TensionOp σ f = (σ - 1/2) • f
+    -- For any nonzero f: (σ - 1/2) • f = 0 implies σ - 1/2 = 0
+    -- HR = Lp ℝ 2 volume has nonzero elements (e.g., indicator of [0,1])
+    by_contra hne
+    -- Pick any nonzero f₀ in HR (e.g., indicator function of a bounded set)
+    -- Then h f₀ (nonzero proof) gives (σ - 1/2) • f₀ = 0
+    -- By smul_eq_zero_iff_right, since f₀ ≠ 0, we get σ - 1/2 = 0
+    -- This contradicts hne
+    sorry -- Requires: construct nonzero f₀ ∈ Lp ℝ 2 volume (indicator of [0,1])
+  · intro hσ f _
     rw [hσ]
     unfold TensionOp
     simp
