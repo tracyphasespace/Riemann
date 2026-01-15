@@ -206,6 +206,71 @@ theorem alpha_cl_normSq (s : SpectralParam) (p : ℕ) (_hp : 2 ≤ p) :
         congr 1
         ring
 
+/-! ## 6. Clifford-Valued Weights for Transfer Operator -/
+
+/--
+The Clifford-valued weight for a prime shift.
+Decomposes p⁻ˢ into real (scalar) and imaginary (bivector) parts.
+
+p⁻ˢ = p⁻ᵟ (cos(t log p) - B sin(t log p))
+
+where s = σ + B·t in Clifford notation.
+-/
+def α_cl33 (s : SpectralParam) (p : ℕ) : Cl33 :=
+  let scale := (p : ℝ) ^ (-s.sigma)
+  let θ := s.t * Real.log p
+  -- p⁻ˢ = p⁻ᵟ (cos(t log p) - B sin(t log p))
+  scale • Cl33Complex (Real.cos θ) (-Real.sin θ)
+
+/--
+The Clifford weight α_cl33 agrees with the complex-form alpha_cl.
+-/
+theorem α_cl33_eq_alpha_cl (s : SpectralParam) (p : ℕ) :
+    α_cl33 s p = alpha_cl s p := by
+  unfold α_cl33 alpha_cl
+  rfl
+
+/--
+Theorem: The modulus squared of α_cl33 is p^{-2σ}.
+This shows the weight magnitude is determined solely by the real part σ.
+-/
+theorem α_cl33_normSq (s : SpectralParam) (p : ℕ) (hp : 2 ≤ p) :
+    let θ := s.t * Real.log p
+    normSq_cl33
+      ((p : ℝ) ^ (-s.sigma) * Real.cos θ)
+      ((p : ℝ) ^ (-s.sigma) * (-Real.sin θ)) =
+    (p : ℝ) ^ (-2 * s.sigma) := by
+  exact alpha_cl_normSq s p hp
+
+/--
+Theorem: The Cl33 weight is unitary on the critical line.
+|α_cl33| = p⁻¹/² when σ = 1/2.
+-/
+theorem α_cl33_norm_critical (p : ℕ) (hp : 2 ≤ p) (t : ℝ) :
+    let s := criticalLine t
+    let θ := s.t * Real.log p
+    norm_cl33
+      ((p : ℝ) ^ (-s.sigma) * Real.cos θ)
+      ((p : ℝ) ^ (-s.sigma) * (-Real.sin θ)) =
+    (p : ℝ) ^ (-(1/2 : ℝ)) := by
+  intro s θ
+  unfold norm_cl33
+  rw [α_cl33_normSq (criticalLine t) p hp]
+  -- σ = 1/2 for criticalLine, so -2 * σ = -1
+  have h_sigma : s.sigma = 1/2 := rfl
+  rw [h_sigma]
+  have h_exp : (-2 : ℝ) * (1/2 : ℝ) = -1 := by norm_num
+  rw [h_exp]
+  have hp_pos : (0 : ℝ) < p := by
+    have h1 : 0 < p := by omega
+    exact Nat.cast_pos.mpr h1
+  -- √(p⁻¹) = p^{-1/2} using (x^a)^b = x^{a*b}
+  rw [Real.sqrt_eq_rpow]
+  rw [← Real.rpow_mul (le_of_lt hp_pos)]
+  -- Goal: p ^ ((-1) * (1/2)) = p ^ (-(1/2))
+  congr 1
+  norm_num
+
 end Riemann.GA.Ops
 
 end

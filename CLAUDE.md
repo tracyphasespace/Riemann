@@ -22,12 +22,12 @@ This is a Lean 4 formalization of a geometric/spectral approach to the Riemann H
 - **Mathlib**: v4.27.0-rc1
 - **Build command**: `lake build`
 
-## Current Status (v6 - Distributional Trace)
+## Current Status (v7 - Weil Criterion)
 
 | Category | Count |
 |----------|-------|
-| `sorry` | 0 ✅ |
-| Custom Axioms | 2 (orthogonality, explicit formula) |
+| `sorry` | 3 (technical Schwartz lemmas) |
+| Custom Axioms | 3 (orthogonality, explicit formula, Weil criterion) |
 | Hypothesis Structures | 1 (ZetaLink) |
 
 **Geometric Deduction: COMPLETE**
@@ -120,8 +120,9 @@ See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
 |-------|------|---------------------------|
 | `Orthogonal_Primes_Trace_Zero` | GeometricTrace.lean | Clifford grading: scalar part of orthogonal bivector product is zero |
 | `Geometric_Explicit_Formula` | DistributionalTrace.lean | Weil explicit formula from analytic number theory |
+| `Weil_Positivity_Criterion` | GeometricPositivity.lean | **EQUIVALENT TO RH** - positivity of prime distribution implies critical line |
 
-These axioms encode deep results from Clifford algebra grading theory and analytic number theory that would require substantial additional formalization.
+These axioms encode deep results from Clifford algebra grading theory and analytic number theory. The Weil criterion is the fundamental bridge: it states that positivity of the prime signal forces all zeros onto σ = 1/2.
 
 ## Proof Conventions
 
