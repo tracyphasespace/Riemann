@@ -117,6 +117,7 @@ The approach formalizes four key insights:
 -- Core geometric modules
 import Riemann.ZetaSurface
 import Riemann.GA.Cl33
+import Riemann.GA.Cl33Ops
 
 -- Transfer operator infrastructure
 import Riemann.ZetaSurface.Translations
@@ -142,3 +143,15 @@ import Riemann.ZetaSurface.SpectralZeta
 import Riemann.ZetaSurface.Compression
 import Riemann.ZetaSurface.AdapterQFD_Ricker
 import Riemann.ZetaSurface.CompressionRicker
+
+-- Surface Tension and Spectral Real
+import Riemann.ZetaSurface.SpectralReal
+import Riemann.ZetaSurface.SurfaceTension
+import Riemann.ZetaSurface.SurfaceTensionMeasure
+import Riemann.ZetaSurface.Hamiltonian
+
+-- Surface Tension Instantiation (Algebraic Bridge)
+import Riemann.ZetaSurface.SurfaceTensionInstantiation
+
+-- Geometric Sieve (Cl(3,3) foundations)
+import Riemann.ZetaSurface.GeometricSieve
