@@ -169,6 +169,9 @@ import Riemann.ZetaSurface.GeometricZetaDerivation
 -- Geometric-Complex Equivalence (Bridges Cl(n,n) to ℂ)
 import Riemann.ZetaSurface.GeometricComplexEquiv
 
+-- Dirichlet Term Proof (Cl(N,N) Foundation - 0 sorry on real side)
+import Riemann.ZetaSurface.DirichletTermProof
+
 -- Zeta Link Instantiation (Wiring the Logic)
 import Riemann.ZetaSurface.ZetaLinkInstantiation
 
