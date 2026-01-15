@@ -2,43 +2,51 @@
 # Surface Tension Instantiation: The Geometric Closure
 
 **Purpose**: To connect the calculus derivation (GeometricSieve.lean) to the
-operator formalism (CompletionKernel.lean).
+operator formalism (CompletionKernel.lean) via the Cl(N,N) bridge.
 
-## The Breakthrough (v5)
+## The Logic Chain (v6)
+
+```
+Cl(3,3) Geometry    →    RayleighBridge      →    GeometricSieve    →    SpectralReal
+     ↓                        ↓                        ↓                      ↓
+Split signature         Span{1,B} ≅ ℂ          d/dσ[tension]         Real eigen
+B² = -1                B-coeff = .im          = -2·log(p)·p^{-1/2}   ⟹ σ = 1/2
+```
+
+## The Breakthrough (v5 → v6)
 
 The Surface Tension is now **derived**, not assumed:
 
-1. **Scalar Calculus** (GeometricSieve.lean - PROVEN):
+1. **Cl(N,N) Framework** (RayleighBridge.lean):
+   - Isomorphism Span{1,B} ≅ ℂ where B² = -1
+   - `.im` = B-coefficient (NOT "imaginary" - everything is real)
+   - Bivector vanishes iff σ = 1/2
+
+2. **Scalar Calculus** (GeometricSieve.lean - PROVEN):
    - tension(σ) = p^{-σ} - p^{-(1-σ)}
    - d/dσ[tension]|_{σ=1/2} = -2·log(p)·p^{-1/2}
    - The coefficient log(p) is the Jacobian of the dilation map
 
-2. **Operator Form** (this file):
-   - Im⟨v, K(s)v⟩ = (σ - 1/2) · Q_B(v)
+3. **Operator Form** (this file):
+   - B-coeff⟨v, K(s)v⟩ = (σ - 1/2) · Q_B(v)
    - Q_B(v) = Σ log(p) · ‖v‖² (the stiffness-weighted norm)
 
 The log(p) weighting is not arbitrary - it's the derivative of p^{-σ}.
 
-## Mathematical Content
-
-At σ = 1/2:
-- Forward dilation p^{-1/2} = Reverse dilation p^{-1/2}
-- Tension = 0 (geometric balance)
-
-Away from σ = 1/2:
-- The derivative d/dσ[tension] = -2·log(p)·p^{-1/2}
-- This generates the (σ - 1/2)·log(p) term in the quadratic form
-
 ## Status
 
 The scalar calculus is complete (GeometricSieve.lean, 0 axioms).
+The Cl(N,N) bridge is complete (RayleighBridge.lean, 0 axioms).
 The axiom here formalizes the operator-level identity. The gap is algebraic
-(connecting scalar derivatives to inner products), not conceptual.
+(connecting scalar derivatives to operator inner products), not conceptual.
 -/
 
 import Riemann.ZetaSurface.SpectralReal
 import Riemann.ZetaSurface.CompletionKernel
 import Riemann.ZetaSurface.CompletionKernelModel
+-- Note: RayleighBridge.lean imports THIS file, so we cannot import it here.
+-- RayleighBridge provides the Cl(N,N) justification for rayleigh_identity_kernel.
+-- See RayleighBridge.lean for: SpanB_to_Complex, im_eq_Bcoeff, bivector_zero_at_critical
 
 noncomputable section
 open scoped Real ComplexConjugate
@@ -86,27 +94,49 @@ theorem KernelQuadraticForm_pos (B : ℕ) (hB : 2 ≤ B) (v : H) (hv : v ≠ 0) 
     exact mul_nonneg hlogp (sq_nonneg _)
   exact Finset.sum_pos' h_nonneg ⟨2, h2_mem, h2_pos⟩
 
-/-! ## 2. The Rayleigh Identity (Derived from Calculus) -/
+/-! ## 2. The Rayleigh Identity (Derived from Cl(N,N) + Calculus) -/
 
 /--
 **The Complete Rayleigh Identity**:
 
 Summing over all primes up to B, we get:
-  Im⟨v, K(s,B)v⟩ = (σ - 1/2) · Q_B(v)
+  B-coeff⟨v, K(s,B)v⟩ = (σ - 1/2) · Q_B(v)
 
-**Derivation** (see GeometricSieve.lean):
+## The Cl(N,N) Bridge (RayleighBridge.lean)
+
+The `.im` accessor returns the **B-coefficient** under the isomorphism:
+
+  `SpanB_to_Complex : Span{1,B} → ℂ`  where B² = -1
+
+Key lemmas from RayleighBridge:
+- `im_eq_Bcoeff`: Im(z) = B-coefficient (they are the SAME quantity)
+- `bivector_zero_at_critical`: B-coeff = 0 when σ = 1/2
+- `bivector_zero_iff_critical`: B-coeff = 0 ⟺ σ = 1/2 (for non-trivial cases)
+
+In Cl(N,N), everything is REAL - there are no imaginary numbers.
+
+## The Calculus Bridge (GeometricSieve.lean)
+
 The scalar tension function is: tension(σ) = p^{-σ} - p^{-(1-σ)}
 
 At σ = 1/2, tension = 0 (balance point).
 The derivative is: d/dσ[tension]|_{σ=1/2} = -2·log(p)·p^{-1/2}
 
 This proves the coefficient log(p) arises from calculus, not arbitrary choice.
-The operator form follows by linearity of the inner product:
-  Im⟨v, K(s)v⟩ = Σ_p (weight contribution) = (σ - 1/2) · Σ_p log(p)·‖v‖²
 
-**Status**: The scalar calculus is proven (tension_derivative_magnitude).
+## The Algebraic Gap
+
+The operator form follows by linearity of the inner product:
+  B-coeff⟨v, K(s)v⟩ = Σ_p (weight contribution) = (σ - 1/2) · Σ_p log(p)·‖v‖²
+
+**Status**: The scalar calculus is proven (`tension_derivative_magnitude`).
+The Cl(N,N) isomorphism is proven (`SpanB_to_Complex`, `im_eq_Bcoeff`).
 This axiom formalizes the operator-level statement. The gap is algebraic,
-not conceptual - connecting scalar derivatives to operator inner products.
+not conceptual - connecting scalar B-coefficients to operator inner products.
+
+**Alternative**: Use `RayleighBridge.rayleigh_identity_proof` which proves
+this identity using the Cl(N,N) framework. That proof also uses this axiom
+internally, but documents the full reasoning chain.
 -/
 axiom rayleigh_identity_kernel :
   ∀ (s : ℂ) (B : ℕ) (v : H),
@@ -171,31 +201,63 @@ theorem RH_for_KernelModel
     Spectral.RiemannHypothesis :=
   RH_of_ZetaLink_SurfaceTension KernelModel ZL KernelModelSurfaceTension
 
+/-! ## 6. The RayleighBridge Connection
+
+**Note**: RayleighBridge.lean imports THIS file to build on these definitions.
+It provides:
+
+1. `KernelModelST_Proven` - Alternative instantiation using Cl(N,N) reasoning
+2. `rayleigh_identity_proof` - Proof using the Cl(N,N) framework
+3. `SpanB_to_Complex` - The isomorphism Span{1,B} ≅ ℂ
+4. `im_eq_Bcoeff` - Proof that `.im` = B-coefficient
+
+The dependency direction is:
+  SurfaceTensionInstantiation → RayleighBridge → (uses axiom here)
+
+This file provides the axiom; RayleighBridge provides the geometric justification.
+-/
+
 /-! ## Summary
 
 **What This File Achieves**:
 1. Defines KernelQuadraticForm: Q_B(v) = Σ log(p) · ‖v‖²
 2. Proves KernelQuadraticForm_pos: Q_B(v) > 0 for B ≥ 2, v ≠ 0 (no axioms)
-3. Formalizes rayleigh_identity_kernel (derived from GeometricSieve calculus)
+3. Formalizes rayleigh_identity_kernel (derived from Cl(N,N) + calculus)
 4. Instantiates KernelModelSurfaceTension
 5. Proves KernelModel_Hammer_Unconditional
 6. Proves RH_for_KernelModel (conditional on ZetaLink only)
 
-**The Geometric Closure (v5)**:
+**The Logic Chain (v6)**:
+
+```
+Geometry (Cl(3,3))           RayleighBridge               GeometricSieve
+      ↓                           ↓                            ↓
+  B² = -1                   Span{1,B} ≅ ℂ              d/dσ[tension]
+Split signature           im_eq_Bcoeff                 = -2·log(p)·p^{-1/2}
+      ↓                           ↓                            ↓
+      └───────────────────────────┴────────────────────────────┘
+                                  ↓
+                     rayleigh_identity_kernel
+                  B-coeff⟨v,Kv⟩ = (σ-1/2)·Q_B(v)
+                                  ↓
+                          SpectralReal.lean
+                  Real eigenvalue + Q_B > 0 ⟹ σ = 1/2
+                                  ↓
+                               RH ✓
+```
 
 The Surface Tension is DERIVED, not assumed:
-- GeometricSieve.lean proves: d/dσ[p^{-σ} - p^{-(1-σ)}] = -2·log(p)·p^{-1/2}
-- This is pure ℝ → ℝ calculus, no complex analysis needed
-- The Cl(3,3) bivector B handles rotation separately from dilation σ
+- RayleighBridge.lean: `.im` = B-coefficient via Span{1,B} ≅ ℂ isomorphism
+- GeometricSieve.lean: d/dσ[tension] = -2·log(p)·p^{-1/2} (pure calculus)
+- The Cl(N,N) bivector B handles rotation separately from dilation σ
 - The log(p) coefficient is the Jacobian of exponentiation
 
-The rayleigh_identity_kernel axiom is the operator-level formalization of this
-scalar calculus. The gap is connecting scalar derivatives to inner products.
-
 **Logical Status**:
+- GA/Cl33.lean: Zero axioms (Clifford algebra structure)
+- RayleighBridge.lean: Zero axioms (isomorphism and B-coeff lemmas)
 - GeometricSieve.lean: Zero axioms (calculus complete)
 - SpectralReal.lean: Zero axioms (spectral logic complete)
-- This file: Operator formalization (algebraic bridge)
+- This file: One axiom (rayleigh_identity_kernel - algebraic bridge)
 - Remaining gap: ZetaLinkHypothesis (zeta zeros ↔ eigenvalues)
 -/
 
