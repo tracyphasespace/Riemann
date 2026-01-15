@@ -172,6 +172,9 @@ import Riemann.ZetaSurface.GeometricComplexEquiv
 -- Zeta Link Instantiation (Wiring the Logic)
 import Riemann.ZetaSurface.ZetaLinkInstantiation
 
+-- Spectral Mapping (Zeros ↔ Kernel Vectors)
+import Riemann.ZetaSurface.SpectralMapping
+
 -- Alternative RH Proofs
 import Riemann.ZetaSurface.RH_FromReversion
 import Riemann.ZetaSurface.ReversionForcesRH
