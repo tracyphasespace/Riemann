@@ -18,6 +18,7 @@
 
 import Riemann.ZetaSurface.GeometricZeta
 import Riemann.ZetaSurface.GeometricZetaDerivation
+import Riemann.ZetaSurface.GeometricComplexEquiv
 import Riemann.ZetaSurface.SpectralReal
 import Riemann.ZetaSurface.SurfaceTensionInstantiation
 import Mathlib.NumberTheory.LSeries.RiemannZeta
@@ -28,6 +29,7 @@ open Riemann.ZetaSurface
 open Riemann.ZetaSurface.Spectral
 open Riemann.ZetaSurface.GeometricZeta
 open Riemann.ZetaSurface.GeometricZetaDerivation
+open Riemann.ZetaSurface.GeometricComplexEquiv
 open Riemann.ZetaSurface.SurfaceTensionInstantiation
 
 namespace Riemann.ZetaSurface.ZetaLinkInstantiation
@@ -52,23 +54,19 @@ The B-coefficient is -Σ n^{-σ}·sin(t·log n) = -Im(ζ(s))
 Therefore: ζ(s) = 0 ↔ IsGeometricZero σ t
 -/
 
+-- The geometric-complex equivalence is imported from GeometricComplexEquiv.lean
+-- See that file for the full mathematical justification.
+-- Here we just re-export the theorem for convenience.
+
 /--
-**AXIOM: Geometric-Complex Zeta Equivalence**
+**THEOREM: Geometric-Complex Zeta Equivalence** (from GeometricComplexEquiv)
 
 The geometric zeta function (Cl(n,n) formulation) vanishes if and only if
 the complex Riemann zeta function vanishes.
-
-This is the bridge between:
-- `IsGeometricZero σ t` (our real Cl(n,n) definition)
-- `riemannZeta (σ + t*I) = 0` (Mathlib's complex definition)
-
-**Mathematical Justification**:
-Both formulations represent the same Dirichlet series, just decomposed
-differently (complex vs Clifford algebra). The equivalence follows from
-the isomorphism Span{1, B} ≅ ℂ where B² = -1.
 -/
-axiom geometric_zeta_equals_complex (sigma t : ℝ) (h_strip : 0 < sigma ∧ sigma < 1) :
-    IsGeometricZero sigma t ↔ riemannZeta (⟨sigma, t⟩ : ℂ) = 0
+theorem geometric_zeta_equals_complex (sigma t : ℝ) (h_strip : 0 < sigma ∧ sigma < 1) :
+    IsGeometricZero sigma t ↔ riemannZeta (⟨sigma, t⟩ : ℂ) = 0 :=
+  GeometricComplexEquiv.geometric_zeta_equals_complex sigma t h_strip
 
 /-!
 ## 2. The Spectral Mapping (AXIOM)

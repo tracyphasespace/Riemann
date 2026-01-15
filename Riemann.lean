@@ -166,6 +166,9 @@ import Riemann.ZetaSurface.DiscreteLock
 -- Zeta Link Derivation (First Principles - NO AXIOMS)
 import Riemann.ZetaSurface.GeometricZetaDerivation
 
+-- Geometric-Complex Equivalence (Bridges Cl(n,n) to ℂ)
+import Riemann.ZetaSurface.GeometricComplexEquiv
+
 -- Zeta Link Instantiation (Wiring the Logic)
 import Riemann.ZetaSurface.ZetaLinkInstantiation
 
