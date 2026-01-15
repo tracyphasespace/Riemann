@@ -22,12 +22,12 @@ This is a Lean 4 formalization of a geometric/spectral approach to the Riemann H
 - **Mathlib**: v4.27.0-rc1
 - **Build command**: `lake build`
 
-## Current Status (v5 - Geometric Closure)
+## Current Status (v6 - Distributional Trace)
 
 | Category | Count |
 |----------|-------|
 | `sorry` | 0 ✅ |
-| Custom Axioms | 0 ✅ |
+| Custom Axioms | 2 (orthogonality, explicit formula) |
 | Hypothesis Structures | 1 (ZetaLink) |
 
 **Geometric Deduction: COMPLETE**
@@ -38,6 +38,8 @@ The Surface Tension is now **derived from calculus**, not assumed as physics:
 - No axioms needed for the geometric/spectral logic
 
 **The Remaining Gap**: `ZetaLinkHypothesis` - the correspondence between zeta zeros and operator eigenvalues. This is explicitly a hypothesis structure, not a hidden axiom.
+
+**New in v6**: Distributional trace framework connects primes to zeros via the Weil explicit formula in pure real Cl(N,N).
 
 ## CRITICAL: Clifford Algebra - NO IMAGINARY COMPONENTS
 
@@ -90,7 +92,10 @@ See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
 |------|---------|
 | `GeometricSieve.lean` | Calculus derivation of Surface Tension |
 | `SpectralReal.lean` | The Hammer: real eigenvalue ⟹ σ = 1/2 |
-| `SurfaceTensionInstantiation.lean` | Connects calculus to operator |
+| `SurfaceTensionInstantiation.lean` | Pure real Cl(3,3) tension operator, Critical_Line theorem |
+| `GeometricZeta.lean` | Zeta as scalar + bivector series (no complex numbers) |
+| `GeometricTrace.lean` | Trace via Cl(n,n) grading, cross-terms vanish |
+| `DistributionalTrace.lean` | Weil explicit formula: primes ↔ zeros as distributions |
 | `RayleighBridge.lean` | Span{1,B} ≅ ℂ isomorphism, B-coeff = .im |
 | `CompletionKernel.lean` | Operator K(s,B) definition |
 | `GA/Cl33.lean` | Cl(3,3) definitions, B² = -1 proof |
@@ -102,7 +107,18 @@ See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
 2. **Calculus (Verified)**: d/dσ[p^{-σ} - p^{-(1-σ)}]|_{σ=1/2} = -2·log(p)·p^{-1/2}
 3. **Operator Identity (Verified)**: B-coeff⟨v, K(s)v⟩ = (σ - 1/2)·Q_B(v)
 4. **Spectral Hammer (Verified)**: Real eigenvalue + Q_B > 0 ⟹ σ = 1/2
-5. **Zeta Link (Hypothesis)**: ζ(s)=0 ⟹ Real Eigenvalue
+5. **Trace Orthogonality (Axiom)**: ⟨e_p e_q⟩₀ = 0 for p ≠ q (Cl(n,n) grading)
+6. **Explicit Formula (Axiom)**: PrimeSignal(φ) = ZeroResonance(φ) + corrections
+7. **Zeta Link (Hypothesis)**: ζ(s)=0 ⟹ Real Eigenvalue
+
+## Axioms Explained
+
+| Axiom | File | Mathematical Justification |
+|-------|------|---------------------------|
+| `Orthogonal_Primes_Trace_Zero` | GeometricTrace.lean | Clifford grading: scalar part of orthogonal bivector product is zero |
+| `Geometric_Explicit_Formula` | DistributionalTrace.lean | Weil explicit formula from analytic number theory |
+
+These axioms encode deep results from Clifford algebra grading theory and analytic number theory that would require substantial additional formalization.
 
 ## Proof Conventions
 
