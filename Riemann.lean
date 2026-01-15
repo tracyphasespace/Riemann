@@ -155,3 +155,10 @@ import Riemann.ZetaSurface.SurfaceTensionInstantiation
 
 -- Geometric Sieve (Cl(3,3) foundations)
 import Riemann.ZetaSurface.GeometricSieve
+
+-- Geometric Trace and Distributional Framework
+import Riemann.ZetaSurface.GeometricZeta
+import Riemann.ZetaSurface.GeometricTrace
+import Riemann.ZetaSurface.DistributionalTrace
+import Riemann.ZetaSurface.GeometricPositivity
+import Riemann.ZetaSurface.DiscreteLock

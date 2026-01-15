@@ -115,11 +115,10 @@ theorem Nyquist_Limit_Lock (σ : ℝ) :
     have h1 : (2 : ℝ) ^ (-σ + 1/2) = (2 : ℝ) ^ (0 : ℝ) := by
       simp only [Real.rpow_zero]
       exact h
-    have h2 : -σ + 1/2 = 0 := Real.rpow_injective (by norm_num : 1 < 2) h1
+    have h2 : -σ + 1/2 = 0 := (Real.rpow_right_inj (by norm_num : (0:ℝ) < 2) (by norm_num : (2:ℝ) ≠ 1)).mp h1
     linarith
   · intro h
     rw [h]
-    simp only [Real.rpow_zero]
     norm_num
 
 /--
@@ -144,11 +143,10 @@ theorem Nyquist_Lock_General (p : ℕ) (hp : Nat.Prime p) (σ : ℝ) :
     have h1 : (p : ℝ) ^ (-σ + 1/2) = (p : ℝ) ^ (0 : ℝ) := by
       simp only [Real.rpow_zero]
       exact h
-    have h2 : -σ + 1/2 = 0 := Real.rpow_injective hp_gt_one h1
+    have h2 : -σ + 1/2 = 0 := (Real.rpow_right_inj hp_pos (ne_of_gt hp_gt_one)).mp h1
     linarith
   · intro h
     rw [h]
-    simp only [Real.rpow_zero]
     norm_num
 
 /-!
@@ -170,24 +168,25 @@ theorem Nyquist_iff_Zero_Tension (p : ℕ) (hp : Nat.Prime p) (σ : ℝ) :
     ((p : ℝ) ^ (-σ) * (p : ℝ) ^ (1/2 : ℝ) = 1) ↔
     ((p : ℝ) ^ (-σ) = (p : ℝ) ^ (-(1 - σ))) := by
   have hp_pos : (0 : ℝ) < p := Nat.cast_pos.mpr hp.pos
+  have hp_gt_one : (1 : ℝ) < p := by exact_mod_cast hp.one_lt
+  have hp_ne_one : (p : ℝ) ≠ 1 := ne_of_gt hp_gt_one
   constructor
   · intro h
     -- From Nyquist: p^{-σ + 1/2} = 1 = p^0, so -σ + 1/2 = 0, so σ = 1/2
     rw [← Real.rpow_add hp_pos] at h
-    have hexp : -σ + 1/2 = 0 := by
-      have : (p : ℝ) ^ (-σ + 1/2) = (p : ℝ) ^ (0 : ℝ) := by simp [h]
-      exact Real.rpow_injective (by exact_mod_cast hp.one_lt) this
+    have h1 : (p : ℝ) ^ (-σ + 1/2) = (p : ℝ) ^ (0 : ℝ) := by
+      simp only [Real.rpow_zero]; exact h
+    have hexp : -σ + 1/2 = 0 := (Real.rpow_right_inj hp_pos hp_ne_one).mp h1
     -- At σ = 1/2: p^{-1/2} = p^{-(1-1/2)} = p^{-1/2} ✓
     have hσ : σ = 1/2 := by linarith
     rw [hσ]
     ring_nf
   · intro h
     -- From zero tension: p^{-σ} = p^{σ-1}, so -σ = σ-1, so σ = 1/2
-    have hexp : -σ = -(1 - σ) := Real.rpow_injective (by exact_mod_cast hp.one_lt) h
+    have hexp : -σ = -(1 - σ) := (Real.rpow_right_inj hp_pos hp_ne_one).mp h
     have hσ : σ = 1/2 := by linarith
     rw [hσ]
     rw [← Real.rpow_add hp_pos]
-    simp only [Real.rpow_zero]
     norm_num
 
 /-!
