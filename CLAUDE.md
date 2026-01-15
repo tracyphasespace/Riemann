@@ -97,6 +97,7 @@ See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
 | `GeometricTrace.lean` | Trace via Cl(n,n) grading, cross-terms vanish |
 | `DistributionalTrace.lean` | Weil explicit formula: primes ↔ zeros as distributions |
 | `GeometricPositivity.lean` | Weil criterion: positive signal ⟹ RH |
+| `DiscreteLock.lean` | Nyquist limit: 2^{-σ}·√2 = 1 ⟺ σ = 1/2 |
 | `RayleighBridge.lean` | Span{1,B} ≅ ℂ isomorphism, B-coeff = .im |
 | `CompletionKernel.lean` | Operator K(s,B) definition |
 | `GA/Cl33.lean` | Cl(3,3) definitions, B² = -1 proof |
@@ -108,9 +109,10 @@ See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
 2. **Calculus (Verified)**: d/dσ[p^{-σ} - p^{-(1-σ)}]|_{σ=1/2} = -2·log(p)·p^{-1/2}
 3. **Operator Identity (Verified)**: B-coeff⟨v, K(s)v⟩ = (σ - 1/2)·Q_B(v)
 4. **Spectral Hammer (Verified)**: Real eigenvalue + Q_B > 0 ⟹ σ = 1/2
-5. **Trace Orthogonality (Axiom)**: ⟨e_p e_q⟩₀ = 0 for p ≠ q (Cl(n,n) grading)
-6. **Explicit Formula (Axiom)**: PrimeSignal(φ) = ZeroResonance(φ) + corrections
-7. **Zeta Link (Hypothesis)**: ζ(s)=0 ⟹ Real Eigenvalue
+5. **Nyquist Lock (Verified)**: p^{-σ}·√p = 1 ⟺ σ = 1/2 (L² measure balance)
+6. **Trace Orthogonality (Axiom)**: ⟨e_p e_q⟩₀ = 0 for p ≠ q (Cl(n,n) grading)
+7. **Explicit Formula (Axiom)**: PrimeSignal(φ) = ZeroResonance(φ) + corrections
+8. **Zeta Link (Hypothesis)**: ζ(s)=0 ⟹ Real Eigenvalue
 
 ## Axioms Explained
 
