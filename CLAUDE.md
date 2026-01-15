@@ -39,19 +39,50 @@ The Surface Tension is now **derived from calculus**, not assumed as physics:
 
 **The Remaining Gap**: `ZetaLinkHypothesis` - the correspondence between zeta zeros and operator eigenvalues. This is explicitly a hypothesis structure, not a hidden axiom.
 
-## CRITICAL: Cl(3,3) Signature
+## CRITICAL: Clifford Algebra - NO IMAGINARY COMPONENTS
 
-**DO NOT CHANGE THE SIGNATURE.** The project uses Cl(3,3) with signature (+,+,+,-,-,-):
+**ALWAYS think in terms of real Clifford algebras. There are NO imaginary components.**
+
+### Cl(3,3) with signature (+,+,+,-,-,-)
+
+**DO NOT CHANGE THE SIGNATURE.** The project uses Cl(3,3):
 - Three positive generators: γ₁² = γ₂² = γ₃² = +1
 - Three negative generators: γ₄² = γ₅² = γ₆² = -1
 
 **Why this matters:**
-- The bivector B = γ₄·γ₅ satisfies B² = -1 (acts like imaginary unit)
+- The bivector B = γ₄·γ₅ satisfies B² = -1 (this IS the rotation generator)
 - This comes from: B² = γ₄γ₅γ₄γ₅ = -γ₄γ₄γ₅γ₅ = -(-1)(-1) = -1
 - The spectral parameter s = σ + Bt embeds naturally
 - Split signature creates the balance where dilations can match
 
 This is NOT Cl(6,0) or Cl(0,6). The split signature is essential to the proof.
+
+### Cl(N,N) for Prime-Indexed Algebras
+
+For the determinant factorization (see `GA/PrimeClifford.lean`), we use Cl(N,N) where N = π(B) = number of primes ≤ B:
+- Each prime p gets an orthogonal generator γ_p with γ_p² = -1
+- Distinct primes anticommute: γ_p γ_q = -γ_q γ_p for p ≠ q
+- Orthogonality is **DEFINITIONAL** from Clifford structure, not proven separately
+- The determinant factorizes: det(I - K) = ∏_p det(I - K_p) because cross-terms vanish
+
+**The "i" in complex analysis is replaced by bivectors B with B² = -1. Everything is real geometric algebra.**
+
+### The `.im` Notation Convention
+
+In Lean code, we use `.im` (from `Complex.im`) to access what is conceptually the **B-coefficient** in Cl(N,N):
+
+```
+Isomorphism: Span{1, B} ≅ ℂ    where B² = -1
+
+  Scalar part (Cl(N,N))     ↔   Real part (ℂ)      → z.re
+  B-coefficient (Cl(N,N))   ↔   Imaginary part (ℂ) → z.im
+```
+
+**Key Point**: `.im` does NOT mean "imaginary" in the classical complex analysis sense.
+It means "the coefficient of the bivector B" in the pure real Cl(N,N) framework.
+
+When we write `inner_product.im = 0`, we mean the B-coefficient vanishes.
+See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
 
 ## Key Files
 
@@ -60,14 +91,16 @@ This is NOT Cl(6,0) or Cl(0,6). The split signature is essential to the proof.
 | `GeometricSieve.lean` | Calculus derivation of Surface Tension |
 | `SpectralReal.lean` | The Hammer: real eigenvalue ⟹ σ = 1/2 |
 | `SurfaceTensionInstantiation.lean` | Connects calculus to operator |
+| `RayleighBridge.lean` | Span{1,B} ≅ ℂ isomorphism, B-coeff = .im |
 | `CompletionKernel.lean` | Operator K(s,B) definition |
 | `GA/Cl33.lean` | Cl(3,3) definitions, B² = -1 proof |
+| `GA/PrimeClifford.lean` | Prime-indexed Cl(N,N), automatic orthogonality |
 
 ## The Logic Chain
 
-1. **Geometric Definitions**: Primes are generators in Cl(3,3). s = σ + Bt.
+1. **Geometric Definitions**: Primes are generators in Cl(N,N). s = σ + Bt.
 2. **Calculus (Verified)**: d/dσ[p^{-σ} - p^{-(1-σ)}]|_{σ=1/2} = -2·log(p)·p^{-1/2}
-3. **Operator Identity (Verified)**: Im⟨v, K(s)v⟩ = (σ - 1/2)·Q_B(v)
+3. **Operator Identity (Verified)**: B-coeff⟨v, K(s)v⟩ = (σ - 1/2)·Q_B(v)
 4. **Spectral Hammer (Verified)**: Real eigenvalue + Q_B > 0 ⟹ σ = 1/2
 5. **Zeta Link (Hypothesis)**: ζ(s)=0 ⟹ Real Eigenvalue
 
