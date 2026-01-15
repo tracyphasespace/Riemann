@@ -96,6 +96,7 @@ See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
 | `GeometricZeta.lean` | Zeta as scalar + bivector series (no complex numbers) |
 | `GeometricTrace.lean` | Trace via Cl(n,n) grading, cross-terms vanish |
 | `DistributionalTrace.lean` | Weil explicit formula: primes ↔ zeros as distributions |
+| `GeometricPositivity.lean` | Weil criterion: positive signal ⟹ RH |
 | `RayleighBridge.lean` | Span{1,B} ≅ ℂ isomorphism, B-coeff = .im |
 | `CompletionKernel.lean` | Operator K(s,B) definition |
 | `GA/Cl33.lean` | Cl(3,3) definitions, B² = -1 proof |
