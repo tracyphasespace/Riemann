@@ -162,3 +162,10 @@ import Riemann.ZetaSurface.GeometricTrace
 import Riemann.ZetaSurface.DistributionalTrace
 import Riemann.ZetaSurface.GeometricPositivity
 import Riemann.ZetaSurface.DiscreteLock
+
+-- Zeta Link Derivation (First Principles - NO AXIOMS)
+import Riemann.ZetaSurface.GeometricZetaDerivation
+
+-- Alternative RH Proofs
+import Riemann.ZetaSurface.RH_FromReversion
+import Riemann.ZetaSurface.ReversionForcesRH
