@@ -24,6 +24,7 @@ import Riemann.ZetaSurface.CompletionCore
 import Riemann.ZetaSurface.Hamiltonian
 import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.Topology.Algebra.Module.Basic
+import Mathlib.NumberTheory.LSeries.RiemannZeta
 
 noncomputable section
 open scoped Real ComplexConjugate
@@ -32,6 +33,25 @@ open Riemann.ZetaSurface
 open Riemann.ZetaSurface.Dynamics
 
 namespace Riemann.ZetaSurface.Spectral
+
+/-!
+## Notation: `.im` = B-coefficient in Cl(N,N)
+
+**Important Conceptual Note**: Throughout this file, we use Lean's `Complex.im` accessor.
+In the Cl(N,N) geometric framework, there are NO imaginary numbers - everything is real.
+
+The "imaginary part" is actually the **B-coefficient** under the isomorphism:
+  Span{1, B} ≅ ℂ    where B² = -1
+
+This isomorphism maps:
+  - Scalar part (in Cl(N,N)) ↔ Real part (in ℂ)
+  - B-coefficient (in Cl(N,N)) ↔ Imaginary part (in ℂ)
+
+When we write `z.im = 0`, we mean the B-coefficient vanishes.
+When we write `ev.im = 0`, we mean the eigenvalue has no bivector component.
+
+See `RayleighBridge.lean` for the formal isomorphism `SpanB_to_Complex`.
+-/
 
 /-!
 ## 1. The Self-Adjoint Property (Recap)
@@ -300,26 +320,31 @@ theorem Spectral_Rigidity (M : CompletedModel) (B : ℕ) :
 -/
 
 /--
-**The Surface Tension Hypothesis** (Strengthened Form):
+**The Surface Tension Hypothesis** (Strengthened Form with Fix B):
 
 This structure encapsulates the Rayleigh-quotient imaginary-part identity:
   Im⟨v, K(s)v⟩ = (Re(s) - 1/2) · Q_B(v)
-where Q_B(v) > 0 for all nonzero v.
+where Q_B(v) > 0 for all nonzero v when B ≥ 2.
 
 **Why This Form?**
 This is the "one-line Hammer": if v is an eigenvector with real eigenvalue λ,
 then Im⟨v, K(s)v⟩ = Im(λ‖v‖²) = 0, which forces Re(s) = 1/2.
 
+**Fix B Domain Restriction**:
+The positivity requirement is restricted to B ≥ 2 to ensure the prime sum
+is non-empty (since the first prime is 2). For B < 2, the sum is empty
+and the quadratic form is zero.
+
 **Mathematical Content**:
 - `quadraticForm` : The positive-definite form Q_B(v)
-- `quadraticForm_pos` : Q_B(v) > 0 for v ≠ 0
+- `quadraticForm_pos` : Q_B(v) > 0 for v ≠ 0 when B ≥ 2
 - `rayleigh_imaginary_part` : The explicit identity relating Im⟨v,Kv⟩ to (σ - 1/2)·Q(v)
 -/
 structure SurfaceTensionHypothesis (M : CompletedModel) where
   /-- The positive-definite quadratic form Q_B(v) -/
   quadraticForm : ℕ → M.H → ℝ
-  /-- Positivity: Q_B(v) > 0 for nonzero v -/
-  quadraticForm_pos : ∀ B : ℕ, ∀ v : M.H, v ≠ 0 → 0 < quadraticForm B v
+  /-- Positivity: Q_B(v) > 0 for nonzero v when B ≥ 2 (Fix B domain) -/
+  quadraticForm_pos : ∀ B : ℕ, 2 ≤ B → ∀ v : M.H, v ≠ 0 → 0 < quadraticForm B v
   /-- The Rayleigh-quotient identity:
       Im⟨v, K(s)v⟩ = (Re(s) - 1/2) · Q_B(v) -/
   rayleigh_imaginary_part :
@@ -327,18 +352,19 @@ structure SurfaceTensionHypothesis (M : CompletedModel) where
     (@inner ℂ M.H _ v (M.Op s B v)).im = (s.re - 1/2) * quadraticForm B v
 
 /--
-**The Hammer from Surface Tension**:
-If the Surface Tension hypothesis holds, then any real eigenvalue forces Re(s) = 1/2.
+**The Hammer from Surface Tension** (with Fix B domain):
+If the Surface Tension hypothesis holds and B ≥ 2, then any real eigenvalue
+forces Re(s) = 1/2.
 
 Proof: For eigenvector v with K(s)v = λv where λ ∈ ℝ:
   ⟨v, K(s)v⟩ = λ‖v‖² ∈ ℝ
   ⟹ Im⟨v, K(s)v⟩ = 0
   ⟹ (Re(s) - 1/2) · Q_B(v) = 0
-  ⟹ Re(s) = 1/2  (since Q_B(v) > 0 for v ≠ 0)
+  ⟹ Re(s) = 1/2  (since Q_B(v) > 0 for v ≠ 0 when B ≥ 2)
 -/
 theorem Real_Eigenvalue_Implies_Critical_of_SurfaceTension
     (M : CompletedModel) (ST : SurfaceTensionHypothesis M)
-    (s : ℂ) (B : ℕ) (ev : ℝ) (v : M.H) (hv : v ≠ 0)
+    (s : ℂ) (B : ℕ) (hB : 2 ≤ B) (ev : ℝ) (v : M.H) (hv : v ≠ 0)
     (h_eigen : M.Op s B v = (ev : ℂ) • v) :
     s.re = 1 / 2 := by
   -- Step 1: ⟨v, K(s)v⟩ = ev * ⟨v,v⟩ is real
@@ -358,8 +384,8 @@ theorem Real_Eigenvalue_Implies_Critical_of_SurfaceTension
   -- Step 3: Apply Surface Tension: 0 = (Re(s) - 1/2) * Q_B(v)
   have h_st := ST.rayleigh_imaginary_part s B v
   rw [h_im_zero] at h_st
-  -- Step 4: Q_B(v) > 0 since v ≠ 0
-  have h_Q_pos : 0 < ST.quadraticForm B v := ST.quadraticForm_pos B v hv
+  -- Step 4: Q_B(v) > 0 since v ≠ 0 and B ≥ 2 (Fix B domain)
+  have h_Q_pos : 0 < ST.quadraticForm B v := ST.quadraticForm_pos B hB v hv
   -- Step 5: (Re(s) - 1/2) * Q = 0 with Q > 0 implies Re(s) = 1/2
   have h_factor : s.re - 1/2 = 0 := by
     by_contra h_ne
@@ -455,6 +481,91 @@ theorem adjoint_defect_inner_zero
   have h_eq := inner_product_consistency M s B ev v hv h_eigen
   rw [h_eq]
   ring
+
+/-! ## 7. The Zeta Link Hypotheses -/
+
+/--
+The Riemann Hypothesis statement.
+-/
+def RiemannHypothesis : Prop :=
+  ∀ s : ℂ, 0 < s.re ∧ s.re < 1 → riemannZeta s = 0 → s.re = 1 / 2
+
+/--
+**Zeta Link Hypothesis**: The spectral correspondence between zeta zeros and eigenvalues.
+
+This captures the Hilbert-Pólya conjecture: ζ(s) = 0 ↔ 1 ∈ Spectrum(K(s,B)).
+-/
+structure ZetaLinkHypothesis (M : CompletedModel) where
+  zeta_zero_iff_eigenvalue_one :
+    ∀ s : ℂ, (0 < s.re ∧ s.re < 1) →
+    (riemannZeta s = 0 ↔ ∃ B : ℕ, ∃ (v : M.H), v ≠ 0 ∧ M.Op s B v = (1 : ℂ) • v)
+
+/--
+**Zeta Link Hypothesis (Fix B)**: Strengthened version with B ≥ 2 guarantee.
+
+This ensures the Surface Tension Hammer can be applied directly since
+Q_B(v) > 0 only for B ≥ 2.
+-/
+structure ZetaLinkHypothesisFixB (M : CompletedModel) where
+  zeta_zero_iff_eigenvalue_one :
+    ∀ s : ℂ, (0 < s.re ∧ s.re < 1) →
+    (riemannZeta s = 0 ↔ ∃ B : ℕ, 2 ≤ B ∧ ∃ (v : M.H), v ≠ 0 ∧ M.Op s B v = (1 : ℂ) • v)
+
+/--
+**Upgrade Lemma**: A ZetaLinkHypothesis with B ≥ 2 bound gives ZetaLinkHypothesisFixB.
+-/
+def ZetaLinkHypothesisFixB.ofZetaLink (M : CompletedModel)
+    (ZL : ZetaLinkHypothesis M)
+    (h_bound : ∀ s : ℂ, (0 < s.re ∧ s.re < 1) → riemannZeta s = 0 →
+      ∃ B : ℕ, 2 ≤ B ∧ ∃ (v : M.H), v ≠ 0 ∧ M.Op s B v = (1 : ℂ) • v) :
+    ZetaLinkHypothesisFixB M where
+  zeta_zero_iff_eigenvalue_one := fun s h_strip => by
+    constructor
+    · exact h_bound s h_strip
+    · intro ⟨B, _, v, hv, h_eigen⟩
+      exact (ZL.zeta_zero_iff_eigenvalue_one s h_strip).mpr ⟨B, v, hv, h_eigen⟩
+
+/-! ## 8. The Final RH Theorem -/
+
+/--
+**The Complete RH Reduction via Surface Tension**:
+
+Given:
+1. A CompletedModel M
+2. A ZetaLinkHypothesisFixB (zeta zeros ↔ eigenvalue 1 at some B ≥ 2)
+3. A SurfaceTensionHypothesis (Rayleigh identity with positive Q_B)
+
+We prove the Riemann Hypothesis.
+
+This is the "watertight" formulation that combines:
+- The Hilbert-Pólya correspondence (ZetaLink)
+- The algebraic "Hammer" (Surface Tension)
+- The Fix B domain alignment (B ≥ 2)
+-/
+theorem RH_of_ZetaLink_SurfaceTension
+    (M : CompletedModel)
+    (ZL : ZetaLinkHypothesisFixB M)
+    (ST : SurfaceTensionHypothesis M) :
+    RiemannHypothesis := by
+  unfold RiemannHypothesis
+  intro s h_strip h_zero
+  -- 1. Get B ≥ 2 and eigenvector from ZetaLink
+  have h_eig := (ZL.zeta_zero_iff_eigenvalue_one s h_strip).mp h_zero
+  rcases h_eig with ⟨B, hB, v, hv, h_eigen⟩
+  -- 2. Apply the Surface Tension Hammer (requires B ≥ 2)
+  exact Real_Eigenvalue_Implies_Critical_of_SurfaceTension M ST s B hB 1 v hv h_eigen
+
+/--
+**Alternative**: RH from standard ZetaLink with explicit B ≥ 2 bound.
+-/
+theorem RH_of_ZetaLink_SurfaceTension_alt
+    (M : CompletedModel)
+    (ZL : ZetaLinkHypothesis M)
+    (ST : SurfaceTensionHypothesis M)
+    (h_bound : ∀ s : ℂ, (0 < s.re ∧ s.re < 1) → riemannZeta s = 0 →
+      ∃ B : ℕ, 2 ≤ B ∧ ∃ (v : M.H), v ≠ 0 ∧ M.Op s B v = (1 : ℂ) • v) :
+    RiemannHypothesis :=
+  RH_of_ZetaLink_SurfaceTension M (ZetaLinkHypothesisFixB.ofZetaLink M ZL h_bound) ST
 
 /-!
 ## Physical Summary: Why Zeros Must Be Real

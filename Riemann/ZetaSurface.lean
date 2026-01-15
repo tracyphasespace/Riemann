@@ -43,6 +43,19 @@ open Real (log exp)
 
 namespace Riemann.ZetaSurface
 
+/-!
+## Notation: `Complex.I` = Bivector B in Cl(N,N)
+
+In Lean code, we use `Complex.I` and `.im` from Mathlib. Conceptually, in the
+Cl(N,N) framework, `Complex.I` represents the bivector B where B² = -1.
+
+The isomorphism Span{1,B} ≅ ℂ identifies:
+  - Scalar part ↔ Real part (.re)
+  - B-coefficient ↔ Imaginary part (.im)
+
+Everything in Cl(N,N) is real. See `RayleighBridge.lean` for the formal isomorphism.
+-/
+
 /-! ## 1. Basic Definitions -/
 
 /--

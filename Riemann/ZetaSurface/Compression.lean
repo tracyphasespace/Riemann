@@ -41,6 +41,14 @@ open Complex
 
 namespace Riemann.ZetaSurface
 
+/-!
+## Notation: `.im` = B-coefficient in Cl(N,N)
+
+In the Cl(N,N) geometric framework, the "imaginary part" accessed via `.im` is
+actually the **B-coefficient** under the isomorphism Span{1,B} ≅ ℂ where B² = -1.
+Everything in Cl(N,N) is real - see `RayleighBridge.lean` for details.
+-/
+
 /-! ## 1. CompressionData Structure -/
 
 /--
