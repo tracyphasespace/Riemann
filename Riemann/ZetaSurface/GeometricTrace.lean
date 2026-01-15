@@ -72,7 +72,12 @@ theorem KwTension_as_sum (sigma : ℝ) (B : ℕ) :
     (primesUpTo B).sum (fun p => PrimeTensionTerm GT sigma p) := by
   -- Both are sums of (σ - 1/2) * log(p) * J over primes
   unfold KwTension PrimeTensionTerm LatticeStiffness
-  sorry
+  simp only []
+  -- Goal: ((sigma - 1/2) * Σ_p (stiffness p / 2)) • J = Σ_p (((sigma - 1/2) * stiffness p / 2) • J)
+  -- Step 1: Distribute (sigma - 1/2) into the sum
+  rw [Finset.mul_sum]
+  -- Step 2: Distribute smul over the sum
+  rw [Finset.sum_smul]
 
 /-!
 ## 3. The Orthogonality Axiom
@@ -105,13 +110,33 @@ theorem Trace_Single_Prime_Zero (sigma : ℝ) (p : ℕ) :
   ring
 
 /--
+Trace of zero operator is zero (follows from scaling by 0).
+-/
+theorem tr_zero : GT.tr 0 = 0 := by
+  have h := GT.tr_smul 0 GT.Geom.J
+  simp only [zero_smul, zero_mul] at h
+  exact h
+
+/--
+Helper: Trace distributes over finite sums.
+-/
+theorem tr_sum (s : Finset ℕ) (f : ℕ → H →L[ℝ] H) :
+    GT.tr (s.sum f) = s.sum (fun i => GT.tr (f i)) := by
+  induction s using Finset.induction_on with
+  | empty => simp only [Finset.sum_empty, tr_zero]
+  | insert a s' ha ih =>
+    rw [Finset.sum_insert ha, Finset.sum_insert ha]
+    rw [GT.tr_add, ih]
+
+/--
 **Theorem: The Geometric Trace Sum**
 Because cross-terms vanish, the Trace of the sum is the sum of the Traces.
 -/
 theorem Trace_of_Sum_is_Sum_of_Traces (sigma : ℝ) (B : ℕ) :
     GT.tr (KwTension GT.Geom sigma B) =
     (primesUpTo B).sum (fun p => GT.tr (PrimeTensionTerm GT sigma p)) := by
-  sorry  -- Requires linearity over finite sums
+  rw [KwTension_as_sum]
+  exact tr_sum GT (primesUpTo B) (fun p => PrimeTensionTerm GT sigma p)
 
 /-!
 ## 5. The Zeta Identification
