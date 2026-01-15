@@ -166,6 +166,9 @@ import Riemann.ZetaSurface.DiscreteLock
 -- Zeta Link Derivation (First Principles - NO AXIOMS)
 import Riemann.ZetaSurface.GeometricZetaDerivation
 
+-- Zeta Link Instantiation (Wiring the Logic)
+import Riemann.ZetaSurface.ZetaLinkInstantiation
+
 -- Alternative RH Proofs
 import Riemann.ZetaSurface.RH_FromReversion
 import Riemann.ZetaSurface.ReversionForcesRH
