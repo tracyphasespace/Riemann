@@ -60,7 +60,7 @@ open Riemann.GA.Ops
 open Riemann.ZetaSurface
 open Riemann.ZetaSurface.CompletionKernel
 open Riemann.ZetaSurface.GeometricSieve
-open Riemann.ZetaSurface.Instantiation
+open Riemann.ZetaSurface.SurfaceTensionInstantiation
 
 namespace Riemann.ZetaSurface.RayleighBridge
 
@@ -319,8 +319,13 @@ This gives B-coeff ≈ -2(σ - 1/2)·log(p)·p^{-1/2}·sin θ
 The derivative d/dσ[p^{-σ} - p^{σ-1}] at σ = 1/2 is -2·log(p)·p^{-1/2}
 This was already proven in GeometricSieve as tension_derivative_at_half.
 -/
-theorem tension_linearization_statement (_σ : ℝ) (_p : ℕ) (_hp : 1 < _p) :
-    True := trivial
+theorem tension_linearization_statement (σ : ℝ) (p : ℕ) (hp : 1 < p) :
+    -- The tension Δ(σ,p) = p^{-σ} - p^{σ-1} has derivative -2·log(p)·p^{-1/2} at σ = 1/2
+    -- This linearization is key to understanding the critical line
+    deriv (fun s => (p : ℝ) ^ (-s) - (p : ℝ) ^ (s - 1)) (1/2 : ℝ) =
+      -2 * Real.log p * (p : ℝ) ^ (-(1/2 : ℝ)) := by
+  -- This is tension_derivative_at_half from GeometricSieve
+  sorry -- 🚧 GOAL: Import and apply tension_derivative_at_half
 
 /-! ## 5. The Rayleigh Identity in Pure Cl(3,3) Form
 
@@ -338,10 +343,14 @@ same statement in the Span{1,B} ≅ ℂ isomorphism.
 For a real eigenvalue λ, the eigenvalue equation Kv = λv means
 the B-coefficient of ⟨v, Kv⟩ must equal the B-coefficient of λ‖v‖².
 Since λ is real (pure scalar), its B-coefficient is 0.
+
+In Clifford algebra terms: a real scalar has no bivector component.
 -/
-theorem real_eigenvalue_zero_Bcoeff (_ev : ℝ) (_norm_sq : ℝ) :
-    -- ev·norm_sq has B-coefficient 0 (it's purely scalar)
-    True := trivial
+theorem real_eigenvalue_zero_Bcoeff (ev : ℝ) (norm_sq : ℝ) :
+    -- A real number times a real number is real (B-coefficient = 0)
+    -- In the isomorphism Span{1,B} ≅ ℂ, this means Im(ev · norm_sq) = 0
+    (⟨ev * norm_sq, 0⟩ : ℂ).im = 0 := by
+  simp only [Complex.im_ofReal_mul, mul_zero]
 
 /-! ## 6. Bridge to Complex Formulation
 
@@ -380,16 +389,16 @@ theorem critical_of_real_eigenvalue
     (s : ℂ) (B : ℕ) (hB : 2 ≤ B) (ev : ℝ) (v : H) (hv : v ≠ 0)
     (h_eigen : K s B v = (ev : ℂ) • v)
     (h_rayleigh : (@inner ℂ H _ v (K s B v)).im =
-                  (s.re - 1 / 2) * KernelQuadraticForm B v) :
+                  (s.re - 1 / 2) * RealQuadraticForm B v) :
     s.re = 1 / 2 := by
   -- From eigenvector: B-coeff (= Im in complex notation) = 0
   have h_im_zero := inner_real_of_real_eigenvalue (K s B) v ev h_eigen
   -- Combine with Rayleigh identity
   rw [h_im_zero] at h_rayleigh
   -- 0 = (σ - 1/2) · Q_B(v)
-  have h_Q_pos := KernelQuadraticForm_pos B hB v hv
+  have h_Q_pos := RealQuadraticForm_pos B hB v hv
   -- Q_B(v) > 0, so σ - 1/2 = 0
-  have h_Q_ne : KernelQuadraticForm B v ≠ 0 := ne_of_gt h_Q_pos
+  have h_Q_ne : RealQuadraticForm B v ≠ 0 := ne_of_gt h_Q_pos
   have h := mul_eq_zero.mp h_rayleigh.symm
   cases h with
   | inl h_sigma => linarith
@@ -447,14 +456,14 @@ contributes an orthogonal B_p direction. The key steps:
 2. **Decomposition**: B-coeff⟨v,Kv⟩ = Σ_p B_p-coeff (orthogonal primes)
 3. **Weight Formula**: B_p-coeff = Δ(σ,p)·sin(θ_p)·‖v‖² (per computeWeightSum)
 4. **Linearization**: Δ(σ,p) = (σ-1/2)·(-2·log(p)·p^{-1/2}) (from GeometricSieve)
-5. **Summation**: Σ_p log(p)·‖v‖² = Q_B(v) (definition of KernelQuadraticForm)
+5. **Summation**: Σ_p log(p)·‖v‖² = Q_B(v) (definition of RealQuadraticForm)
 
 The Menger Sponge analogy: at σ = 1/2, all B_p-coefficients vanish
 (zero "surface tension"), giving the unique stable point.
 -/
 theorem rayleigh_identity_proof (s : ℂ) (B : ℕ) (v : H) :
     (@inner ℂ H _ v (K s B v)).im =
-    (s.re - 1 / 2) * KernelQuadraticForm B v := by
+    (s.re - 1 / 2) * RealQuadraticForm B v := by
   -- Via Span{1,B} ≅ ℂ isomorphism: Im = B-coefficient
   -- The B-coefficient sum from inner_im_eq_Bcoeff_sum gives:
   -- Σ_p (computeWeightSum σ t p).bivector * ‖v‖²
@@ -473,19 +482,33 @@ theorem rayleigh_identity_proof (s : ℂ) (B : ℕ) (v : H) :
   -- The isomorphism Span{1,B} ≅ ℂ (proven above) shows:
   -- Complex Im = Cl(N,N) B-coefficient (they are the SAME)
   --
-  -- Using the existing axiom as the definition of the Cl(N,N) structure:
-  exact rayleigh_identity_kernel s B v
+  -- 🚧 GOAL: Bridge from Geometric_Rayleigh_Identity (real, BivectorComponent)
+  -- to complex inner product. Requires:
+  -- 1. Definition of K s B : H →L[ℂ] H from KwTension (real operator)
+  -- 2. Isomorphism showing complex Im = real B-coefficient
+  -- For now, mark as sorry pending the complex/real bridge
+  sorry
 
 /-! ## 6. Instantiation -/
 
-/--
-Surface Tension for KernelModel using the proven identity.
-Once rayleigh_identity_proof is complete, this replaces the axiom version.
--/
+/-
+🚧 PENDING: Surface Tension for KernelModel
+
+This requires bridging between:
+- RealQuadraticForm (defined for BivectorStructure H, real Clifford algebra)
+- KernelModel (defined over L²(ℝ; ℂ), complex operators)
+
+The bridge requires:
+1. Embedding BivectorStructure into L² space
+2. Showing RealQuadraticForm corresponds to the norm structure
+3. Proving rayleigh_identity_proof connects to Geometric_Rayleigh_Identity
+
+Once the complex/real bridge is complete, define:
 def KernelModelST_Proven : Spectral.SurfaceTensionHypothesis KernelModel where
-  quadraticForm := fun B v => KernelQuadraticForm B v
-  quadraticForm_pos := fun B hB v hv => KernelQuadraticForm_pos B hB v hv
-  rayleigh_imaginary_part := fun s B v => rayleigh_identity_proof s B v
+  quadraticForm := ...
+  quadraticForm_pos := ...
+  rayleigh_imaginary_part := ...
+-/
 
 /-! ## Summary
 

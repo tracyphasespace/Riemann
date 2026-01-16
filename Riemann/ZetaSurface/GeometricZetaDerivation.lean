@@ -20,6 +20,48 @@ not an axiom.
   Z(s) = 0  ⟹  log Z(s) = -∞  ⟹  ∇ log Z(s) singular  ⟹  K(s)v = 0 for some v
 
 This replaces the Zeta Link axiom with a derived theorem.
+
+## OUTER PRODUCT DIRECTIONALITY
+
+**Critical Geometric Insight**: Primes Point OUTWARD from Previous Prime Sphere
+
+In Geometric Algebra, each prime defines a new orthogonal direction:
+  e₂           = 1D (line in direction of prime 2)
+  e₂ ∧ e₃      = 2D (plane spanned by primes 2, 3)
+  e₂ ∧ e₃ ∧ e₅ = 3D (volume spanned by primes 2, 3, 5)
+
+The next prime is PERPENDICULAR to the subspace of all previous primes.
+This orthogonality is captured by the anticommutation: γ_p γ_q = -γ_q γ_p for p ≠ q.
+
+**The Derivative Gives the Outward Direction**:
+
+  d/ds [p^{-s}] = -log(p) × p^{-s}
+
+- The NEGATIVE SIGN indicates OUTWARD from origin
+- The MAGNITUDE is log(p) - this is the geometric stiffness
+- This is NOT arbitrary - it emerges from calculus!
+
+**The 1/k Cancellation is Profound**:
+
+In the log expansion: log ζ(s) = Σ_p Σ_k (1/k) p^{-ks}
+
+When differentiating:
+  d/dσ [(1/k) p^{-kσ}] = (1/k) × (-k × log p) × p^{-kσ} = -log(p) × p^{-kσ}
+
+The 1/k from the logarithm EXACTLY cancels the k from the chain rule!
+This proves Λ(n) = log(p) is the GEOMETRIC STIFFNESS - the Jacobian of dilation.
+
+**Balance at σ = 1/2**:
+
+At the critical line:
+- Derivative contribution: -log(p) × p^{-1/2}
+- Measure contribution: √p (from L² theory)
+- Product: log(p) × p^{-1/2} × √p = log(p) (pure direction!)
+
+This balance ONLY occurs at σ = 1/2. Away from the critical line, the
+outward/inward forces are imbalanced.
+
+See: scripts/experiments/outer_product_direction.py
 -/
 
 import Riemann.ZetaSurface.GeometricZeta

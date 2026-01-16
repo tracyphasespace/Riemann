@@ -1,0 +1,169 @@
+/-
+================================================================================
+                          DO NOT USE THIS FILE
+================================================================================
+
+# Archive: Removed Axioms
+
+This file is for HISTORICAL DOCUMENTATION ONLY. It preserves axioms that
+were removed from the main proof. DO NOT import, reference, or use any
+code from this file.
+
+The file extension is .lean.txt specifically to prevent it from being
+compiled or counted as part of the codebase.
+
+================================================================================
+
+**Purpose**: Preserves axioms that were removed from the main proof path.
+These represent an alternative "Weil positivity" approach to RH that was
+never fully implemented.
+
+**Why Removed**: The main proof chain only uses `zero_implies_kernel`.
+These axioms were intended for an alternative proof path via the Weil
+explicit formula that was never completed.
+
+**Potential Value** (for future reference only):
+- The Weil explicit formula is a deep result in analytic number theory
+- Plancherel in Cl(N,N) form connects to Fourier analysis
+- zeros_isolated captures RH in a symmetric form
+
+**Note**: This file does NOT compile - it's for documentation only.
+The definitions it references are still in Definitions.lean.
+-/
+
+/-!
+## Axiom: The Geometric Explicit Formula
+
+The distributional form of the prime-zero duality:
+  PrimeSignal(φ) = ZeroResonance(φ) + VolumeCorrections(φ)
+
+This is the Weil explicit formula in Cl(N,N) language.
+
+**Mathematical Content**:
+The Weil explicit formula relates sums over primes to sums over zeros:
+  Σ_p log(p) · φ(log p) = Σ_ρ φ̂(γ_ρ) + (correction terms)
+
+In our geometric formulation:
+- PrimeSignal(φ) encodes the left side (sum over primes)
+- ZeroResonance(φ) encodes the right side (sum over zeros)
+- The equality is the deep arithmetic-analytic duality
+
+**Status**: Never used in main proof. Would require Weil_Positivity_Criterion
+to complete the proof path.
+-/
+
+-- axiom Geometric_Explicit_Formula (phi : GeometricTestFunction) (zeros : ℕ → ℝ) :
+--   PrimeSignal phi =
+--   ZeroResonance zeros phi +
+--   (phi.toFun 0 * Real.log (2 * Real.pi))
+
+
+/-!
+## Axiom: Plancherel Identity (Cl(N,N) form)
+
+The energy in log-space equals the integrated squared magnitude in phase-space:
+  ∫ |φ(x)|² dx = (1/2π) ∫ |φ̂(t)|²_Cl dt
+
+This connects the prime-side (log-space) to the zero-side (phase-space).
+
+**Mathematical Content**:
+Standard Plancherel: ∫|f|² = ∫|𝓕f|²
+
+In Cl(N,N) form:
+- LogSpaceEnergy = ∫ |φ(x)|² dx (prime side)
+- ClSquaredMagnitude = |FourierScalar|² + |FourierBivector|² (zero side)
+- The 1/2π factor comes from physicist vs mathematician Fourier conventions
+
+**Status**: Never used in main proof. PlancherelBridge.lean documents the
+connection to Mathlib's Plancherel theorem.
+-/
+
+-- axiom Plancherel_ClNN (phi : GeometricTestFunction) :
+--     LogSpaceEnergy phi = (1 / (2 * Real.pi)) * ∫ t : ℝ, ClSquaredMagnitude phi t
+
+
+/-!
+## Axiom: Uniqueness of Real Part per Imaginary Part
+
+If two zeros in the critical strip have the same imaginary part t,
+they must have the same real part σ.
+
+**CRITICAL**: This is NOT the standard "isolated zeros" theorem!
+
+The standard identity theorem says zeros of analytic functions are
+topologically isolated (can't accumulate). This is automatic.
+
+This axiom is MUCH STRONGER: it says zeros are unique per horizontal line.
+
+**Why this is equivalent to RH**:
+Combined with the functional equation (which pairs zeros (σ,t) and (1-σ,t)):
+1. If ζ(σ+it)=0, then ζ((1-σ)+it)=0 (functional equation)
+2. Both zeros have the same t
+3. By this axiom: σ = 1-σ, hence σ = 1/2
+
+This axiom encodes RH in the form: "zeros can't exist at symmetric
+positions off the critical line."
+
+**Status**: Used in ReversionForcesRH.lean (alternative proof path).
+Now marked with sorry since the axiom was removed.
+-/
+
+-- axiom zeros_isolated (s₁ s₂ : GeometricParam)
+--     (h₁ : InCriticalStrip s₁) (h₂ : InCriticalStrip s₂)
+--     (hz₁ : IsGeometricZeroParam s₁) (hz₂ : IsGeometricZeroParam s₂)
+--     (h_same_t : s₁.t = s₂.t) :
+--     s₁.sigma = s₂.sigma
+
+
+/-!
+## Axiom: The Weil Positivity Criterion (Also Removed Earlier)
+
+The Cl(n,n) positivity combined with the explicit formula forces all
+zeros to lie on σ = 1/2.
+
+**Mathematical Content**:
+This axiom encapsulates the deep analytic content that:
+- Positivity of squared magnitudes (sum of squares ≥ 0)
+- Combined with the explicit formula (primes ↔ zeros)
+- Forces zeros onto the critical line
+
+**Note**: This is EQUIVALENT to RH - it's the Weil criterion statement.
+
+**Status**: Removed because it was never used. zeros_isolated serves
+the same purpose (both encode RH).
+-/
+
+-- axiom Weil_Positivity_Criterion
+--     (zeros : ℕ → ℝ)
+--     (h_explicit : ∀ φ, PrimeSignal φ = ZeroResonance zeros φ) :
+--     RiemannHypothesis
+
+
+/-!
+## Summary: The Alternative Proof Path
+
+The removed axioms represent a different approach to proving RH:
+
+**Path 1 (Current - Spectral)**:
+```
+zero_implies_kernel → spectral_mapping → Critical_Line_from_Zero_Bivector → σ = 1/2
+```
+
+**Path 2 (Removed - Weil Positivity)**:
+```
+Geometric_Explicit_Formula + Plancherel_ClNN + Weil_Positivity_Criterion → RH
+```
+
+**Path 3 (Removed - Functional Equation)**:
+```
+functional_equation_zero + zeros_isolated → σ = 1/2
+```
+
+Path 1 is complete (modulo the single axiom).
+Paths 2 and 3 were never fully implemented.
+
+**Potential Mathlib Value**:
+- The Weil explicit formula statements could inform future Mathlib additions
+- The Plancherel bridge (physicist ↔ mathematician conventions) is documented in PlancherelBridge.lean
+- zeros_isolated shows an interesting reformulation of RH
+-/
