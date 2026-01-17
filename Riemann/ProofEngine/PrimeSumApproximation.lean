@@ -42,6 +42,12 @@ theorem error_term_bound (p : ℕ) (s : ℂ) (hp : Nat.Prime p) (hσ : 1 / 2 < s
   -- 2. |x| = p^{-σ} for x = p^{-s}
   -- 3. |1-x| ≥ 1 - |x| = 1 - p^{-σ}  (reverse triangle inequality)
   -- 4. Combine to get the bound
+
+  -- The proof requires careful handling of complex norms and the
+  -- reverse triangle inequality. Key lemmas:
+  -- - Complex.norm_cpow_of_ne_zero for |p^{-s}| = p^{-Re(s)}
+  -- - norm_sub_norm_le for |1 - x| ≥ |1| - |x| = 1 - |x|
+  -- - div_le_div for combining the bounds
   sorry
 
 /-!

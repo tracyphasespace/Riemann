@@ -161,7 +161,8 @@ theorem hasDerivAt_rotorTrace (σ t : ℝ) (primes : List ℕ)
   -- Each term has derivative given by hasDerivAt_term
   -- The sum of derivatives equals the derivative of the sum
   -- For foldl with addition, we need list induction
-  sorry -- (List induction using hasDerivAt_term)
+  -- Structure: apply HasDerivAt.const_mul, then list induction using hasDerivAt_term
+  sorry -- (List induction: derivative of finite sum is sum of derivatives)
 
 /--
 **Helper**: A single term is continuous in σ.
@@ -176,14 +177,23 @@ theorem continuous_rotorTrace (t : ℝ) (primes : List ℕ)
     (h_primes : ∀ p ∈ primes, 0 < (p : ℝ)) :
     Continuous (fun σ => rotorTrace σ t primes) := by
   -- The trace is 2 * (finite sum of terms)
-  -- Use continuity of finite sums
+  -- Each term is continuous by continuous_term
+  -- Finite sums preserve continuity
+  -- The foldl with addition is a finite sum
+  --
+  -- Key insight: foldl (fun acc x => acc + f(x)) 0 l = (l.map f).sum
+  -- Both are continuous when f is continuous
+  --
+  -- Proof uses:
+  -- 1. continuous_term: Each term σ ↦ log(p) * p^(-σ) * cos(t*log(p)) is continuous
+  -- 2. Continuous.add: Sum of continuous functions is continuous
+  -- 3. List induction on primes
   unfold rotorTrace
   apply Continuous.mul
   · exact continuous_const
-  · -- Continuity of foldl sum follows from continuity of each term
-    -- Each term is continuous by continuous_term
-    -- Finite sums preserve continuity
-    sorry -- (List induction with continuous_term)
+  · -- The foldl sum is continuous by induction
+    -- This is a standard fact about finite sums of continuous functions
+    sorry -- (List induction: continuity of finite sum via Continuous.add)
 
 /-!
 ## 5. The Main Theorem: Phase Clustering ⟹ Monotonicity
