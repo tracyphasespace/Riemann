@@ -361,7 +361,7 @@ example (s : ℂ) (h_strip : 0 < s.re ∧ s.re < 1) (h_zero : riemannZeta s = 0)
 
 | File | Locked By | Since | Task |
 |------|-----------|-------|------|
-| TraceConvexity.lean | Claude-B | 2026-01-17 | Fixing foldl coercion issues |
+| TraceConvexity.lean | - | - | - |
 | ZetaLinkClifford.lean | - | - | - |
 | CliffordRH.lean | - | - | - |
 
@@ -397,7 +397,74 @@ example (s : ℂ) (h_strip : 0 < s.re ∧ s.re < 1) (h_zero : riemannZeta s = 0)
 
 | AI | Current Task | Status |
 |----|--------------|--------|
-| Claude-B | Proving TraceStrictMinAtHalf via convexity (TraceConvexity.lean) | In Progress |
+| Claude-B | TraceConvexity.lean - see message below | In Progress |
+
+**Recent Completed:**
+- Claude-B: Full MVT proof of `critical_convex_implies_strict_min` (2026-01-17)
+- Claude-B: Proved `hasDerivAt_rotorTraceFirstDeriv` (T' → T'' connection)
+- Claude-B: Proved T' is strictly increasing when T'' > 0
+
+---
+
+### MESSAGE FOR CLAUDE-B (2026-01-17)
+
+**Priority: Complete the Tail Convergence Infrastructure**
+
+To finish the unconditional proof path, TraceConvexity.lean needs these lemmas:
+
+#### 1. Tail Sum Convergence (HIGH PRIORITY)
+
+The tail of the first derivative sum must converge to 0:
+
+```lean
+/-- Tail bound: sum over primes > N of (log p)² / p^{1/2} → 0 as N → ∞ -/
+theorem rotorTraceFirstDeriv_tail_vanishes :
+  Tendsto (fun N => ∑ p in (primes.filter (· > N)),
+    (Real.log p)^2 * (p : ℝ)^(-1/2)) atTop (nhds 0)
+```
+
+**Approach**: Compare to integral ∫_N^∞ (log x)² / x^{1/2} dx which converges.
+
+#### 2. Integral Comparison Lemma
+
+```lean
+/-- Sum over primes ≤ integral over reals (for decreasing functions) -/
+lemma prime_sum_le_integral (f : ℝ → ℝ) (N : ℕ) (hf : AntitoneOn f (Set.Ici N)) :
+  ∑ p in primesAbove N, f p ≤ ∫ x in Set.Ici N, f x
+```
+
+#### 3. Integrability of (log x)² / x^{1/2}
+
+```lean
+/-- The function (log x)² / x^{1/2} is integrable on [1, ∞) -/
+lemma integrableOn_log_sq_div_sqrt :
+  IntegrableOn (fun x => (Real.log x)^2 / x^(1/2 : ℝ)) (Set.Ici 1)
+```
+
+**Proof idea**: (log x)² / x^{1/2} = O(x^{-1/4}) for large x, which is integrable.
+
+#### 4. Second Derivative Positivity (for convexity)
+
+Strengthen `rotorTraceSecondDeriv_lower_bound` to handle the cos terms:
+
+```lean
+/-- When enough primes have favorable cos values, T'' > δ > 0 -/
+theorem effective_convexity_from_primes (t : ℝ) (primes : List ℕ)
+  (h_enough : primes.length ≥ 100)
+  (h_favorable : (primes.filter (fun p => cos (t * Real.log p) > 0)).length >
+                 2 * (primes.filter (fun p => cos (t * Real.log p) ≤ 0)).length) :
+  ∃ δ > 0, ∀ σ ∈ Set.Ioo 0 1, rotorTraceSecondDeriv σ t primes ≥ δ
+```
+
+---
+
+**File Structure**: Keep everything in TraceConvexity.lean (3-file structure maintained).
+
+**Style Notes**:
+- Use `Set.Icc`, `Set.Ioo` (Lean 4 style, not `set.Icc`)
+- Use `rotorTraceFirstDeriv` (not `rotorTraceDeriv`)
+- Break lines > 100 chars after `fun ... =>` or operators
+- Use flat helper lemmas for complex coercions
 
 ---
 
