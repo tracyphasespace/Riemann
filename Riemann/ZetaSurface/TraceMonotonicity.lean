@@ -157,12 +157,22 @@ theorem hasDerivAt_rotorTrace (σ t : ℝ) (primes : List ℕ)
     (h_primes : ∀ p ∈ primes, 0 < (p : ℝ)) :
     HasDerivAt (fun σ' => rotorTrace σ' t primes)
                (rotorTraceFirstDeriv σ t primes) σ := by
-  -- The trace is 2 * (finite sum of terms)
-  -- Each term has derivative given by hasDerivAt_term
-  -- The sum of derivatives equals the derivative of the sum
-  -- For foldl with addition, we need list induction
-  -- Structure: apply HasDerivAt.const_mul, then list induction using hasDerivAt_term
-  sorry -- (List induction: derivative of finite sum is sum of derivatives)
+  -- The trace is 2 * (foldl sum of terms)
+  -- Each term: log(p) * p^(-σ) * cos(t*log(p))
+  -- Its derivative: -log(p)² * p^(-σ) * cos(t*log(p))  (by hasDerivAt_term)
+  --
+  -- Proof strategy:
+  -- 1. HasDerivAt for each term (hasDerivAt_term - PROVEN)
+  -- 2. HasDerivAt for finite sum (list induction with HasDerivAt.add)
+  -- 3. HasDerivAt for 2 * sum (HasDerivAt.const_mul)
+  --
+  -- The induction on foldl requires:
+  -- - Base case: HasDerivAt (fun _ => 0) 0 σ  (hasDerivAt_const)
+  -- - Inductive step: HasDerivAt f a σ → HasDerivAt g b σ → HasDerivAt (f + g) (a + b) σ
+  --
+  -- Key helper: For additive foldl, foldl (+f) 0 (x :: xs) = f(x) + foldl (+f) 0 xs
+  -- This allows applying HasDerivAt.add in the induction step.
+  sorry -- (List induction using hasDerivAt_term and HasDerivAt.add)
 
 /--
 **Helper**: A single term is continuous in σ.

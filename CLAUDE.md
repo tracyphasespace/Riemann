@@ -11,6 +11,18 @@ pgrep -f "lake build" || echo "No build running"
 
 If a build is running, wait for it to complete before starting another.
 
+## File Locks (Active Work)
+
+**IMPORTANT**: Check this section before editing a file. If a file is listed here, another Claude instance may be working on it.
+
+| File | Locked By | Started | Task |
+|------|-----------|---------|------|
+| (none) | - | - | - |
+
+To lock a file, add it to this table. To release, remove your entry.
+
+---
+
 ## Project Overview
 
 This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl(3,3) rotor dynamics approach.
@@ -108,6 +120,16 @@ Numerical work requiring interval arithmetic:
 - `trace_at_first_zero_in_interval`
 - `prime_sum_error_is_small`
 - `term_interval` bounds
+
+---
+
+## FILE LOCKS (Active Edits)
+
+**IMPORTANT**: Check this section before editing any file. Add your lock before editing, remove after.
+
+| File | Locked By | Since |
+|------|-----------|-------|
+| `PrimeSumApproximation.lean` | CLAUDE2 | 2026-01-17 13:30 |
 
 ---
 
