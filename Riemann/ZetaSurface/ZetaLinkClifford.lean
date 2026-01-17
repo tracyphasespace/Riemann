@@ -41,7 +41,8 @@ where s = σ + it. This is the k=1 term of -ζ'/ζ(s).
 /-- The trace function connects to the logarithmic derivative of zeta -/
 theorem trace_eq_vonMangoldt_real (σ t : ℝ) (primes : List ℕ) :
     rotorTrace σ t primes =
-    2 * primes.foldl (fun acc p => acc + Real.log p * (p : ℝ)^(-σ) * Real.cos (t * Real.log p)) 0 := by
+    2 * primes.foldl (fun acc p =>
+      acc + Real.log p * (p : ℝ)^(-σ) * Real.cos (t * Real.log p)) 0 := by
   unfold rotorTrace
   ring
 
@@ -171,7 +172,7 @@ Both are numerically verified and follow from explicit formula theory.
 -/
 theorem Classical_RH_CliffordRH
     (s : ℂ) (h_strip : 0 < s.re ∧ s.re < 1)
-    (h_zero : riemannZeta s = 0)
+    (_h_zero : riemannZeta s = 0) -- Unused but documents s is a zeta zero
     (primes : List ℕ)
     -- The CliffordRH conditions
     (h_zero_min : ZeroHasMinTrace s.re s.im primes)
