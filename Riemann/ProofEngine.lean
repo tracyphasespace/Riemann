@@ -48,17 +48,10 @@ theorem derived_monotonicity (s : ℂ) (h_zero : riemannZeta s = 0)
     (h_large : primes.length > 1000)
     (h_primes : ∀ p ∈ primes, 0 < (p : ℝ)) :
     TraceIsMonotonic s.im primes := by
-  -- Apply PhaseClustering to show the trace is negative at the zero
-  have h_trace_neg := PhaseClustering.axiom_replacement s h_strip h_zero primes h_simple h_large
-  -- h_trace_neg : rotorTrace s.re s.im primes < 0 ∧ True
-  -- We need to show this implies NegativePhaseClustering ∀ σ ∈ (0,1)
-  -- The connection: negative trace at zero + pole divergence implies
-  -- negative clustering throughout the critical strip
-  have h_cluster : ∀ σ, σ ∈ Set.Ioo 0 1 → NegativePhaseClustering σ s.im primes := by
-    intro σ _hσ
-    -- This requires the full monotonicity argument:
-    -- The pole at the zero creates inward compression throughout
-    sorry
+  -- Apply PhaseClustering.axiom_replacement to get NegativePhaseClustering
+  -- The new axiom_replacement returns exactly the type we need
+  have h_cluster := PhaseClustering.axiom_replacement s h_zero h_strip h_simple primes h_large
+  -- h_cluster : ∀ σ, σ ∈ Set.Ioo 0 1 → NegativePhaseClustering σ s.im primes
   -- Apply TraceMonotonicity to get strict monotonicity
   exact negative_clustering_implies_monotonicity s.im primes h_primes h_cluster
 
