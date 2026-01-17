@@ -91,15 +91,34 @@ theorem zeta_zero_gives_clustering (s : ℂ)
 
   -- 6. The Domination Logic
   intro σ hσ
+  -- hσ : σ ∈ Set.Ioo (s.re - δ) (s.re + δ)
 
-  -- We have AnalyticForce(σ) > max_error + 1
-  -- We know FiniteForce = AnalyticForce - Error (with |Error| < max_error)
-  -- Therefore FiniteForce > (max_error + 1) - max_error = 1 > 0
+  -- Step 6a: Apply the Analytic Lower Bound
+  -- h_impl gives: for σ in (s.re, s.re + δ), AnalyticForce(σ) > max_error + 1
+  -- Note: We only get the right half of the neighborhood, which is sufficient for the limit
 
-  -- Positive Force implies Negative Clustering (by definition in TraceMonotonicity)
-  -- T'(σ) = -2 * ClusteringSum, so T' > 0 means ClusteringSum < 0
+  -- Step 6b: Apply the Approximation Bound (from PrimeSumApproximation)
+  -- Key insight: |AnalyticForce - FiniteForce| < max_error
+  -- This follows from prime_sum_error_is_small which gives total error < 2.6 < 3
 
-  sorry -- (Inequality algebra: A > 4 ∧ |A-B| < 3 → B > 1)
+  -- Step 6c: Algebraic Domination
+  -- Given: AnalyticForce > max_error + 1 = 4
+  -- Given: |AnalyticForce - FiniteForce| < max_error = 3
+  -- From triangle inequality: FiniteForce > AnalyticForce - max_error > 4 - 3 = 1 > 0
+  -- Formally: |A - F| < E  ⟹  A - E < F  (by abs_sub_lt_iff)
+  -- So: F > A - E > (E + 1) - E = 1
+
+  -- Step 6d: Positive Force implies Negative Clustering
+  -- rotorTraceFirstDeriv σ t primes = -2 * (clustering sum)
+  -- If derivative > 0, then clustering sum < 0
+  -- This is exactly NegativePhaseClustering
+
+  -- The proof combines:
+  -- 1. Filter extraction (h_eventually) - sorry above
+  -- 2. Approximation bound (prime_sum_error_is_small)
+  -- 3. linarith for the algebra
+  -- 4. Definition unfolding for NegativePhaseClustering
+  sorry -- (Combine filter extraction + approximation bound + linarith)
 
 /-!
 ## 3. Global Monotonicity
