@@ -107,6 +107,108 @@ lemma hasDerivAt_traceTerm (p : ℕ) (hp : 1 < p) (t σ : ℝ) :
   ring
 
 /-!
+## 3.5 Sum Differentiability by Induction
+
+We prove that the trace sum is differentiable with derivative equal to `rotorTraceFirstDeriv`.
+The key is induction on the list of primes.
+-/
+
+/-- Inner sum: Σ log(p)·p^{-σ}·cos(t·log p) (without the factor of 2) -/
+def traceInnerSum (t σ : ℝ) (primes : List ℕ) : ℝ :=
+  primes.foldl (fun acc p => acc + Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)) 0
+
+/-- Inner derivative sum: Σ (log p)²·p^{-σ}·cos(t·log p) (without the factor of -2) -/
+def traceInnerDerivSum (t σ : ℝ) (primes : List ℕ) : ℝ :=
+  primes.foldl (fun acc p => acc + (Real.log p)^2 * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)) 0
+
+/-- The trace equals 2 times the inner sum -/
+lemma rotorTrace_eq_two_mul_inner (σ t : ℝ) (primes : List ℕ) :
+    rotorTrace σ t primes = 2 * traceInnerSum t σ primes := by
+  unfold rotorTrace traceInnerSum
+  rfl
+
+/-- The first derivative equals -2 times the inner derivative sum -/
+lemma rotorTraceFirstDeriv_eq_neg_two_mul_inner (σ t : ℝ) (primes : List ℕ) :
+    rotorTraceFirstDeriv σ t primes = -2 * traceInnerDerivSum t σ primes := by
+  unfold rotorTraceFirstDeriv traceInnerDerivSum
+  rfl
+
+/-- Helper: foldl with addition distributes -/
+lemma foldl_add_cons {α : Type*} [Add α] [Zero α] (f : ℕ → α) (p : ℕ) (ps : List ℕ) (init : α) :
+    List.foldl (fun acc q => acc + f q) init (p :: ps) =
+    List.foldl (fun acc q => acc + f q) (init + f p) ps := by
+  simp only [List.foldl_cons]
+
+/-- Helper: foldl with addition shifts the accumulator -/
+lemma foldl_add_shift (f : ℕ → ℝ) (ps : List ℕ) (a b : ℝ) :
+    List.foldl (fun acc p => acc + f p) a ps =
+    List.foldl (fun acc p => acc + f p) b ps + (a - b) := by
+  induction ps generalizing a b with
+  | nil => simp [List.foldl]; ring
+  | cons p ps ih =>
+    simp only [List.foldl_cons]
+    rw [ih, ih (b + f p) b]
+    ring
+
+/-- The inner sum over p :: ps equals inner sum over ps plus the p term -/
+lemma traceInnerSum_cons (t σ : ℝ) (p : ℕ) (ps : List ℕ) :
+    traceInnerSum t σ (p :: ps) = traceInnerSum t σ ps + traceTerm p t σ := by
+  unfold traceInnerSum traceTerm
+  simp only [List.foldl_cons]
+  -- foldl ... (0 + term_p) ps = foldl ... 0 ps + term_p
+  rw [foldl_add_shift]
+  ring
+
+/-- The inner derivative sum over p :: ps -/
+lemma traceInnerDerivSum_cons (t σ : ℝ) (p : ℕ) (ps : List ℕ) :
+    traceInnerDerivSum t σ (p :: ps) =
+    traceInnerDerivSum t σ ps + (Real.log p)^2 * (p : ℝ)^(-σ) * Real.cos (t * Real.log p) := by
+  unfold traceInnerDerivSum
+  simp only [List.foldl_cons]
+  rw [foldl_add_shift]
+  ring
+
+/-- **Key Lemma**: The inner sum is differentiable with the correct derivative.
+    Proved by induction on the list of primes. -/
+lemma hasDerivAt_traceInnerSum (t σ : ℝ) (primes : List ℕ) (h_primes : ∀ p ∈ primes, 1 < p) :
+    HasDerivAt (fun σ => traceInnerSum t σ primes) (-traceInnerDerivSum t σ primes) σ := by
+  induction primes with
+  | nil =>
+    -- Base case: empty list, sum is 0, derivative is 0
+    unfold traceInnerSum traceInnerDerivSum
+    convert hasDerivAt_const σ (0 : ℝ) using 1 <;> simp [List.foldl]
+  | cons p ps ih =>
+    -- Inductive case: derivative of (sum over ps + term_p) = deriv(sum over ps) + deriv(term_p)
+    have hp : 1 < p := h_primes p (List.mem_cons_self p ps)
+    have h_ps : ∀ q ∈ ps, 1 < q := fun q hq => h_primes q (List.mem_cons_of_mem p hq)
+    -- Get derivative of sum over ps
+    have ih_deriv := ih h_ps
+    -- Get derivative of the p term
+    have hp_deriv := hasDerivAt_traceTerm p hp t σ
+    -- Rewrite using cons lemmas
+    have h_sum : ∀ σ, traceInnerSum t σ (p :: ps) = traceInnerSum t σ ps + traceTerm p t σ :=
+      fun σ => traceInnerSum_cons t σ p ps
+    have h_deriv_sum : -traceInnerDerivSum t σ (p :: ps) =
+                       -traceInnerDerivSum t σ ps + (-(Real.log p)^2 * (p : ℝ)^(-σ) * Real.cos (t * Real.log p)) := by
+      rw [traceInnerDerivSum_cons]; ring
+    simp only [h_sum]
+    rw [h_deriv_sum]
+    exact ih_deriv.add hp_deriv
+
+/-- **Main Theorem**: The rotor trace is differentiable with derivative = rotorTraceFirstDeriv -/
+theorem hasDerivAt_rotorTrace (t σ : ℝ) (primes : List ℕ) (h_primes : ∀ p ∈ primes, 1 < p) :
+    HasDerivAt (fun σ => rotorTrace σ t primes) (rotorTraceFirstDeriv σ t primes) σ := by
+  -- rotorTrace = 2 * traceInnerSum
+  -- rotorTraceFirstDeriv = -2 * traceInnerDerivSum
+  -- d/dσ[2 * f(σ)] = 2 * f'(σ)
+  have h_inner := hasDerivAt_traceInnerSum t σ primes h_primes
+  have h := h_inner.const_mul 2
+  -- h : HasDerivAt (fun σ => 2 * traceInnerSum t σ primes) (2 * -traceInnerDerivSum t σ primes) σ
+  convert h using 1
+  · ext σ; exact (rotorTrace_eq_two_mul_inner σ t primes).symm
+  · rw [rotorTraceFirstDeriv_eq_neg_two_mul_inner]; ring
+
+/-!
 ## 4. The Convexity Criterion
 
 For T(σ) to have a strict minimum at σ = 1/2, we need:

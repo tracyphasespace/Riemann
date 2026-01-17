@@ -73,6 +73,18 @@ This would require PROVING the hypotheses as theorems (see TraceConvexity.lean).
 **Bottom line**: We eliminated custom axioms but the theorem is conditional.
 The hypotheses are numerically verified but not yet proven in Lean.
 
+### Verified with #print axioms (2026-01-17)
+
+```
+#print axioms Classical_RH_CliffordRH
+'Classical_RH_CliffordRH' depends on axioms: [propext, Classical.choice, Quot.sound]
+```
+
+These are ALL standard Lean axioms (no custom mathematical axioms):
+- `propext`: Propositional extensionality
+- `Classical.choice`: Classical choice (for noncomputable)
+- `Quot.sound`: Quotient soundness
+
 ---
 
 ## The 3-File Structure
@@ -343,7 +355,31 @@ example (s : ℂ) (h_strip : 0 < s.re ∧ s.re < 1) (h_zero : riemannZeta s = 0)
 
 **Purpose**: Enable multiple AI instances to work on this codebase without conflicts.
 
+---
+
+### FILE LOCKS (CRITICAL - CHECK BEFORE EDITING)
+
+| File | Locked By | Since | Task |
+|------|-----------|-------|------|
+| TraceConvexity.lean | Claude-B | 2026-01-17 | Proving sum differentiability by induction |
+| ZetaLinkClifford.lean | - | - | - |
+| CliffordRH.lean | - | - | - |
+
+**HOW TO CHECKOUT A FILE:**
+1. **READ this table FIRST** - if file is locked by another AI, DO NOT edit it
+2. **EDIT this CLAUDE.md** to add your lock BEFORE making any edits to the target file
+3. **Work on the file** - you now have exclusive write access
+4. **RELEASE the lock** - edit this table to remove your entry when done
+
+**CONFLICT RESOLUTION:**
+- If you see a stale lock (>24 hours old), you may override it
+- If two AIs lock the same file simultaneously, the one with earlier timestamp wins
+- Read-only access (for context) does not require a lock
+
+---
+
 ### Build Lock
+
 | Field | Value |
 |-------|-------|
 | **Status** | UNLOCKED |
@@ -355,12 +391,19 @@ example (s : ℂ) (h_strip : 0 < s.re ∧ s.re < 1) (h_zero : riemannZeta s = 0)
 2. After build completes: Set back to UNLOCKED
 3. If LOCKED by another AI: Wait or work on non-build tasks
 
-### Active Tasks
-| AI | Task | Files | Status |
-|----|------|-------|--------|
-| - | - | - | - |
+---
+
+### Active Tasks (Summary)
+
+| AI | Current Task | Status |
+|----|--------------|--------|
+| Claude-B | Proving TraceStrictMinAtHalf via convexity (TraceConvexity.lean) | In Progress |
+
+---
 
 ### AI Identifiers
+- **Claude-A**: General tasks
+- **Claude-B**: TraceConvexity.lean - sum differentiability proofs
 - **AI1**: Axiom reduction / ProvenAxioms work
 - **AI2**: File structure / Definitions split
 - **AI3**: Documentation / TODO tracking
