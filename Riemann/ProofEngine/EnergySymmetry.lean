@@ -98,10 +98,23 @@ ZetaEnergy(t, σ) = ZetaEnergy(t, 1-σ) up to conjugate consideration.
 theorem zeta_energy_reflects (t : ℝ) (σ : ℝ) :
     ZetaEnergy (-t) σ = ZetaEnergy t (1 - σ) := by
   unfold ZetaEnergy
+  -- Need to show: ‖Λ(σ - t*I)‖² = ‖Λ(1 - σ + t*I)‖²
+  -- From functional equation: Λ(s) = Λ(1 - s)
+  -- So Λ(σ - t*I) = Λ(1 - (σ - t*I)) = Λ(1 - σ + t*I)
   congr 1
-  -- |Λ(σ - it)| = |Λ(1 - σ - it)| from completed_zeta_norm_symmetric
-  -- The functional equation relates Λ(s) to Λ(1-s)
-  sorry -- (Sign handling for complex conjugate symmetry)
+  -- Simplify the arguments
+  have h_lhs : (σ : ℂ) + (-t : ℝ) * I = (σ : ℂ) - (t : ℝ) * I := by
+    push_cast
+    ring
+  have h_rhs : ((1 - σ) : ℝ) + (t : ℝ) * I = (1 : ℂ) - (σ : ℂ) + (t : ℝ) * I := by
+    push_cast; ring
+  rw [h_lhs, h_rhs]
+  -- Now use functional equation: Λ(s) = Λ(1 - s)
+  have h_fe := completed_zeta_symmetric ((σ : ℂ) - (t : ℝ) * I)
+  -- 1 - (σ - t*I) = 1 - σ + t*I
+  have h_reflect : (1 : ℂ) - ((σ : ℂ) - (t : ℝ) * I) = 1 - σ + t * I := by ring
+  rw [h_reflect] at h_fe
+  rw [h_fe]
 
 /-!
 ## 4. Symmetry Implies Critical Point
