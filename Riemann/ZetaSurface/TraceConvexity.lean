@@ -69,24 +69,45 @@ The real part Re[1/(s-ρ)] = (σ - Re(ρ))/|s-ρ|² has a sign determined by σ 
 lemma rpow_neg_deriv (p : ℕ) (hp : 1 < p) (σ : ℝ) :
     HasDerivAt (fun σ => (p : ℝ) ^ (-σ)) (-Real.log p * (p : ℝ) ^ (-σ)) σ := by
   have hp_pos : (0 : ℝ) < p := Nat.cast_pos.mpr (Nat.zero_lt_of_lt hp)
-  -- p^{-σ} = exp(-σ · log p)
-  have h_eq : ∀ x, (p : ℝ) ^ (-x) = Real.exp (-x * Real.log p) := by
-    intro x; rw [Real.rpow_def_of_pos hp_pos]; ring_nf
-  -- Use Mathlib's rpow derivative directly
-  have h := Real.hasDerivAt_rpow_const (Or.inl hp_pos.ne') σ
-  -- h : HasDerivAt (fun x => p ^ x) (p ^ σ * log p) σ
-  -- We need derivative of p^{-σ}
-  -- d/dσ[p^{-σ}] = d/dσ[p^σ]|_{σ:=-σ} * d/dσ[-σ]
-  --              = (p^{-σ} * log p) * (-1) = -log p * p^{-σ}
+  -- Use HasDerivAt.const_rpow: d/dσ[a^f(σ)] = log(a) * f'(σ) * a^f(σ)
+  -- For f(σ) = -σ, f'(σ) = -1, so d/dσ[p^{-σ}] = log(p) * (-1) * p^{-σ} = -log(p) * p^{-σ}
   have h_neg : HasDerivAt (fun x => -x) (-1) σ := hasDerivAt_neg σ
-  have h_comp := h.comp σ h_neg
-  -- h_comp : HasDerivAt (fun x => p ^ (-x)) ((p : ℝ) ^ (-σ) * Real.log p * -1) σ
-  simp only [mul_neg, mul_one] at h_comp
-  convert h_comp using 1
+  have h := h_neg.const_rpow hp_pos
+  -- h : HasDerivAt (fun σ => p ^ (-σ)) (log p * (-1) * p ^ (-σ)) σ
+  convert h using 1
   ring
 
 /-!
-## 3. The Convexity Criterion
+## 3. Trace Differentiability
+
+The trace function T(σ) = 2·Σ log(p)·p^{-σ}·cos(t·log p) is infinitely differentiable
+as a finite sum of smooth terms. We establish that:
+- deriv T = rotorTraceFirstDeriv
+- deriv^[2] T = rotorTraceSecondDeriv
+-/
+
+/-- Single prime term in trace: log(p)·p^{-σ}·cos(t·log p) -/
+def traceTerm (p : ℕ) (t σ : ℝ) : ℝ :=
+  Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)
+
+/-- The trace term is differentiable in σ -/
+lemma hasDerivAt_traceTerm (p : ℕ) (hp : 1 < p) (t σ : ℝ) :
+    HasDerivAt (traceTerm p t) (-(Real.log p)^2 * (p : ℝ)^(-σ) * Real.cos (t * Real.log p)) σ := by
+  unfold traceTerm
+  -- d/dσ[log(p) * p^{-σ} * cos(t*log p)] = log(p) * (-log(p) * p^{-σ}) * cos(t*log p)
+  --                                       = -(log p)² * p^{-σ} * cos(t*log p)
+  have hp_pos : (0 : ℝ) < p := Nat.cast_pos.mpr (Nat.zero_lt_of_lt hp)
+  have h_rpow := rpow_neg_deriv p hp σ
+  -- h_rpow : HasDerivAt (fun σ => p^{-σ}) (-log p * p^{-σ}) σ
+  have h := h_rpow.const_mul (Real.log p)
+  -- h : HasDerivAt (fun σ => log p * p^{-σ}) (log p * (-log p * p^{-σ})) σ
+  have h2 := h.mul_const (Real.cos (t * Real.log p))
+  -- h2 : HasDerivAt (fun σ => log p * p^{-σ} * cos(...)) (...) σ
+  convert h2 using 1
+  ring
+
+/-!
+## 4. The Convexity Criterion
 
 For T(σ) to have a strict minimum at σ = 1/2, we need:
 1. T'(1/2) = 0 (critical point)
@@ -239,20 +260,24 @@ theorem Riemann_Hypothesis_Unconditional
 ### PROVEN (no sorry):
 - `firstDeriv_eq_rotorTraceFirstDeriv` - derivative formula verification
 - `secondDeriv_eq_rotorTraceSecondDeriv` - second derivative formula verification
-- `rpow_neg_deriv` - derivative of p^{-σ} is -log(p)·p^{-σ}
+- `rpow_neg_deriv` - d/dσ[p^{-σ}] = -log(p)·p^{-σ} (chain rule via HasDerivAt.const_rpow)
+- `hasDerivAt_traceTerm` - single prime term is differentiable
 - `ZeroHasMinTrace_at_zeros` - follows from TraceStrictMinAtHalf
+- `TraceStrictMinAtHalf_at_zeros` - follows from critical + convex
 
-### DOCUMENTED but need sorry:
-- `critical_convex_implies_strict_min` - standard calculus (needs Mathlib MVT)
+### DOCUMENTED but need sorry (4 remaining):
+- `critical_convex_implies_strict_min` - needs trace sum differentiability + MVT
 - `zeros_have_critical_point` - functional equation symmetry
 - `zeros_have_convex_trace` - explicit formula analysis
-- `TraceStrictMinAtHalf_at_zeros` - follows from above two
 - `Riemann_Hypothesis_Unconditional` - the main theorem
 
-### KEY MATHEMATICAL CONTENT needed:
-1. **Functional equation** → critical point at σ = 1/2
-2. **Explicit formula** → pole of -ζ'/ζ creates convexity
-3. **Mean Value Theorem** → critical + convex = strict minimum
+### PATH FORWARD:
+1. **Sum differentiability**: Show `HasDerivAt (rotorTrace · t primes) (rotorTraceFirstDeriv · t primes)`
+   by induction on the list, using `hasDerivAt_traceTerm` for each term.
+2. **Convexity**: Apply Mathlib's `strictConvexOn_of_deriv2_pos` with T'' = rotorTraceSecondDeriv
+3. **Unique minimum**: Use `StrictConvexOn.eq_of_isMinOn` + `ConvexOn.isMinOn_of_rightDeriv_eq_zero`
+4. **Functional equation**: Show T'(1/2) = 0 from Ξ(s) = Ξ(1-s) symmetry
+5. **Explicit formula**: Show T''(σ) > 0 at zeros from -ζ'/ζ pole structure
 -/
 
 end TraceConvexity
