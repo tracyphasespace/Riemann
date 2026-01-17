@@ -445,16 +445,32 @@ lemma integrableOn_log_sq_div_sqrt :
 
 #### 4. Second Derivative Positivity (for convexity)
 
-Strengthen `rotorTraceSecondDeriv_lower_bound` to handle the cos terms:
+**NOTE**: Most of this is already implemented! Just need to:
 
+a) **Fill the sorry at line 1083** in `rotorTraceSecondDeriv_eq_two_sum`:
 ```lean
-/-- When enough primes have favorable cos values, T'' > δ > 0 -/
-theorem effective_convexity_from_primes (t : ℝ) (primes : List ℕ)
-  (h_enough : primes.length ≥ 100)
-  (h_favorable : (primes.filter (fun p => cos (t * Real.log p) > 0)).length >
-                 2 * (primes.filter (fun p => cos (t * Real.log p) ≤ 0)).length) :
-  ∃ δ > 0, ∀ σ ∈ Set.Ioo 0 1, rotorTraceSecondDeriv σ t primes ≥ δ
+-- The foldl expressions should match; this is the elaboration issue
 ```
+
+b) **Add explicit `FavorableDominance` definition** for documentation:
+```lean
+/--
+Favorable Dominance: The "energy" of favorable primes exceeds destructive interference.
+Physical meaning: At zeros, constructive interference overwhelms noise.
+-/
+def FavorableDominance (σ t : ℝ) (primes : List ℕ) : Prop :=
+  let terms := primes.map (fun p => secondDerivTerm p t σ)
+  let pos_energy := (terms.filter (· > 0)).sum
+  let neg_energy := (terms.filter (· < 0)).sum
+  pos_energy > -neg_energy  -- pos > |neg|
+
+/-- Dominance implies convexity (T'' > 0) -/
+theorem dominance_implies_convexity (σ t : ℝ) (primes : List ℕ)
+    (h_dom : FavorableDominance σ t primes) :
+    rotorTraceSecondDeriv σ t primes > 0
+```
+
+This makes explicit what `h_favorable_dominates` already captures as a hypothesis.
 
 ---
 
