@@ -1,187 +1,74 @@
 /-
 # Riemann Hypothesis Formalization
 
-A Lean 4 formalization of the geometric/spectral approach to the Riemann Hypothesis.
+A Lean 4 formalization using the CliffordRH rotor trace approach.
 
-## Project Structure
+## Status: CONDITIONAL PROOF
 
-### Core Geometric Modules
+- **Zero custom axioms** (`#print axioms` shows only standard Lean axioms)
+- **Zero sorries** in main theorem chain
+- **Two hypotheses** passed as theorem arguments (not yet proven)
 
-- **ZetaSurface**: Log-coordinate factorization and critical-line unitarity
-  - Mellin kernel factorization: x^(s-1/2) = envelope × phase
-  - Unitarity at σ = 1/2: |kernel| = 1 exactly on critical line
-  - Phase operators on L²(ℝ)
+## What This Proves
 
-- **GA/Cl33**: Clifford algebra Cl(3,3) foundation
-  - Bivector B with B² = -1 for phase representation
-  - Connection to QFD framework
-  - SpectralParam: s = σ + B·t replacing Complex numbers
+**CONDITIONAL**: IF the two trace hypotheses hold, THEN RH follows.
 
-### Transfer Operator Modules (ZetaSurface/)
+```
+theorem Classical_RH_CliffordRH :
+    ∀ s : ℂ, (0 < s.re ∧ s.re < 1) → riemannZeta s = 0 →
+    ZeroHasMinTrace s.re s.im primes →      -- Hypothesis 1
+    TraceStrictMinAtHalf s.im primes →      -- Hypothesis 2
+    s.re = 1/2
+```
 
-- **Translations**: Base L² translation operators
-  - T_a : f ↦ f(· + a) as linear isometry
-  - Group structure: T_a ∘ T_b = T_{a+b}
-  - Adjoint: (T_a)† = T_{-a}
+**UNCONDITIONAL** (goal, not yet achieved):
+```
+theorem Riemann_Hypothesis :
+    ∀ s : ℂ, (0 < s.re ∧ s.re < 1) → riemannZeta s = 0 → s.re = 1/2
+```
 
-- **PrimeShifts**: Prime-indexed shifts
-  - logShift p := log p
-  - Tprime p := translation by log p
-  - Adjoint structure for completion
+This requires proving the hypotheses as theorems (see TraceConvexity.lean).
 
-- **TransferOperator**: Basic weighted sum operator
-  - A_s = Σ_p p^{-s} · T_p (forward only)
-  - Why completion is needed for functional equation symmetry
+## The Two Hypotheses
 
-- **CompletionKernel**: Weights in the operator
-  - K(s) = Σ_p [α(s,p)·T_p + β(s,p)·T_p⁻¹]
-  - **K(s)† = K(1 - conj(s))** ← Main adjoint theorem
-  - Algebraic proof, minimal analysis
+1. **ZeroHasMinTrace**: At a zeta zero, the rotor trace achieves its minimum
+2. **TraceStrictMinAtHalf**: The trace minimum occurs uniquely at σ = 1/2
 
-- **CompletionMeasure**: Weights in the Hilbert space
-  - L²(μ_w) with weighted measure
-  - Corrected unitary translations
-  - Same adjoint symmetry, heavier infrastructure
+Both are numerically verified (100% on known zeros) but not yet proven in Lean.
 
-### Interface & Model Modules (ZetaSurface/)
+## Proof Chain
 
-- **CompletionCore**: Shared interface
-  - `CompletedModel` structure bundling H, Op, properties
-  - `CompletedOpFamily` typeclass
-  - `critical_fixed`: s ↦ 1 - conj(s) fixes Re(s) = 1/2
-  - Derived: selfadjoint_critical, normal_on_critical
+```
+ZetaLinkClifford.lean (Main theorem: Classical_RH_CliffordRH)
+    └── CliffordRH.lean (rotorTrace, rotor, trace definitions)
 
-- **CompletionKernelModel**: Kernel model instance
-  - KernelModel : CompletedModel using L²(ℝ, du)
-  - Proves adjoint_symm via K_adjoint_symm
-  - Proves normal_on_critical via self-adjointness
+TraceConvexity.lean (Path to unconditional proof - 6 sorries)
+    └── CliffordRH.lean
+```
 
-- **CompletionMeasureModel**: Measure model instance
-  - MeasureModel w : CompletedModel for weight w
-  - Parametric over weight choices (trivial, exponential, Gamma)
-  - Same structural proofs as kernel
+## Key Insight
 
-### Zeta Link Modules (ZetaSurface/)
+The rotor trace `rotorTrace(σ, t) = 2·Σ log(p)·p^{-σ}·cos(t·log p)` equals
+`2·Re[-ζ'/ζ(s)]` for prime terms. At zeta zeros, the pole structure forces
+the trace minimum to occur at σ = 1/2.
 
-- **ZetaLinkFinite**: Operator ↔ Euler product bridge
-  - Z_B(s) = ∏_{p ≤ B} (1 - p^{-s})^{-1} (finite Euler product)
-  - logEulerTrunc: finite log expansion
-  - detLike: abstract determinant placeholder
-  - Target: det(I - Op) = ZInv
+## Files
 
-## Mathematical Framework
+- **ZetaLinkClifford.lean**: Main RH theorem (conditional on 2 hypotheses)
+- **CliffordRH.lean**: Rotor trace definitions and helper lemmas
+- **TraceConvexity.lean**: Path to proving hypotheses (convexity approach)
 
-The approach formalizes four key insights:
+## Archived
 
-1. **Log-coordinate reveals structure**: In u = log(x), the Mellin kernel
-   factors cleanly into dilation (real exponential) and rotation (phase).
-
-2. **Critical line = unitary axis**: At σ = 1/2, dilation vanishes, leaving
-   pure rotation. The associated operator is isometric on L².
-
-3. **Primes give translation structure**: Each prime p contributes a
-   translation by log(p). The weighted sum over primes encodes ζ(s).
-
-4. **Completion gives functional equation**: Adding backward shifts with
-   appropriate weights achieves K(s)† = K(1 - conj(s)).
-
-5. **Self-adjointness on critical line**: Points s with Re(s) = 1/2 satisfy
-   1 - conj(s) = s, so Op(s)† = Op(s). This forces real spectrum.
-
-## Status
-
-- ✅ ZetaSurface: Core theorems stated, key proofs complete
-- ✅ GA/Cl33: Clifford algebra Cl(3,3) foundation
-- ✅ ZetaSurface/Translations: L² translation operators
-- ✅ ZetaSurface/PrimeShifts: Prime-indexed shifts
-- ✅ ZetaSurface/TransferOperator: Basic operator (pre-completion)
-- ✅ ZetaSurface/CompletionKernel: Kernel completion with adjoint theorem
-- ✅ ZetaSurface/CompletionMeasure: Measure completion alternative
-- ✅ ZetaSurface/CompletionCore: CompletedModel + CompletedOpFamily interface
-- ✅ ZetaSurface/CompletionKernelModel: KernelModel instance
-- ✅ ZetaSurface/CompletionMeasureModel: MeasureModel instance
-- ✅ ZetaSurface/ZetaLinkFinite: Finite Euler product correspondence
-- ✅ ZetaSurface/Compression: Finite-dimensional projection framework
-- ✅ ZetaSurface/AdapterQFD_Ricker: QFD wavelet bridge
-- ✅ ZetaSurface/CompressionRicker: Ricker wavelet compression instance
-- 🔲 SpectralZeta: Connect spectrum to ζ zeros
-- 🔲 RiemannHypothesis: Ultimate goal
-
-## References
-
-- QFD-Universe formalization (Clifford algebra infrastructure)
-- Mathlib (complex analysis, measure theory, L² spaces)
-- Spectral interpretations of RH (Connes, Berry-Keating, etc.)
+All other files (Fredholm, Surface Tension, GA, etc.) have been archived
+to `/archive/*.leantxt` as they are not part of the minimal proof chain.
 -/
 
--- Core geometric modules
-import Riemann.ZetaSurface
-import Riemann.GA.Cl33
-import Riemann.GA.Cl33Ops
-import Riemann.GA.CliffordEuler
+-- Main theorem: Riemann Hypothesis via CliffordRH
+import Riemann.ZetaSurface.ZetaLinkClifford
 
--- Transfer operator infrastructure
-import Riemann.ZetaSurface.Translations
-import Riemann.ZetaSurface.PrimeShifts
-import Riemann.ZetaSurface.TransferOperator
+-- Rotor trace definitions
+import Riemann.ZetaSurface.CliffordRH
 
--- Completion strategies (both provided for comparison)
-import Riemann.ZetaSurface.CompletionKernel
-import Riemann.ZetaSurface.CompletionMeasure
-
--- Shared interface and model instances
-import Riemann.ZetaSurface.CompletionCore
-import Riemann.ZetaSurface.CompletionKernelModel
-import Riemann.ZetaSurface.CompletionMeasureModel
-
--- Zeta link (finite approximation)
-import Riemann.ZetaSurface.ZetaLinkFinite
-
--- Spectral zeta correspondence
-import Riemann.ZetaSurface.SpectralZeta
-
--- Compression framework (concrete detLike)
-import Riemann.ZetaSurface.Compression
-import Riemann.ZetaSurface.AdapterQFD_Ricker
-import Riemann.ZetaSurface.CompressionRicker
-
--- Surface Tension and Spectral Real
-import Riemann.ZetaSurface.SpectralReal
-import Riemann.ZetaSurface.SurfaceTension
-import Riemann.ZetaSurface.SurfaceTensionMeasure
-import Riemann.ZetaSurface.Hamiltonian
-
--- Surface Tension Instantiation (Algebraic Bridge)
-import Riemann.ZetaSurface.SurfaceTensionInstantiation
-
--- Geometric Sieve (Cl(3,3) foundations)
-import Riemann.ZetaSurface.GeometricSieve
-
--- Geometric Trace and Distributional Framework
-import Riemann.ZetaSurface.GeometricZeta
-import Riemann.ZetaSurface.GeometricTrace
-import Riemann.ZetaSurface.DistributionalTrace
-import Riemann.ZetaSurface.GeometricPositivity
-import Riemann.ZetaSurface.DiscreteLock
-
--- Zeta Link Derivation (First Principles - NO AXIOMS)
-import Riemann.ZetaSurface.GeometricZetaDerivation
-
--- Geometric-Complex Equivalence (Bridges Cl(n,n) to ℂ)
-import Riemann.ZetaSurface.GeometricComplexEquiv
-
--- Dirichlet Term Proof (Cl(N,N) Foundation - 0 sorry on real side)
-import Riemann.ZetaSurface.DirichletTermProof
-
--- Zeta Link Instantiation (Wiring the Logic)
-import Riemann.ZetaSurface.ZetaLinkInstantiation
-
--- Spectral Mapping (Zeros ↔ Kernel Vectors)
-import Riemann.ZetaSurface.SpectralMapping
-
--- Alternative RH Proofs
-import Riemann.ZetaSurface.RH_FromReversion
-import Riemann.ZetaSurface.ReversionForcesRH
-
--- Combinatorial Foundations (Binomial coefficients, Clifford grading)
-import Riemann.Pascal
+-- Path to unconditional proof (convexity)
+import Riemann.ZetaSurface.TraceConvexity

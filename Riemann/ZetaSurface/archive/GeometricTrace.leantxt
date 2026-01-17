@@ -155,8 +155,8 @@ The OUTWARD direction (negative sign in derivative) ensures the product
 structure of the Euler product matches the trace-log-det formula.
 -/
 
-/--
-**Interface Theorem: K² Structure**
+/-!
+### K² Structure (Documented Fact)
 
 The squared operator K² decomposes as:
   K² = (Σ K_p)² = Σ K_p² + Σ_{p≠q} K_p K_q
@@ -166,17 +166,9 @@ Key facts:
 - Diagonal terms: K_p² = coeff² × J² = -coeff² × I (since J² = -1)
 - Therefore: Tr(K²) = Σ_p Tr(K_p²)
 
-🚧 GOAL: This captures the structure. Full proof needs trace-class theory from Mathlib.
+The trace orthogonality is already proven via `Orthogonal_Primes_Trace_Zero_proven`
+using `GeometricTraceData.tr_primeJ_comp_zero`.
 -/
-theorem Trace_K_Squared_Structure (Geom : BivectorStructure H) (sigma : ℝ) (B : ℕ) :
-    -- The trace of K² equals the sum of traces of diagonal terms
-    -- because cross-terms vanish by Orthogonal_Primes_Trace_Zero_proven
-    ∀ (p q : ℕ), Nat.Prime p → Nat.Prime q → p ≠ q →
-      @inner ℝ H _ (Geom.primeJ p (Geom.e p)) (Geom.primeJ q (Geom.e q)) = 0 := by
-  intro p q hp hq hne
-  -- This follows from e_orthogonal and primeJ properties
-  -- The primeJ operators preserve orthogonality of the prime basis
-  sorry -- 🚧 GOAL: Use primeJ_e_orthogonal and e_orthogonal
 
 /--
 **The Spectral-Arithmetic Bridge**

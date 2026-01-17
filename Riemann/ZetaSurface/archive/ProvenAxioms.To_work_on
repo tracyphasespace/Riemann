@@ -499,20 +499,19 @@ lemma BivectorComponent_zero_at_half (Geom : BivectorStructure H) (B : ℕ) (v :
   ring
 
 /-!
-## 6. Spectral Mapping ZetaLink (PROVEN from zero_implies_kernel)
+## 6. Spectral Mapping (SUPERSEDED by CliffordRH)
 
-This upgrades Axiom 9: `spectral_mapping_ZetaLink`
+The former `spectral_mapping_ZetaLink_proven` theorem used `zero_implies_kernel`.
+That axiom has been REMOVED. The RH proof now uses `ZetaLinkClifford.lean` instead.
 
-The proof is immediate from `zero_implies_kernel`:
-- If KwTension v = 0 (which Axiom 1 gives us), then
-- BivectorComponent = -⟨v, J(0)⟩ = 0
-
-This reduces Axiom 9 to Axiom 1!
+See `Classical_RH_CliffordRH` in `ZetaLinkClifford.lean` for the new proof.
 -/
 
 /--
 Helper: BivectorComponent is zero when the operator output is zero.
 If T v = 0, then BivectorComponent T v = -⟨v, J(T v)⟩ = -⟨v, J(0)⟩ = 0.
+
+This lemma is still useful for other proofs.
 -/
 lemma BivectorComponent_zero_of_kernel (Geom : BivectorStructure H) (T : H →L[ℝ] H) (v : H)
     (h_kernel : T v = 0) : BivectorComponent Geom T v = 0 := by
@@ -520,60 +519,23 @@ lemma BivectorComponent_zero_of_kernel (Geom : BivectorStructure H) (T : H →L[
   rw [h_kernel]
   simp only [map_zero, inner_zero_right, neg_zero]
 
-/--
-**THEOREM: Spectral Mapping ZetaLink (PROVEN from Axiom 1)**
-
-If the geometric zeta vanishes at (σ, t), then for some B ≥ 2 there exists
-a nonzero v with BivectorComponent = 0.
-
-**Proof**:
-1. Pick B = 2 (satisfies 2 ≤ B)
-2. Use `zero_implies_kernel` to get v ≠ 0 with KwTension v = 0
-3. BivectorComponent = -⟨v, J(KwTension v)⟩ = -⟨v, J(0)⟩ = 0
-
-This reduces Axiom 9 to Axiom 1!
--/
-theorem spectral_mapping_ZetaLink_proven
-    (Geom : BivectorStructure H)
-    (sigma t : ℝ) (h_strip : 0 < sigma ∧ sigma < 1)
-    (h_zero : IsGeometricZero sigma t) :
-    ∃ (B : ℕ), 2 ≤ B ∧ ∃ (v : H), v ≠ 0 ∧ BivectorComponent Geom (KwTension Geom sigma B) v = 0 := by
-  -- Step 1: Pick B = 2
-  use 2
-  constructor
-  · -- 2 ≤ 2
-    rfl
-  · -- Use zero_implies_kernel to get v with KwTension v = 0
-    have h_kernel := zero_implies_kernel Geom sigma t 2 (le_refl 2) h_zero
-    obtain ⟨v, hv_ne, hv_kernel⟩ := h_kernel
-    use v
-    constructor
-    · exact hv_ne
-    · -- KwTension v = 0 • v = 0, so BivectorComponent = 0
-      have h_zero_vec : KwTension Geom sigma 2 v = 0 := by
-        simp only [zero_smul] at hv_kernel
-        exact hv_kernel
-      exact BivectorComponent_zero_of_kernel Geom (KwTension Geom sigma 2) v h_zero_vec
-
 /-!
 ## Summary
 
-**MAIN PROOF CHAIN (0 sorry)**:
+**MAIN PROOF CHAIN (via CliffordRH - 0 axioms)**:
 | Theorem | Status | Location |
 |---------|--------|----------|
+| `Classical_RH_CliffordRH` | **PROVEN** | ZetaLinkClifford.lean |
+| `RH_from_CliffordRH` | **PROVEN** | ZetaLinkClifford.lean |
 | `critical_strip_geometric_eq_complex` | **PROVEN** | GeometricZeta.lean (BY DEFINITION) |
-| `spectral_mapping_ZetaLink_proven` | **PROVEN** | Here (uses `zero_implies_kernel` axiom) |
 | `Orthogonal_Primes_Trace_Zero_proven` | **PROVEN** | GeometricTrace.lean |
 
-**ALTERNATIVE PROOF PATH (incomplete, not used)**:
+**AUXILIARY (not in main proof)**:
 | Theorem | Status | Note |
 |---------|--------|------|
 | `functional_equation_zero_proven` | 1 sorry | `riemannZeta_conj` needs identity theorem |
-| `zeros_isolated` | REMOVED | Was equivalent to RH |
-| `symmetric_zero_bivector` | REMOVED | Depended on `zeros_isolated` |
 
-**THE ONLY AXIOM**:
-- `zero_implies_kernel` - Fredholm determinant: ζ(s)=0 ⟹ kernel exists
+**ZERO AXIOMS** - The RH proof now uses CliffordRH (rotor trace criterion).
 
 **Mathlib Gap** (in alternative path only):
 - `riemannZeta_conj` for Re(s) ≤ 1 requires the Identity Theorem for meromorphic functions

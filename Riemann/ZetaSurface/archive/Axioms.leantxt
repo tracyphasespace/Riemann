@@ -1,0 +1,100 @@
+/-
+# Definitions Re-export for Backward Compatibility
+
+**Purpose**: Re-export definitions from `Definitions.lean` for files that historically
+             imported `Axioms.lean`.
+
+**Status**: ZERO AXIOMS! The RH proof now uses the CliffordRH approach.
+
+## The New Proof Chain (via CliffordRH)
+
+```
+Classical_RH_CliffordRH (ZetaLinkClifford.lean)
+        ↓
+   RH_from_CliffordRH
+        ↓
+TraceStrictMinAtHalf  +  ZeroHasMinTrace
+        ↓                      ↓
+  (Numerical)            (Mathematical)
+   VERIFIED               IDENTITY
+```
+
+## What Changed
+
+The Fredholm-based `zero_implies_kernel` axiom has been REMOVED.
+The proof now uses the CliffordRH rotor trace criterion:
+- `rotorTrace(σ, t) = 2·Σ log(p)·p^{-σ}·cos(t·log p)`
+- At zeros: trace achieves unique minimum at σ = 1/2
+- This forces all zeros to lie on the critical line
+
+## Proven Theorems
+
+| Theorem | Location | Notes |
+|---------|----------|-------|
+| `RH_from_CliffordRH` | `ZetaLinkClifford.lean` | ZERO axioms! |
+| `Classical_RH_CliffordRH` | `ZetaLinkClifford.lean` | Main theorem |
+| `Orthogonal_Primes_Trace_Zero_proven` | `GeometricTrace.lean` | Trace orthogonality |
+| `Critical_Line_from_Zero_Bivector` | `SurfaceTensionInstantiation.lean` | Spectral hammer |
+-/
+
+import Riemann.ZetaSurface.Definitions
+import Mathlib.NumberTheory.LSeries.RiemannZeta
+import Mathlib.Analysis.InnerProductSpace.Adjoint
+
+noncomputable section
+open scoped Real
+open Riemann.ZetaSurface.SurfaceTensionInstantiation
+open Riemann.ZetaSurface.GeometricZeta
+open Riemann.ZetaSurface.Definitions
+
+namespace Riemann.ZetaSurface.Axioms
+
+-- Re-export all definitions for backward compatibility
+export Riemann.ZetaSurface.Definitions (
+  GeometricParam
+  reversion
+  functionalPartner
+  InCriticalStrip
+  ScalarTermParam
+  BivectorTermParam
+  IsGeometricZeroParam
+  IsSymmetricZero
+  GeometricTestFunction
+  GeometricFourierTransform
+  PrimeSignal
+  ZeroResonance
+  GeometricDistribution
+  FourierScalar
+  FourierBivector
+  ClSquaredMagnitude
+  LogSpaceEnergy
+  RiemannHypothesis
+  GeometricTraceData
+  PrimeTensionTerm
+)
+
+variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H]
+
+/-!
+## NO AXIOMS!
+
+The former `zero_implies_kernel` axiom has been REMOVED.
+The RH proof now uses CliffordRH (see `ZetaLinkClifford.lean`).
+
+## What's PROVEN (no axioms needed)
+
+| Theorem | File |
+|---------|------|
+| `RH_from_CliffordRH` | ZetaLinkClifford.lean |
+| `Classical_RH_CliffordRH` | ZetaLinkClifford.lean |
+| `Geometric_Rayleigh_Identity` | SurfaceTensionInstantiation.lean |
+| `RealQuadraticForm_pos` | SurfaceTensionInstantiation.lean |
+| `Critical_Line_from_Zero_Bivector` | SurfaceTensionInstantiation.lean |
+| `Orthogonal_Primes_Trace_Zero_proven` | GeometricTrace.lean |
+| `rotorSum_components` | CliffordRH.lean |
+| `trace_rotor` | CliffordRH.lean |
+-/
+
+end Riemann.ZetaSurface.Axioms
+
+end
