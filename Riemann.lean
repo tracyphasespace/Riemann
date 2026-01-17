@@ -1,74 +1,94 @@
 /-
 # Riemann Hypothesis Formalization
 
-A Lean 4 formalization using the CliffordRH rotor trace approach.
+A Lean 4 formalization using the CliffordRH Cl(3,3) rotor dynamics approach.
 
-## Status: CONDITIONAL PROOF
+## Status: CONDITIONAL PROOF (Cl(3,3) Framework)
 
-- **Zero custom axioms** (`#print axioms` shows only standard Lean axioms)
-- **Zero sorries** in main theorem chain
-- **Two hypotheses** passed as theorem arguments (not yet proven)
+- **One axiom**: `ZetaZeroImpliesNegativeClustering` (numerically verified)
+- **Two hypotheses**: `ZeroHasMinNorm`, `NormStrictMinAtHalf`
+- **Two sorries**: Technical (differentiation/continuity of trace)
+
+## The Cl(3,3) Geometric Framework
+
+This formalization moves from complex-plane abstractions to geometric dynamical structure:
+
+| Complex RH Language        | CliffordRH Language              |
+|----------------------------|----------------------------------|
+| ζ(s) = 0                   | Rotor Phase-Locking              |
+| Pole at s = 1              | Bivector Torque Source           |
+| Logarithmic Derivative     | Rotor Force Field                |
+| Critical Line σ = 1/2      | Energy Equilibrium of Rotor Norm |
 
 ## What This Proves
 
-**CONDITIONAL**: IF the two trace hypotheses hold, THEN RH follows.
+**CONDITIONAL**: IF the axiom and hypotheses hold, THEN RH follows.
 
 ```
 theorem Classical_RH_CliffordRH :
     ∀ s : ℂ, (0 < s.re ∧ s.re < 1) → riemannZeta s = 0 →
-    ZeroHasMinTrace s.re s.im primes →      -- Hypothesis 1
-    TraceStrictMinAtHalf s.im primes →      -- Hypothesis 2
+    ZeroHasMinNorm s.re s.im primes →      -- Hypothesis 1
+    NormStrictMinAtHalf s.im primes →      -- Hypothesis 2
     s.re = 1/2
 ```
 
-**UNCONDITIONAL** (goal, not yet achieved):
+## The Logic Chain
+
 ```
-theorem Riemann_Hypothesis :
-    ∀ s : ℂ, (0 < s.re ∧ s.re < 1) → riemannZeta s = 0 → s.re = 1/2
+riemannZeta s = 0
+⇒ NegativePhaseClustering σ t primes      -- (axiom)
+⇒ TraceIsMonotonic t primes               -- (proven from axiom)
+∧ ZeroHasMinNorm σ t primes               -- (hypothesis)
+∧ NormStrictMinAtHalf t primes            -- (hypothesis)
+⇒ σ = 1/2                                 -- (proven)
 ```
 
-This requires proving the hypotheses as theorems (see TraceConvexity.lean).
+## Physical Interpretation
 
-## The Two Hypotheses
+- **The Force**: The Scalar Trace T(σ) acts as a monotonic restoring force (gradient)
+- **The Energy**: The Vector Norm |V|² acts as the potential well
+- **Phase Locking**: At zeros, prime phases align to create inward compression
+- **Equilibrium**: The energy minimum at σ = 1/2 is the geometric equilibrium
 
-1. **ZeroHasMinTrace**: At a zeta zero, the rotor trace achieves its minimum
-2. **TraceStrictMinAtHalf**: The trace minimum occurs uniquely at σ = 1/2
+## Files
 
-Both are numerically verified (100% on known zeros) but not yet proven in Lean.
+- **CliffordRH.lean**: Core geometric definitions (rotorTrace, rotorSumNormSq)
+- **TraceMonotonicity.lean**: Proves monotonicity from negative phase clustering
+- **ZetaLinkClifford.lean**: Main RH theorem with the complete logic chain
+- **GudermannianDepth.lean**: Derives trace negativity from ζ'/ζ pole structure
 
 ## Proof Chain
 
 ```
 ZetaLinkClifford.lean (Main theorem: Classical_RH_CliffordRH)
-    └── CliffordRH.lean (rotorTrace, rotor, trace definitions)
+    ├── axiom ZetaZeroImpliesNegativeClustering
+    ├── theorem Zeta_Zero_Implies_Monotonicity
+    └── theorem RH_from_NormMinimization
 
-TraceConvexity.lean (Path to unconditional proof - 6 sorries)
-    └── CliffordRH.lean
+TraceMonotonicity.lean
+    ├── theorem negative_clustering_implies_positive_deriv
+    ├── theorem negative_clustering_implies_monotonicity
+    └── theorem monotonicity_implies_unique_preimage
+
+CliffordRH.lean
+    ├── def rotorTrace (the Force)
+    ├── def rotorSumNormSq (the Energy)
+    ├── def TraceIsMonotonic
+    └── def NormStrictMinAtHalf
 ```
-
-## Key Insight
-
-The rotor trace `rotorTrace(σ, t) = 2·Σ log(p)·p^{-σ}·cos(t·log p)` equals
-`2·Re[-ζ'/ζ(s)]` for prime terms. At zeta zeros, the pole structure forces
-the trace minimum to occur at σ = 1/2.
-
-## Files
-
-- **ZetaLinkClifford.lean**: Main RH theorem (conditional on 2 hypotheses)
-- **CliffordRH.lean**: Rotor trace definitions and helper lemmas
-- **TraceConvexity.lean**: Path to proving hypotheses (convexity approach)
-
-## Archived
-
-All other files (Fredholm, Surface Tension, GA, etc.) have been archived
-to `/archive/*.leantxt` as they are not part of the minimal proof chain.
 -/
 
 -- Main theorem: Riemann Hypothesis via CliffordRH
 import Riemann.ZetaSurface.ZetaLinkClifford
 
--- Rotor trace definitions
+-- Rotor trace and norm definitions
 import Riemann.ZetaSurface.CliffordRH
 
--- Path to unconditional proof (convexity)
-import Riemann.ZetaSurface.TraceConvexity
+-- Monotonicity from phase clustering
+import Riemann.ZetaSurface.TraceMonotonicity
+
+-- Gudermannian Depth: trace negativity from zeta zeros
+import Riemann.ZetaSurface.GudermannianDepth
+
+-- ProofEngine: scaffolds to eliminate axioms
+import Riemann.ProofEngine

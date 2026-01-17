@@ -1,0 +1,234 @@
+{
+  "meta": {
+    "project": "CliffordRH",
+    "version": "2.0",
+    "date": "2026-01-17",
+    "goal": "∀ s : ℂ, ζ(s) = 0 ∧ 0 < s.re < 1 → s.re = 1/2"
+  },
+  "chain": [
+    {
+      "step": 1,
+      "description": "Zeta zero exists in critical strip",
+      "input": "riemannZeta s = 0",
+      "type": "premise"
+    },
+    {
+      "step": 2,
+      "description": "Log derivative is negative at zeros",
+      "output": "vonMangoldtCosineSum < 0",
+      "type": "axiom",
+      "name": "log_deriv_real_part_negative_at_zero",
+      "file": "GudermannianDepth.lean",
+      "line": 99
+    },
+    {
+      "step": 3,
+      "description": "Prime sum approximates von Mangoldt sum",
+      "output": "|primeCosineSum - vonMangoldtCosineSum| < 2",
+      "type": "axiom",
+      "name": "prime_sum_approximates_full_sum",
+      "file": "GudermannianDepth.lean",
+      "line": 120
+    },
+    {
+      "step": 4,
+      "description": "Trace is negative at zero",
+      "output": "TraceIsNegative s.re s.im primes",
+      "type": "sorry",
+      "name": "zeta_zero_implies_trace_negative",
+      "file": "GudermannianDepth.lean",
+      "line": 145
+    },
+    {
+      "step": 5,
+      "description": "Zero implies negative phase clustering",
+      "output": "NegativePhaseClustering σ t primes",
+      "type": "axiom",
+      "name": "ZetaZeroImpliesNegativeClustering",
+      "file": "ZetaLinkClifford.lean",
+      "line": 50
+    },
+    {
+      "step": 6,
+      "description": "Negative clustering implies positive derivative",
+      "output": "rotorTraceFirstDeriv > 0",
+      "type": "theorem",
+      "name": "negative_clustering_implies_positive_deriv",
+      "file": "TraceMonotonicity.lean",
+      "line": 78
+    },
+    {
+      "step": 7,
+      "description": "Positive derivative implies monotonicity",
+      "output": "TraceIsMonotonic t primes",
+      "type": "theorem",
+      "name": "negative_clustering_implies_monotonicity",
+      "file": "TraceMonotonicity.lean",
+      "line": 120
+    },
+    {
+      "step": 8,
+      "description": "Zero has minimum norm (energy well)",
+      "output": "ZeroHasMinNorm σ t primes",
+      "type": "hypothesis",
+      "name": "ZeroHasMinNorm",
+      "file": "CliffordRH.lean",
+      "line": 116
+    },
+    {
+      "step": 9,
+      "description": "Norm strictly minimized at 1/2",
+      "output": "NormStrictMinAtHalf t primes",
+      "type": "hypothesis",
+      "name": "NormStrictMinAtHalf",
+      "file": "CliffordRH.lean",
+      "line": 86
+    },
+    {
+      "step": 10,
+      "description": "Energy constraints force critical line",
+      "output": "σ = 1/2",
+      "type": "theorem",
+      "name": "RH_from_NormMinimization",
+      "file": "ZetaLinkClifford.lean",
+      "line": 88
+    }
+  ],
+  "files": {
+    "CliffordRH.lean": {
+      "path": "Riemann/ZetaSurface/CliffordRH.lean",
+      "purpose": "Core geometric definitions (Force, Energy)",
+      "definitions": [
+        {"name": "rotorTrace", "line": 51, "desc": "Scalar projection of rotor force field"},
+        {"name": "rotorSumNormSq", "line": 56, "desc": "Chiral rotor sum norm squared (energy)"},
+        {"name": "rotorTraceFirstDeriv", "line": 69, "desc": "Derivative of rotor force"},
+        {"name": "TraceIsMonotonic", "line": 78, "desc": "Rotor force is monotonic"},
+        {"name": "NormMinimizedAtHalf", "line": 82, "desc": "Energy minimized at σ=1/2"},
+        {"name": "NormStrictMinAtHalf", "line": 86, "desc": "Energy UNIQUELY minimized at σ=1/2"},
+        {"name": "TraceIsNegative", "line": 91, "desc": "Trace is negative (inward locking)"},
+        {"name": "ZeroHasMinNorm", "line": 116, "desc": "At zero, norm achieves minimum"}
+      ],
+      "hypotheses": [
+        {"name": "ZeroHasMinNorm", "desc": "At a zeta zero, the NORM achieves its minimum"},
+        {"name": "NormStrictMinAtHalf", "desc": "The NORM is UNIQUELY minimized at σ = 1/2"}
+      ],
+      "axioms": [],
+      "sorries": [],
+      "theorems": []
+    },
+    "TraceMonotonicity.lean": {
+      "path": "Riemann/ZetaSurface/TraceMonotonicity.lean",
+      "purpose": "Proves S < 0 ⟹ T' > 0 ⟹ monotonic",
+      "definitions": [
+        {"name": "NegativePhaseClustering", "line": 47, "desc": "Weighted cosine sum is negative"}
+      ],
+      "hypotheses": [],
+      "axioms": [],
+      "sorries": [
+        {"name": "hasDerivAt_rotorTrace", "line": 92, "desc": "Trace has derivative (calculus)"},
+        {"name": "continuous_rotorTrace", "line": 101, "desc": "Trace is continuous (calculus)"}
+      ],
+      "theorems": [
+        {"name": "firstDeriv_eq_neg_two_sum", "line": 61, "desc": "T' = -2·S formula"},
+        {"name": "negative_clustering_implies_positive_deriv", "line": 78, "desc": "S < 0 ⟹ T' > 0"},
+        {"name": "negative_clustering_implies_monotonicity", "line": 120, "desc": "S < 0 ∀σ ⟹ StrictMonoOn"},
+        {"name": "monotonicity_implies_unique_preimage", "line": 153, "desc": "StrictMono ⟹ unique equilibrium"}
+      ]
+    },
+    "GudermannianDepth.lean": {
+      "path": "Riemann/ZetaSurface/GudermannianDepth.lean",
+      "purpose": "Derives TraceIsNegative from ζ'/ζ pole structure",
+      "definitions": [
+        {"name": "vonMangoldtCosineSum", "line": 57, "desc": "Truncated von Mangoldt cosine sum"},
+        {"name": "primeCosineSum", "line": 65, "desc": "Prime-only cosine sum"},
+        {"name": "TraceStronglyNegative", "line": 194, "desc": "Trace bounded below"}
+      ],
+      "hypotheses": [],
+      "axioms": [
+        {"name": "log_deriv_real_part_negative_at_zero", "line": 99, "desc": "Re[-ζ'/ζ] < 0 at zeros"},
+        {"name": "prime_sum_approximates_full_sum", "line": 120, "desc": "Prime sum ≈ von Mangoldt sum"},
+        {"name": "first_zero_trace_bound", "line": 200, "desc": "Numerical bound at γ₁ ≈ 14.1347"}
+      ],
+      "sorries": [
+        {"name": "zeta_zero_implies_trace_negative", "line": 145, "desc": "Bound combination needs tightening"}
+      ],
+      "theorems": [
+        {"name": "primeCosineSum_eq_half_trace", "line": 72, "desc": "Prime sum = trace/2"},
+        {"name": "trace_negative_at_half", "line": 170, "desc": "Corollary at σ=1/2"}
+      ]
+    },
+    "ZetaLinkClifford.lean": {
+      "path": "Riemann/ZetaSurface/ZetaLinkClifford.lean",
+      "purpose": "Main RH theorem with complete logic chain",
+      "definitions": [],
+      "hypotheses": [],
+      "axioms": [
+        {"name": "ZetaZeroImpliesNegativeClustering", "line": 50, "desc": "Zeta zero ⟹ phase clustering"}
+      ],
+      "sorries": [],
+      "theorems": [
+        {"name": "Zeta_Zero_Implies_Monotonicity", "line": 67, "desc": "ζ(s)=0 ⟹ monotonic trace"},
+        {"name": "RH_from_NormMinimization", "line": 88, "desc": "Energy constraints ⟹ σ = 1/2"},
+        {"name": "Classical_RH_CliffordRH", "line": 122, "desc": "MAIN THEOREM: Conditional RH"}
+      ]
+    }
+  },
+  "summary": {
+    "axioms": 4,
+    "sorries": 3,
+    "hypotheses": 2,
+    "theorems_proven": 9,
+    "definitions": 11
+  },
+  "next_steps": [
+    {
+      "priority": 1,
+      "task": "Prove hasDerivAt_rotorTrace",
+      "file": "TraceMonotonicity.lean",
+      "difficulty": "easy",
+      "notes": "Standard calculus - chain rule for finite sum"
+    },
+    {
+      "priority": 2,
+      "task": "Prove continuous_rotorTrace",
+      "file": "TraceMonotonicity.lean",
+      "difficulty": "easy",
+      "notes": "Continuity of finite sum of continuous functions"
+    },
+    {
+      "priority": 3,
+      "task": "Tighten bounds in zeta_zero_implies_trace_negative",
+      "file": "GudermannianDepth.lean",
+      "difficulty": "medium",
+      "notes": "Need vonMangoldtCosineSum < -2 instead of < 0"
+    },
+    {
+      "priority": 4,
+      "task": "Prove prime_sum_approximates_full_sum",
+      "file": "GudermannianDepth.lean",
+      "difficulty": "hard",
+      "notes": "Requires Dirichlet series error bounds"
+    },
+    {
+      "priority": 5,
+      "task": "Prove log_deriv_real_part_negative_at_zero",
+      "file": "GudermannianDepth.lean",
+      "difficulty": "hard",
+      "notes": "Requires analytic continuation of ζ'/ζ in Mathlib"
+    },
+    {
+      "priority": 6,
+      "task": "Prove ZetaZeroImpliesNegativeClustering",
+      "file": "ZetaLinkClifford.lean",
+      "difficulty": "very_hard",
+      "notes": "Requires Weil's explicit formula"
+    },
+    {
+      "priority": 7,
+      "task": "Prove NormStrictMinAtHalf",
+      "file": "CliffordRH.lean",
+      "difficulty": "hard",
+      "notes": "Use functional equation symmetry ξ(s) = ξ(1-s)"
+    }
+  ]
+}
