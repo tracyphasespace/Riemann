@@ -361,7 +361,7 @@ example (s : ℂ) (h_strip : 0 < s.re ∧ s.re < 1) (h_zero : riemannZeta s = 0)
 
 | File | Locked By | Since | Task |
 |------|-----------|-------|------|
-| TraceConvexity.lean | Claude-B | 2026-01-17 | Proving sum differentiability by induction |
+| TraceConvexity.lean | Claude-B | 2026-01-17 | Fixing foldl coercion issues |
 | ZetaLinkClifford.lean | - | - | - |
 | CliffordRH.lean | - | - | - |
 

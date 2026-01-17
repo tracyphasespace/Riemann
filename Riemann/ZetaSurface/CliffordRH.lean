@@ -148,7 +148,7 @@ a hypothesis directly, so this bridge is OPTIONAL for strengthening the proof.
 /-- Trace of rotation matrix is 2·cos(θ) -/
 theorem trace_rotor (θ : ℝ) : trace (rotor θ) = 2 * cos θ := by
   simp only [rotor, trace, diag, Fin.sum_univ_two, of_apply, Fin.isValue]
-  simp only [cons_val_zero, cons_val_one, head_cons]
+  simp only [cons_val_zero, cons_val_one]
   ring
 
 /-- Helper: Single prime rotor action gives cos/sin components -/
@@ -158,7 +158,7 @@ lemma primeRotor_spiralVec_components (p : ℕ) (σ t : ℝ) :
   unfold primeRotor rotor spiralVec colVec
   constructor <;> {
     simp only [Matrix.mul_apply, Fin.sum_univ_two, of_apply, Fin.isValue,
-               cons_val_zero, cons_val_one, head_cons]
+               cons_val_zero, cons_val_one]
     ring
   }
 
