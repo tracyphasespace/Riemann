@@ -1,6 +1,6 @@
 import Riemann.GlobalBound.ZetaManifold
 import Riemann.ProofEngine.GeometricAxioms
-import Riemann.ProofEngine.ConservationAxioms
+-- CYCLE: import Riemann.ProofEngine.ConservationAxioms
 
 noncomputable section
 open Real Filter Topology BigOperators

@@ -69,7 +69,7 @@ The Riemann Hypothesis is a special case:
 -/
 
 import Riemann.GlobalBound.ZetaManifold
-import Riemann.GlobalBound.PrimeRotor
+-- CYCLE: import Riemann.GlobalBound.PrimeRotor
 import Riemann.GlobalBound.Conservation
 import Riemann.GlobalBound.Lindelof
 import Riemann.GlobalBound.InteractionTermLittleO  -- Phase 5: Signal vs Noise (little-o version)

@@ -1,5 +1,6 @@
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+import Mathlib.NumberTheory.SmoothNumbers
 import Riemann.ZetaSurface.CliffordRH
 
 noncomputable section
@@ -15,7 +16,7 @@ namespace ProofEngine
 def rotorTerm (σ t : ℝ) (p : ℕ) : ℝ :=
   Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)
 
-/-- 
+/--
 Replacement for `ax_rotorTrace_first1000_lt_bound`.
 Verified numerically (Wolfram/Interval Arithmetic).
 -/

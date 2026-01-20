@@ -2,7 +2,7 @@ import Mathlib.Analysis.Asymptotics.Defs
 import Mathlib.Analysis.Asymptotics.Lemmas
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
-import Mathlib.Topology.Algebra.Order.Filter
+-- import Mathlib.Topology.Algebra.Order.Filter  -- REMOVED: module does not exist
 import Mathlib.Tactic.Linarith
 -- CYCLE: import Riemann.GlobalBound.SNR_Bounds
 
@@ -35,17 +35,8 @@ theorem isBigO_ratio_divergence {α : ℝ} (hα : α < 1)
     Tendsto (fun i => g i / |f i|) l atTop := by
   sorry
 
-/-- 
-Replacement for `GlobalBound.snr_diverges`.
--/
-theorem snr_diverges_proven (primes : List ℕ)
-    (h_control : GlobalBound.PairCorrelationControl primes)
-    (h_signal_grows : Tendsto (fun t => GlobalBound.SignalGrowth primes.toFinset t) atTop atTop) :
-    Tendsto (fun t => GlobalBound.SignalGrowth primes.toFinset t / |GlobalBound.NoiseGrowth primes.toFinset t|)
-            atTop atTop := by
-  -- Follows directly from isBigO_ratio_divergence
-  -- α < 1 is from h_control.h_alpha
-  -- Noise = O(Signal^α) is from h_control.noise_bound
-  sorry
+-- NOTE: snr_diverges_proven moved to GlobalBound.SNR_Bounds to avoid import cycle.
+-- The helper lemmas above (rpow_divergence_of_pos, growth_ratio_eq, isBigO_ratio_divergence)
+-- are the atomic units that can be proven from Mathlib.
 
 end ProofEngine

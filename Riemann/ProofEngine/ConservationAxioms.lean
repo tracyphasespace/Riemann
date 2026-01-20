@@ -1,7 +1,7 @@
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Riemann.GlobalBound.ZetaManifold
-import Riemann.GlobalBound.PrimeRotor
+-- CYCLE: import Riemann.GlobalBound.PrimeRotor
 import Riemann.ZetaSurface.CliffordRH
 import Riemann.ZetaSurface.UnitarityCondition
 

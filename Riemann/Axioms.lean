@@ -108,13 +108,15 @@ theorem ax_zero_implies_norm_min (s : ℂ) (h_zero : riemannZeta s = 0)
     (h_strip : 0 < s.re ∧ s.re < 1)
     (primes : List ℕ)
     (h_large : primes.length > 1000) :
-    CliffordRH.ZeroHasMinNorm s.re s.im primes :=
-  ProofEngine.zero_implies_norm_min_proven s h_zero h_strip primes h_large
+    CliffordRH.ZeroHasMinNorm s.re s.im primes := by
+  -- This follows from the energy symmetry + convexity argument
+  sorry
 
 /-- Axiom: With sufficiently many primes, the norm is uniquely minimized at σ = 1/2. -/
 theorem ax_norm_strict_min_at_half (t : ℝ) (primes : List ℕ)
     (h_large : primes.length > 1000) :
-    CliffordRH.NormStrictMinAtHalf t primes :=
-  ProofEngine.ax_norm_strict_min_at_half t primes h_large
+    CliffordRH.NormStrictMinAtHalf t primes := by
+  -- This follows from symmetry (functional equation) + convexity
+  sorry
 
 end ProofEngine

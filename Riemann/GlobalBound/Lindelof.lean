@@ -23,7 +23,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Riemann.GlobalBound.ZetaManifold
-import Riemann.GlobalBound.PrimeRotor
+-- CYCLE: import Riemann.GlobalBound.PrimeRotor
 import Riemann.GlobalBound.Conservation
 
 noncomputable section

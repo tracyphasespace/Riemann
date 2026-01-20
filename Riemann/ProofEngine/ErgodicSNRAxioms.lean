@@ -14,36 +14,27 @@ namespace ProofEngine
 
 /-!
 ## Ergodic SNR Helper Lemmas (Atomic Units)
+
+These atomic lemmas support the ergodic argument that Noise = o(Signal).
+The main theorems that reference GlobalBound types are in GlobalBound.ErgodicSNR.
 -/
 
-/-- Atom 1: Pointwise little-o from time averages. -/
-lemma ergodic_little_o_helper {f g : ℝ → ℝ} (hf : Tendsto (fun T => (1/T) * ∫ t in 0..T, f t) atTop (𝓝 0))
-    (hg : ∃ L > 0, Tendsto (fun T => (1/T) * ∫ t in 0..T, g t) atTop (𝓝 L)) :
-    -- This is a strong claim that usually requires regularity (like f, g being almost periodic)
-    -- or interpreting the result in a distributional sense.
-    sorry
-
-/-- 
-Replacement for `GlobalBound.ergodic_noise_is_little_o`.
--/
-theorem ergodic_noise_is_little_o_proven (S : Finset ℕ) (h_primes : ∀ p ∈ S, Nat.Prime p)
-    (h_nonempty : S.Nonempty) :
-    (fun t => |GlobalBound.NoiseGrowth S t|) =o[atTop] (fun t => GlobalBound.SignalGrowth S t) := by
-  -- Signal is sum of squares sin²(t log p) / p.
-  -- Noise is sum of cross terms sin(t log p) sin(t log q) / sqrt(pq).
-  -- Both are bounded for fixed S.
-  -- Ratio oscillates.
+/-- Atom 1: Little-o implies Big-O with any exponent. -/
+lemma little_o_implies_big_o_pow {f g : ℝ → ℝ} (α : ℝ) (hα : 0 < α)
+    (h : f =o[atTop] g) (hg_pos : ∀ᶠ t in atTop, 0 < g t) :
+    IsBigO atTop f (fun t => (g t) ^ α) := by
+  -- f = o(g) means f/g -> 0
+  -- For large enough t, |f t| < |g t|
+  -- Since g -> inf (implied by hg_pos eventually), |g|^α eventually dominates |f|
   sorry
 
-/--
-Replacement for `GlobalBound.ergodic_implies_pair_correlation`.
--/
-theorem ergodic_implies_pair_correlation_proven (primes : List ℕ)
-    (h_primes : ∀ p ∈ primes, Nat.Prime p)
-    (h_nonempty : primes ≠ []) :
-    ∃ (control : GlobalBound.PairCorrelationControl primes), control.α < 1 := by
-  -- Follows from little-o: if Noise = o(Signal), then Noise = O(Signal^α) for α < 1
-  -- (Assuming Signal -> infinity).
+/-- Atom 2: Oscillating integral average tends to zero (Riemann-Lebesgue type). -/
+lemma oscillating_average_tends_to_zero (ω : ℝ) (hω : ω ≠ 0) :
+    Tendsto (fun T => (1/T) * (Real.sin (ω * T) - Real.sin 0) / ω) atTop (𝓝 0) := by
+  -- (sin(ωT) - sin(0)) / ω is bounded, so dividing by T -> 0
   sorry
+
+-- NOTE: ergodic_noise_is_little_o_proven and ergodic_implies_pair_correlation_proven
+-- are defined in GlobalBound.ErgodicSNR to avoid import cycles.
 
 end ProofEngine

@@ -22,7 +22,7 @@ import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Topology.MetricSpace.Basic
 import Riemann.GlobalBound.ZetaManifold
-import Riemann.GlobalBound.PrimeRotor
+-- CYCLE: import Riemann.GlobalBound.PrimeRotor
 
 noncomputable section
 open Real Filter Set
