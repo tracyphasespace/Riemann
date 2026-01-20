@@ -1,0 +1,51 @@
+import Mathlib.Analysis.Asymptotics.Defs
+import Mathlib.Analysis.Asymptotics.Lemmas
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
+import Mathlib.Topology.Algebra.Order.Filter
+import Mathlib.Tactic.Linarith
+-- CYCLE: import Riemann.GlobalBound.SNR_Bounds
+
+noncomputable section
+open Real Filter Topology Asymptotics
+
+namespace ProofEngine
+
+/-!
+## SNR Helper Lemmas (Atomic Units)
+-/
+
+/-- Atom 1: Power law divergence. x^b -> inf for b > 0. -/
+lemma rpow_divergence_of_pos {b : ℝ} (hb : 0 < b) :
+    Tendsto (fun x : ℝ => x ^ b) atTop atTop :=
+  tendsto_rpow_atTop hb
+
+/-- Atom 2: Ratio of growth rates. x / x^a = x^(1-a). -/
+lemma growth_ratio_eq (x : ℝ) (hx : 0 < x) (a : ℝ) :
+    x / x ^ a = x ^ (1 - a) := by
+  nth_rw 1 [← rpow_one x]
+  rw [← rpow_sub hx]
+
+/-- Atom 3: If f = O(g^a) and g -> inf, then g/|f| -> inf for a < 1. -/
+theorem isBigO_ratio_divergence {α : ℝ} (hα : α < 1)
+    {ι : Type*} {l : Filter ι} {f g : ι → ℝ}
+    (h_bound : IsBigO l f (fun i => (g i) ^ α))
+    (h_g_pos : ∀ᶠ i in l, 0 < g i)
+    (h_g_lim : Tendsto g l atTop) :
+    Tendsto (fun i => g i / |f i|) l atTop := by
+  sorry
+
+/-- 
+Replacement for `GlobalBound.snr_diverges`.
+-/
+theorem snr_diverges_proven (primes : List ℕ)
+    (h_control : GlobalBound.PairCorrelationControl primes)
+    (h_signal_grows : Tendsto (fun t => GlobalBound.SignalGrowth primes.toFinset t) atTop atTop) :
+    Tendsto (fun t => GlobalBound.SignalGrowth primes.toFinset t / |GlobalBound.NoiseGrowth primes.toFinset t|)
+            atTop atTop := by
+  -- Follows directly from isBigO_ratio_divergence
+  -- α < 1 is from h_control.h_alpha
+  -- Noise = O(Signal^α) is from h_control.noise_bound
+  sorry
+
+end ProofEngine

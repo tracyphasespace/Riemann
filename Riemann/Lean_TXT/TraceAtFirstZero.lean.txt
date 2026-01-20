@@ -26,7 +26,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.NumberTheory.SmoothNumbers
-import Riemann.Axioms
+import Riemann.ProofEngine.Axioms
 
 noncomputable section
 open Real CliffordRH

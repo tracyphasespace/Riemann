@@ -17,8 +17,6 @@ All remaining sorries are standard Mathlib analysis facts.
 import Riemann.ZetaSurface.CliffordRH
 import Riemann.ZetaSurface.TraceMonotonicity
 import Riemann.ZetaSurface.ZetaLinkClifford
-import Riemann.ZetaSurface.GeometricSieve_Verification
-import Riemann.ZetaSurface.UnitarityCondition
 -- LogDerivativePole.lean DELETED: Vertical approach is a dead end.
 -- The horizontal approach (Residues.lean) provides the needed theorem.
 import Riemann.ProofEngine.PrimeSumApproximation

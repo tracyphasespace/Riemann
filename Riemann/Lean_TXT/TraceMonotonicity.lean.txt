@@ -89,7 +89,7 @@ where S(σ) = Σ (log p)² · p^{-σ} · cos(t · log p)
 theorem firstDeriv_eq_neg_two_sum (σ t : ℝ) (primes : List ℕ) :
     rotorTraceFirstDeriv σ t primes =
     -2 * primes.foldl (fun (acc : ℝ) (p : ℕ) =>
-      acc + (Real.log p) ^ 2 * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)) 0 := by
+      acc + (Real.log p)^2 * (p : ℝ)^(-σ) * Real.cos (t * Real.log p)) 0 := by
   rfl
 
 /-!

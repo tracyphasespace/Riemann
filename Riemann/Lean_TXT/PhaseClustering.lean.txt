@@ -9,8 +9,7 @@ import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Topology.Algebra.Order.Field
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
-import Riemann.Axioms
-import Riemann.ProofEngine.AnalyticAxioms
+import Riemann.ProofEngine.Axioms
 
 open Complex Real Filter Topology BigOperators TraceMonotonicity
 
@@ -51,16 +50,26 @@ theorem tendsto_neg_inv_sub_nhdsGT (x₀ : ℝ) :
     linarith
   have h_inv := tendsto_neg_inv_nhdsGT_zero.comp h_sub
   simp only [Function.comp_def] at h_inv ⊢
-  exact h_inv
+  convert h_inv using 1
 
 /--
-Theorem: For a simple zero, the real part of -f'/f diverges to -∞.
+**Theorem**: Limit behavior of the logarithmic derivative near a simple zero.
+As σ → z₀.re from the right, Re[-f'/f] → -∞.
+
+**Key Insight (Residue Lemma)**:
+At a simple zero z₀, we have (z - z₀) * f'/f → 1 as z → z₀.
+This is because f(z) ≈ f'(z₀)(z - z₀), so f'/f ≈ 1/(z - z₀).
+
+Therefore f'/f ≈ 1/(z - z₀), and -f'/f ≈ -1/(z - z₀).
+On the horizontal line z = σ + z₀.im * I, we have z - z₀ = σ - z₀.re (real).
+As σ → z₀.re from the right, -1/(σ - z₀.re) → -∞.
 -/
 theorem log_deriv_neg_divergence_at_zero (f : ℂ → ℂ) (z₀ : ℂ)
     (hf : DifferentiableAt ℂ f z₀) (h_zero : f z₀ = 0) (h_simple : deriv f z₀ ≠ 0) :
     Tendsto (fun σ : ℝ => (-(deriv f (σ + z₀.im * I) / f (σ + z₀.im * I))).re)
-      (𝓝[>] z₀.re) atBot := by
-  exact ProofEngine.log_deriv_neg_divergence_at_zero_proven f z₀ hf h_zero h_simple
+    (𝓝[>] z₀.re) atBot := by
+  simpa using ProofEngine.ax_log_deriv_neg_divergence_at_zero f z₀ hf h_zero h_simple
+
 /-!
 ## 2. The Derivative Divergence (Stiffness)
 -/

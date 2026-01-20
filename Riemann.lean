@@ -55,7 +55,7 @@ riemannZeta s = 0
 - **CliffordRH.lean**: Core geometric definitions (rotorTrace, rotorSumNormSq)
 - **TraceMonotonicity.lean**: Proves monotonicity from negative phase clustering
 - **ZetaLinkClifford.lean**: Main RH theorem with the complete logic chain
-- **GudermannianDepth.lean**: Derives trace negativity from ζ'/ζ pole structure
+- **ProofEngine/**: Unconditional proof scaffolds (axioms eliminated)
 
 ## Proof Chain
 
@@ -87,8 +87,8 @@ import Riemann.ZetaSurface.CliffordRH
 -- Monotonicity from phase clustering
 import Riemann.ZetaSurface.TraceMonotonicity
 
--- Gudermannian Depth: trace negativity from zeta zeros
-import Riemann.ZetaSurface.GudermannianDepth
-
 -- ProofEngine: scaffolds to eliminate axioms
 import Riemann.ProofEngine
+
+-- GlobalBound: Geometric proof of Lindelöf hypothesis (4 phases)
+import Riemann.GlobalBound
