@@ -9,6 +9,8 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Complex.Exponential
 import Mathlib.Data.Nat.Factorization.Basic
+-- Import the proven FTA from DiophantineGeometry
+import Riemann.ProofEngine.DiophantineGeometry
 
 noncomputable section
 open Real Complex BigOperators Filter Topology
@@ -146,11 +148,10 @@ theorem log_primes_linear_independent :
 
   -- 4. Apply FTA: products of distinct primes can only be equal if trivial
   have h_z_zero : ∀ p ∈ s, z p = 0 := by
-    -- This is the core FTA argument:
-    -- If ∏_{z_p > 0} p^{z_p} = ∏_{z_p < 0} p^{|z_p|},
-    -- then since LHS and RHS have disjoint prime supports,
-    -- both products must equal 1, hence all exponents = 0.
-    sorry -- FTA application: unique factorization implies all z_p = 0
+    -- Use the proven FTA theorem from DiophantineGeometry.lean
+    -- OutstandingProofs.fta_all_exponents_zero shows:
+    -- If ∑ z_p * log p = 0 for integers z_p, then all z_p = 0
+    exact OutstandingProofs.fta_all_exponents_zero s z h_sum_Z
 
   -- 5. Conclude g i = 0
   have hz_i : z i = 0 := h_z_zero i hi

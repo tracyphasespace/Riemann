@@ -216,27 +216,28 @@ theorem dominant_prevents_closure_norm (σ : ℝ) (S : Finset ℕ)
 -- PROOF 3: CHIRALITY FROM UNIFORM BOUND (Solved)
 -- ==============================================================================
 
+/-- The coefficient for prime p at σ = 1/2: c_p = -log(p)/√p -/
+def zetaCoeff (p : ℕ) : ℝ := -Real.log p / Real.sqrt p
+
 /-- IsChiral Definition: Derivative norm bounded away from zero -/
 def IsChiral (σ : ℝ) : Prop :=
   ∃ δ > 0, ∀ t : ℝ, ‖deriv riemannZeta (σ + t * I)‖ ≥ δ
 
 /--
 **Chirality Theorem**:
-If Baker's Theorem provides a uniform lower bound $\delta$ for the finite truncations,
+If Baker's Theorem provides a uniform lower bound δ for the finite truncations,
 and the series converges uniformly to the analytic function,
 and the tail is small enough (ε < δ),
 then the analytic function inherits the bound.
 -/
 theorem is_chiral_proven_conditional
     (S : Finset ℕ)
-    (h_uniform_bound : ∃ δ > 0, ∀ t, ‖∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I)‖ ≥ δ)
-    -- We assume the infinite tail is negligible compared to δ (follows from choosing large enough S)
-    (h_tail_small : ∃ ε > 0, ∀ t, ‖deriv riemannZeta (1/2 + t * I) -
-        ∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I)‖ < ε)
-    -- Separation Condition: The finite bound must exceed the tail error
+    (h_uniform_bound : ∃ δ > 0, ∀ t, ‖∑ p ∈ S, (zetaCoeff p : ℂ) * cexp (t * Real.log p * I)‖ ≥ δ)
+    (h_tail_small : ∃ ε > 0, ∀ t, ‖deriv riemannZeta ((1/2 : ℝ) + t * I) -
+        ∑ p ∈ S, (zetaCoeff p : ℂ) * cexp (t * Real.log p * I)‖ < ε)
     (h_separation : ∃ (δ : ℝ) (ε : ℝ),
-        (∀ t, ‖∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I)‖ ≥ δ) ∧
-        (∀ t, ‖deriv riemannZeta (1/2 + t * I) - ∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I)‖ < ε) ∧
+        (∀ t, ‖∑ p ∈ S, (zetaCoeff p : ℂ) * cexp (t * Real.log p * I)‖ ≥ δ) ∧
+        (∀ t, ‖deriv riemannZeta ((1/2 : ℝ) + t * I) - ∑ p ∈ S, (zetaCoeff p : ℂ) * cexp (t * Real.log p * I)‖ < ε) ∧
         ε < δ)
     : IsChiral (1/2) := by
 
@@ -246,24 +247,16 @@ theorem is_chiral_proven_conditional
   constructor
   · linarith
   · intro t
-    -- |f(t)| ≥ |f_S(t)| - |tail(t)|
-    have h_tri := norm_sub_norm_le (∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I))
-                                    (deriv riemannZeta (1/2 + t * I))
-
     specialize h_tail t
 
-    -- Triangle inequality form: ‖Z‖ ≥ ‖S‖ - ‖Z - S‖
-    -- ‖S - Z‖ = ‖-(Z - S)‖ = ‖Z - S‖
-    rw [norm_sub_rev] at h_tail
+    -- Triangle inequality: ‖b‖ - ‖a - b‖ ≤ ‖a‖
+    -- We have: ‖Z‖ ≥ ‖S‖ - ‖Z - S‖ where Z = deriv zeta, S = finite sum
+    have h_tri := norm_sub_norm_le
+      (∑ p ∈ S, (zetaCoeff p : ℂ) * cexp (t * Real.log p * I))
+      (deriv riemannZeta ((1/2 : ℝ) + t * I))
+    -- ‖S‖ - ‖Z‖ ≤ ‖S - Z‖ = ‖Z - S‖
+    rw [norm_sub_rev] at h_tri
 
-    have h_calc : ‖deriv riemannZeta (1/2 + t * I)‖ ≥
-                  ‖∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I)‖ -
-                  ‖deriv riemannZeta (1/2 + t * I) - ∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I)‖ := by
-      -- ‖a‖ - ‖b - a‖ ≤ ‖b‖  <-> ‖a‖ ≤ ‖b‖ + ‖b - a‖ (true by triangle)
-      have := norm_le_add_norm_sub (∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (t * Real.log p * I)) (deriv riemannZeta (1/2 + t * I))
-      linarith
-
-    calc ‖deriv riemannZeta (1/2 + t * I)‖
-        ≥ δ - ε := by linarith [h_calc, h_bound t, h_tail]
+    linarith [h_tri, h_bound t, h_tail]
 
 end OutstandingProofs
