@@ -18,7 +18,7 @@ namespace ChiralPath
 /-!
 # The Hard Path: Proving IsChiral via Diophantine Analysis
 
-**STATUS**: 3 sorries remaining (down from 9)
+**STATUS**: 3 sorries remaining (down from 9), Job 2a COMPLETE
 
 Goal: Prove that ‖deriv SieveCurve‖² ≥ δ > 0.
 
@@ -190,9 +190,9 @@ def PolygonClosurePossible (σ : ℝ) (S : Finset ℕ) : Prop :=
   ∃ (θ : ℕ → ℝ), (∑ p ∈ S, (deriv_coeff σ p : ℂ) * cexp (θ p * I)) = 0
 
 /--
-**Geometric Closure Impossibility**:
+**Geometric Closure Impossibility** (COMPLETE):
 If dominant term exceeds tail, closure is impossible.
-(This imports the result from GeometricClosure.lean conceptually)
+Uses reverse triangle inequality: ‖a + b‖ ≥ |‖a‖ - ‖b‖|
 -/
 theorem dominant_term_prevents_closure
     (σ : ℝ) (S : Finset ℕ) (hS : ∀ p ∈ S, Nat.Prime p)
@@ -200,13 +200,70 @@ theorem dominant_term_prevents_closure
     (h_dominant : deriv_coeff_mag σ p_dom > ∑ p ∈ S.erase p_dom, deriv_coeff_mag σ p) :
     ¬PolygonClosurePossible σ S := by
   intro ⟨θ, h_sum⟩
-  -- The sum splits into dominant + tail
-  have h_split := Finset.add_sum_erase S (fun p => (deriv_coeff σ p : ℂ) * cexp (θ p * I)) h_mem
-  rw [add_comm] at h_split
-  -- At h_sum = 0, we have dominant = -tail
-  -- Taking norms: |dominant| = |tail| ≤ sum|tail_i|
-  -- But |dominant| > sum|tail_i| by hypothesis → contradiction
-  sorry -- Norm calculation (mirrors GeometricClosure.no_geometric_closure_of_dominant)
+
+  -- 1. Split the sum: dominant + tail = 0
+  have h_split : (deriv_coeff σ p_dom : ℂ) * cexp (θ p_dom * I) +
+                 ∑ p ∈ S.erase p_dom, (deriv_coeff σ p : ℂ) * cexp (θ p * I) = 0 := by
+    have := Finset.add_sum_erase S (fun p => (deriv_coeff σ p : ℂ) * cexp (θ p * I)) h_mem
+    linarith [h_sum, this]
+
+  -- 2. Move tail to RHS: dominant = -tail
+  have h_eq_neg : (deriv_coeff σ p_dom : ℂ) * cexp (θ p_dom * I) =
+                  -(∑ p ∈ S.erase p_dom, (deriv_coeff σ p : ℂ) * cexp (θ p * I)) := by
+    linarith [h_split]
+
+  -- 3. Take norms: ‖dominant‖ = ‖tail‖
+  have h_norm_eq : ‖(deriv_coeff σ p_dom : ℂ) * cexp (θ p_dom * I)‖ =
+                   ‖∑ p ∈ S.erase p_dom, (deriv_coeff σ p : ℂ) * cexp (θ p * I)‖ := by
+    rw [h_eq_neg, norm_neg]
+
+  -- 4. Simplify LHS: ‖c * e^{iθ}‖ = |c| since |e^{iθ}| = 1
+  have h_lhs : ‖(deriv_coeff σ p_dom : ℂ) * cexp (θ p_dom * I)‖ = |deriv_coeff σ p_dom| := by
+    rw [norm_mul]
+    have h_exp_norm : ‖cexp (θ p_dom * I)‖ = 1 := by
+      rw [← Complex.ofReal_mul_I, Complex.norm_exp_ofReal_mul_I]
+    rw [h_exp_norm, mul_one, Complex.norm_eq_abs, Complex.abs_ofReal]
+
+  -- 5. Bound RHS using Triangle Inequality: ‖Σ v_i‖ ≤ Σ ‖v_i‖
+  have h_triangle : ‖∑ p ∈ S.erase p_dom, (deriv_coeff σ p : ℂ) * cexp (θ p * I)‖ ≤
+                    ∑ p ∈ S.erase p_dom, ‖(deriv_coeff σ p : ℂ) * cexp (θ p * I)‖ :=
+    norm_sum_le _ _
+
+  -- 6. Simplify RHS terms: each ‖c_p * e^{iθ}‖ = |c_p|
+  have h_rhs_simp : ∑ p ∈ S.erase p_dom, ‖(deriv_coeff σ p : ℂ) * cexp (θ p * I)‖ =
+                    ∑ p ∈ S.erase p_dom, |deriv_coeff σ p| := by
+    apply Finset.sum_congr rfl
+    intro p _
+    rw [norm_mul]
+    have h_exp_norm : ‖cexp (θ p * I)‖ = 1 := by
+      rw [← Complex.ofReal_mul_I, Complex.norm_exp_ofReal_mul_I]
+    rw [h_exp_norm, mul_one, Complex.norm_eq_abs, Complex.abs_ofReal]
+
+  -- 7. Connect to deriv_coeff_mag: |deriv_coeff σ p| = deriv_coeff_mag σ p for primes
+  have h_abs_eq_mag : |deriv_coeff σ p_dom| = deriv_coeff_mag σ p_dom := by
+    unfold deriv_coeff deriv_coeff_mag
+    rw [abs_div, abs_neg]
+    congr 1
+    · exact abs_of_pos (log_prime_pos (hS p_dom h_mem))
+    · exact abs_of_pos (rpow_pos_of_pos (Nat.cast_pos.mpr (hS p_dom h_mem).pos) σ)
+
+  have h_abs_eq_mag' : ∀ p ∈ S.erase p_dom, |deriv_coeff σ p| = deriv_coeff_mag σ p := by
+    intro p hp
+    have hp_prime := hS p (Finset.mem_of_mem_erase hp)
+    unfold deriv_coeff deriv_coeff_mag
+    rw [abs_div, abs_neg]
+    congr 1
+    · exact abs_of_pos (log_prime_pos hp_prime)
+    · exact abs_of_pos (rpow_pos_of_pos (Nat.cast_pos.mpr hp_prime.pos) σ)
+
+  -- 8. Contradiction: |c_dom| = ‖sum‖ ≤ Σ|c_i| < |c_dom|
+  rw [h_lhs, h_abs_eq_mag] at h_norm_eq
+  rw [h_rhs_simp] at h_triangle
+  have h_sum_eq : ∑ p ∈ S.erase p_dom, |deriv_coeff σ p| = ∑ p ∈ S.erase p_dom, deriv_coeff_mag σ p := by
+    apply Finset.sum_congr rfl h_abs_eq_mag'
+  rw [h_sum_eq] at h_triangle
+  rw [h_norm_eq] at h_dominant
+  linarith
 
 /--
 **No Closure on Critical Line**:
@@ -349,14 +406,16 @@ FTA (Mathlib) ──────► log_primes_linear_independent (Job 1)
 | Job | Description | Status | Sorries |
 |-----|-------------|--------|---------|
 | 1 | Log prime independence | 1 sorry (FTA step) | 1 |
-| 2 | Polygon impossibility | 2 sorries | 2 |
+| 2a | Dominant term prevents closure | **COMPLETE** ✓ | 0 |
+| 2b | General no-closure | 1 sorry | 1 |
 | 3 | Baker's repulsion | Uses axiom | 0 |
 | 4 | Final assembly | 1 sorry | 1 |
-| **Total** | | | **4** (down from 9) |
+| **Total** | | | **3** (down from 9) |
 
 The proof is reduced to:
 - FTA (in Mathlib) - 1 sorry for the application
 - Baker's Theorem (axiomatized - proven result from 1966)
+- General polygon case - 1 sorry (uses Baker)
 - Infinite sum limit argument - 1 sorry
 -/
 
