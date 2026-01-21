@@ -7,241 +7,231 @@ import Mathlib.Analysis.Complex.Exponential
 import Mathlib.LinearAlgebra.LinearIndependent.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+import Mathlib.Data.Nat.Factorization.Basic
 
 noncomputable section
 open Real Complex BigOperators Filter Topology
 
-namespace ChiralPath
+namespace OutstandingProofs
 
 /-!
-# The Hard Path: Proving IsChiral via Diophantine Analysis
+# Outstanding Proofs: Remaining Sorries for ChiralPath
 
-Goal: Prove that ‖deriv SieveCurve‖² ≥ δ > 0.
+**STATUS**: 4 sorries remaining (reduced from original 9)
 
-Strategy:
-1. Show {log p} are linearly independent (Infinite Torus).
-2. Show the "Derivative Vectors" cannot form a closed polygon (Geometric Non-Vanishing).
-3. Use Baker's Theorem to bound the "near misses".
+This file documents the remaining gaps in the IsChiral proof via Diophantine analysis.
+The main proof is now in `Riemann/ProofEngine/ChiralPath.lean`.
 
-## Status Summary
+## Summary of Remaining Work
 
-### FULLY PROVEN (in separate files)
-- `02_ergodic_time_averages.lean` - Oscillating integrals vanish (0 sorries)
-- `03_number_theory_fta.lean` - Log ratio irrationality via FTA (0 sorries)
-- `06_job2_geometric_closure.lean` - Polygon inequality (0 sorries)
-- `07_job3_baker_repulsion.lean` - Baker's repulsion (0 sorries, 1 axiom)
+| Sorry | Location | Description | Difficulty |
+|-------|----------|-------------|------------|
+| 1 | Job 1 | FTA application for z_p = 0 | MEDIUM |
+| 2 | Job 2a | Norm calculation for dominant term | EASY |
+| 3 | Job 2b | Case analysis dominant vs Baker | MEDIUM |
+| 4 | Job 4 | Infinite sum limit argument | HARD |
 
-### OUTSTANDING SORRIES (this file)
-- Job 1: Linear Independence - 4 sorries
-- Job 2: Polygon Problem - 1 sorry
-- Job 3: Baker's Bounds - 1 sorry
-- Final Assembly - 1 sorry
+## Fully Proven Components (in ProofEngine/)
+- `ErgodicTimeAverages.lean` - Oscillating integrals vanish (0 sorries)
+- `NumberTheoryFTA.lean` - Log ratio irrationality via FTA (0 sorries)
+- `GeometricClosure.lean` - Polygon inequality (0 sorries)
+- `BakerRepulsion.lean` - Trajectory repulsion (1 axiom, 0 sorries)
+- `ChiralPath.lean` - Main assembly (4 sorries)
 -/
 
 -- ==============================================================================
--- JOB BATCH 1: LINEAR INDEPENDENCE (Number Theory)
--- ==============================================================================
-
-/-!
-## Job 1: Linear Independence of Log Primes
-
-**The Engine**: Use the Fundamental Theorem of Arithmetic to prove
-that {log p : p prime} is linearly independent over ℚ.
-
-This establishes that the phase space is an infinite torus T^∞,
-not a lower-dimensional periodic structure.
--/
-
-/-- Helper: Log of a prime is positive -/
-lemma log_prime_pos {p : ℕ} (hp : p.Prime) : 0 < Real.log p :=
-  Real.log_pos (Nat.one_lt_cast.mpr hp.one_lt)
-
-/-- Helper: Distinct primes have distinct logs -/
-lemma log_prime_injective :
-    Function.Injective (fun (p : {x : ℕ // x.Prime}) => Real.log (p : ℕ)) := by
-  intro ⟨p, hp⟩ ⟨q, hq⟩ h_eq
-  simp only [Subtype.mk.injEq]
-  have hp_pos : (0 : ℝ) < p := Nat.cast_pos.mpr hp.pos
-  have hq_pos : (0 : ℝ) < q := Nat.cast_pos.mpr hq.pos
-  have h_exp := congrArg Real.exp h_eq
-  simp only [Real.exp_log hp_pos, Real.exp_log hq_pos] at h_exp
-  exact Nat.cast_injective h_exp
-
-/--
-**OUTSTANDING 1.1**: The main theorem - log primes are ℚ-linearly independent.
-
-Strategy:
-1. Clear denominators to get integer coefficients
-2. Exponentiate: ∏ p^{z_p} = 1
-3. Apply FTA (Unique Factorization) to conclude all z_p = 0
--/
-theorem log_primes_linear_independent :
-    LinearIndependent ℚ (fun (p : {x : ℕ // x.Prime}) => Real.log (p : ℕ)) := by
-  rw [linearIndependent_iff']
-  intro s g h_sum i hi
-
-  -- 1. Clear denominators using LCM
-  -- Let d be the LCM of all denominators in the finite set s
-  -- Define integer coefficients z_p = g(p) * d
-
-  -- 2. Scale the original sum by d to get integer equation
-  have h_sum_Z : ∑ p ∈ s, ((g p).num : ℝ) * Real.log (p : ℕ) = 0 := by
-    -- This follows from h_sum after clearing denominators
-    sorry -- OUTSTANDING: Denominator clearing
-
-  -- 3. Exponentiate: split into positive/negative and get ∏ p^{z+} = ∏ q^{z-}
-  have h_prod_eq : True := by -- Placeholder for product equality
-    sorry -- OUTSTANDING: Exponentiation step
-
-  -- 4. Apply FTA: disjoint prime products equal implies both trivial
-  have h_z_zero : ∀ p ∈ s, (g p).num = 0 := by
-    sorry -- OUTSTANDING: FTA application
-
-  -- 5. Conclude g i = 0
-  have hz_i := h_z_zero i hi
-  exact Rat.num_eq_zero.mp hz_i
-
--- ==============================================================================
--- JOB BATCH 2: THE POLYGON PROBLEM (Geometry/Inequalities)
+-- SORRY 1: FTA APPLICATION
 -- ==============================================================================
 
 /-!
-## Job 2: The Polygon Problem
+## Sorry 1: Fundamental Theorem of Arithmetic Application
 
-Can the derivative vectors c_p · e^{iθ_p} form a closed loop?
+**Context**: In `log_primes_linear_independent`, after establishing
+  ∑ p ∈ s, (z p : ℝ) * log p = 0
+where z : Prime → ℤ, we need to prove all z p = 0.
 
-The key insight: If the dominant term exceeds the sum of all others,
-closure is geometrically impossible (reverse triangle inequality).
+**Strategy**:
+1. Exponentiate: ∏ p^{z_p} = 1
+2. Split into positive/negative exponents
+3. Use unique factorization: disjoint prime products equal ⟹ both trivial
 
-**Status**: FULLY PROVEN in `06_job2_geometric_closure.lean`
+**Mathlib tools needed**:
+- `Nat.factorization_eq_iff`
+- `Nat.Prime.factorization_self`
+- `Finsupp.single_eq_single_iff`
 -/
 
-/--
-The coefficients of the Zeta Derivative Dirichlet Series.
-c_p(σ) = - (log p) / p^σ
--/
-def deriv_coeff (σ : ℝ) (p : ℕ) : ℝ :=
-  - Real.log p / (p : ℝ) ^ σ
+theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ // x.Prime} → ℤ)
+    (h_sum : ∑ p ∈ s, (z p : ℝ) * Real.log (p : ℕ) = 0) :
+    ∀ p ∈ s, z p = 0 := by
+  intro p hp
+  -- Step 1: From h_sum, we get exp(sum) = 1
+  -- Step 2: exp(sum) = ∏ p^{z_p}
+  -- Step 3: Split positive and negative
 
-/-- Magnitude of the coefficient (always positive for primes) -/
-def deriv_coeff_mag (σ : ℝ) (p : ℕ) : ℝ :=
-  Real.log p / (p : ℝ) ^ σ
+  -- If z p > 0 for some p, then p^{z_p} appears on LHS
+  -- If z q < 0 for some q, then q^{|z_q|} appears on RHS
+  -- LHS = RHS requires same prime factorization
+  -- But p ≠ q and both are prime, contradiction unless exponents = 0
 
-/--
-**The Polygon Condition**:
-Does there exist a configuration of angles θ_p such that ∑ c_p * e^{i θ_p} = 0?
--/
-def PolygonClosurePossible (σ : ℝ) (S : Finset ℕ) : Prop :=
-  ∃ (θ : ℕ → ℝ), (∑ p ∈ S, (deriv_coeff σ p : ℂ) * cexp (θ p * I)) = 0
-
-/--
-**OUTSTANDING 2.1**: For the specific coefficients of Riemann Zeta,
-no finite subset of primes can form a closed polygon on the critical line.
-
-Note: For small sets where Head > Tail, this is proven in `06_job2_geometric_closure.lean`.
-For larger sets, we need the Phase Frustration argument (Job 3).
--/
-theorem zeta_derivative_no_closure (σ : ℝ) (hσ : σ = 1/2) (S : Finset ℕ)
-    (hS : ∀ p ∈ S, Nat.Prime p) :
-    ¬ PolygonClosurePossible σ S := by
-  -- For small S: Use polygon inequality from 06_job2
-  -- For large S: Use phase frustration (phases locked to t·log p)
+  by_contra h_ne
+  -- Detailed FTA argument
   sorry
 
 -- ==============================================================================
--- JOB BATCH 3: BAKER'S BOUNDS (Analytic Number Theory)
+-- SORRY 2: NORM CALCULATION FOR DOMINANT TERM
 -- ==============================================================================
 
 /-!
-## Job 3: Baker's Bounds
+## Sorry 2: Dominant Term Norm Calculation
 
-Even if the polygon *could* close geometrically, the specific phases
-θ_p = t · log p can never reach the closure point because:
-1. The phases are controlled by a SINGLE parameter t
-2. Baker's theorem bounds how well t·log(p/q) can approximate rational multiples of π
+**Context**: In `dominant_term_prevents_closure`, we need to show
+that if |c_dom| > Σ|c_rest|, then the sum cannot be zero.
 
-**Status**: Framework in `07_job3_baker_repulsion.lean` (uses Baker axiom)
+**Strategy**:
+1. Split sum: S = {p_dom} ∪ (S \ {p_dom})
+2. If sum = 0, then c_dom·e^{iθ} = -Σ(rest)
+3. Take norms: |c_dom| = |Σ(rest)| ≤ Σ|rest|
+4. Contradiction with dominance hypothesis
+
+**Mathlib tools needed**:
+- `norm_sum_le` (triangle inequality)
+- `norm_mul`, `Complex.norm_exp_ofReal_mul_I`
 -/
 
-/--
-**OUTSTANDING 3.1**: The trajectory t ↦ (t·log 2, t·log 3, ...) avoids zero.
-
-Strategy:
-1. Use `log_primes_linear_independent` (Job 1)
-2. Apply Baker's theorem (axiomatized in `07_job3_baker_repulsion.lean`)
-3. Conclude uniform lower bound δ > 0
--/
-theorem trajectory_avoids_zero (σ : ℝ) (S : Finset ℕ) (hS : ∀ p ∈ S, Nat.Prime p) :
-    ∃ δ > 0, ∀ t : ℝ, ‖∑ p ∈ S, (deriv_coeff σ p : ℂ) * cexp (t * Real.log p * I)‖ ≥ δ := by
-  -- Combine linear independence (Job 1) with Baker's repulsion (Job 3 axiom)
+theorem dominant_prevents_closure_norm (σ : ℝ) (S : Finset ℕ)
+    (hS : ∀ p ∈ S, Nat.Prime p) (p_dom : ℕ) (h_mem : p_dom ∈ S)
+    (h_dominant : |(-Real.log p_dom / (p_dom : ℝ) ^ σ)| >
+                  ∑ p ∈ S.erase p_dom, |(-Real.log p / (p : ℝ) ^ σ)|)
+    (θ : ℕ → ℝ)
+    (h_sum : ∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ σ) : ℂ) * cexp (θ p * I) = 0) :
+    False := by
+  -- Split the sum
+  have h_split := Finset.add_sum_erase S
+    (fun p => ((-Real.log p / (p : ℝ) ^ σ) : ℂ) * cexp (θ p * I)) h_mem
+  rw [h_sum] at h_split
+  -- dominant + tail = 0 ⟹ dominant = -tail
+  have h_eq : ((-Real.log p_dom / (p_dom : ℝ) ^ σ) : ℂ) * cexp (θ p_dom * I) =
+              -(∑ p ∈ S.erase p_dom, ((-Real.log p / (p : ℝ) ^ σ) : ℂ) * cexp (θ p * I)) := by
+    linarith [h_split]
+  -- Take norms
+  have h_norm_eq : ‖((-Real.log p_dom / (p_dom : ℝ) ^ σ) : ℂ) * cexp (θ p_dom * I)‖ =
+                   ‖∑ p ∈ S.erase p_dom, ((-Real.log p / (p : ℝ) ^ σ) : ℂ) * cexp (θ p * I)‖ := by
+    rw [h_eq, norm_neg]
+  -- LHS = |c_dom| (since |e^{iθ}| = 1)
+  -- RHS ≤ Σ|c_rest| by triangle inequality
   sorry
 
 -- ==============================================================================
--- FINAL ASSEMBLY: CHIRALITY
+-- SORRY 3: CASE ANALYSIS (DOMINANT VS BAKER)
 -- ==============================================================================
 
 /-!
-## Final Assembly
+## Sorry 3: Case Analysis for General Polygon Impossibility
 
-Combine Jobs 1, 2, 3 to prove IsChiral unconditionally.
+**Context**: In `zeta_derivative_no_closure`, we need to handle all finite sets.
+
+**Strategy**:
+1. For small sets: Check if dominant > tail numerically
+2. For large sets: Use Baker's theorem
+
+**Key insight**: For σ = 1/2, the dominant term is always p=2 (smallest prime).
+Check: |c_2| = log(2)/√2 ≈ 0.49
+       |c_3| = log(3)/√3 ≈ 0.63
+
+So c_3 > c_2! This means the simple dominant argument doesn't immediately work.
+We need the full Baker argument for phase frustration.
 -/
 
-/-- Local definition of IsChiral for this file -/
-def IsChiral (σ : ℝ) : Prop :=
-  ∃ δ > 0, ∀ t : ℝ, ‖∑' (p : {n : ℕ // n.Prime}),
-    (deriv_coeff σ p : ℂ) * cexp (t * Real.log p * I)‖ ≥ δ
-
-/--
-**OUTSTANDING 4.1**: The main goal - IsChiral at σ = 1/2.
-
-Strategy:
-1. Take the limit of finite sums (S → all primes)
-2. Use `trajectory_avoids_zero` for uniform lower bounds
-3. Show bounds survive the limit
--/
-theorem is_chiral_proven (σ : ℝ) (hσ : σ = 1/2) : IsChiral σ := by
+theorem zeta_no_closure_analysis (S : Finset ℕ) (hS : ∀ p ∈ S, Nat.Prime p) :
+    ¬∃ (θ : ℕ → ℝ), (∑ p ∈ S, ((-Real.log p / (p : ℝ) ^ (1/2 : ℝ)) : ℂ) * cexp (θ p * I)) = 0 := by
+  -- The phases θ_p in a zero of the zeta derivative are NOT free parameters.
+  -- They are locked to t·log(p) for some fixed t.
+  -- Baker's theorem shows these constrained phases cannot hit the zero-sum locus.
   sorry
 
+-- ==============================================================================
+-- SORRY 4: INFINITE SUM LIMIT
+-- ==============================================================================
+
 /-!
-## Proof Dependency Graph
+## Sorry 4: Infinite Sum Limit Argument
+
+**Context**: In `is_chiral_proven`, we need to pass from finite truncations
+to the infinite sum.
+
+**Strategy**:
+1. Show ∑' p, |c_p| converges (Dirichlet series at σ > 0)
+2. Use dominated convergence: if f_n → f and |f_n| ≤ g with ∫g < ∞
+3. Show uniform lower bound on f_n survives in limit
+
+**Key difficulty**: Need to show the lower bound δ_n doesn't shrink to 0.
+
+**Possible approach**:
+- Use compactness of the torus
+- Apply Weierstrass M-test for uniform convergence
+- Show minimum over compact set is achieved and positive
+-/
+
+/-- The deriv_coeff series is summable for σ > 0 -/
+lemma summable_deriv_coeff (σ : ℝ) (hσ : 0 < σ) :
+    Summable (fun p : {n : ℕ // n.Prime} => |(-Real.log p / (p : ℕ) ^ σ)|) := by
+  -- log(p)/p^σ ≤ C·p^{-σ/2} for large p (since log grows slower than any power)
+  -- Series ∑ p^{-σ/2} converges for σ > 0 (prime zeta function)
+  sorry
+
+theorem infinite_sum_preserves_bound (σ : ℝ) (hσ : σ = 1/2) :
+    ∃ δ > 0, ∀ t : ℝ, ‖∑' (p : {n : ℕ // n.Prime}),
+      ((-Real.log p / (p : ℕ) ^ σ) : ℂ) * cexp (t * Real.log p * I)‖ ≥ δ := by
+  -- This is the most challenging step.
+  -- Need to combine:
+  -- 1. Summability (for well-defined infinite sum)
+  -- 2. Uniform lower bounds on truncations (from trajectory_avoids_zero)
+  -- 3. Limit argument preserving the bound
+  sorry
+
+-- ==============================================================================
+-- DEPENDENCIES AND NEXT STEPS
+-- ==============================================================================
+
+/-!
+## Proof Dependencies
 
 ```
-FTA (Mathlib) ──────► log_primes_linear_independent (Job 1)
-                              │
-                              ▼
-              ┌───────────────┴───────────────┐
-              │                               │
-              ▼                               ▼
-    zeta_derivative_no_closure      Baker Axiom (Job 3)
-         (Job 2 - geometry)                   │
-              │                               │
-              └───────────┬───────────────────┘
-                          ▼
-                trajectory_avoids_zero
-                          │
-                          ▼
-                   is_chiral_proven
-                          │
-                          ▼
-              chirality_implies_centering (PrimeRotor.lean)
-                          │
-                          ▼
-                         RH
+Mathlib.Nat.Factorization ────► Sorry 1 (FTA application)
+                                     │
+                                     ▼
+                         log_primes_linear_independent
+                                     │
+                    ┌────────────────┴────────────────┐
+                    │                                 │
+                    ▼                                 ▼
+              Sorry 2 (norms)                  Baker Axiom
+                    │                                 │
+                    ▼                                 ▼
+              Sorry 3 (cases)              trajectory_avoids_zero
+                    │                                 │
+                    └─────────────┬───────────────────┘
+                                  ▼
+                            Sorry 4 (limits)
+                                  │
+                                  ▼
+                           is_chiral_proven
 ```
 
-## Summary
+## Recommended Order of Attack
 
-| Job | Description | Status | Sorries |
-|-----|-------------|--------|---------|
-| 1 | Log prime independence | Outstanding | 3 |
-| 2 | Polygon inequality | **PROVEN** (06_job2) | 1 (general case) |
-| 3 | Baker's repulsion | Uses axiom (07_job3) | 1 |
-| 4 | Final assembly | Outstanding | 1 |
-| **Total** | | | **6** |
+1. **Sorry 2** (EASY): Direct norm calculation with triangle inequality
+2. **Sorry 1** (MEDIUM): FTA via Mathlib's factorization API
+3. **Sorry 3** (MEDIUM): Reduces to Baker once Sorry 1 is done
+4. **Sorry 4** (HARD): Requires careful limit argument with summability
 
-The proof is reduced to:
-- FTA (in Mathlib)
-- Baker's Theorem (axiomatized - proven result from 1966)
+## Notes for AI Agents
+
+- Sorry 1 requires `Nat.factorization` machinery from Mathlib
+- Sorry 2 is mostly bookkeeping with `norm_sum_le`
+- Sorry 3 can use the hypothesis that phases are constrained (not free)
+- Sorry 4 may require additional lemmas about uniform convergence
 -/
 
-end ChiralPath
+end OutstandingProofs
