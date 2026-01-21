@@ -13,6 +13,22 @@ open Real Filter Topology Complex
 namespace NumberTheoryFTA
 
 /-!
+# Number Theory: FTA Applications
+
+**STATUS**: FULLY PROVEN (0 sorries)
+
+This file proves key number-theoretic results using the Fundamental Theorem of Arithmetic.
+
+## Main Theorems
+
+1. `prime_power_eq_iff` - Distinct primes have no equal powers (FTA application)
+2. `log_ratio_irrational` - log(p)/log(q) is irrational for distinct primes p, q
+3. `differentiableAt_bounded_near` - Holomorphic functions are locally bounded
+
+These results are used in the linear independence proof for log primes.
+-/
+
+/-!
 ## Lemma 1: Prime Power Equality Contradiction (FTA)
 -/
 

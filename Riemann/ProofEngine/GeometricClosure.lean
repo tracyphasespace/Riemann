@@ -9,10 +9,12 @@ import Mathlib.Analysis.Complex.Exponential
 noncomputable section
 open Real BigOperators Complex
 
-namespace ChiralPath
+namespace GeometricClosure
 
 /-!
 # Job 2: The Polygon Inequality (Geometry)
+
+**STATUS**: FULLY PROVEN (0 sorries)
 
 This proof establishes the "Geometric Non-Closure" condition.
 If the vectors in the sum ∑ c_p * exp(i * θ_p) form a "Polygon",
@@ -20,6 +22,11 @@ and one edge is longer than the sum of all other edges, the polygon
 cannot close (sum cannot be zero).
 
 This is a direct application of the Reverse Triangle Inequality.
+
+## Main Theorem
+
+`no_geometric_closure_of_dominant` - If the dominant term exceeds the tail sum,
+the total sum is strictly non-zero for ALL time t.
 -/
 
 /--
@@ -154,4 +161,4 @@ for the infinite series, we must use Baker's Theorem to show that the
 constrained phases θ_p = t·log(p) can never conspire to hit zero.
 -/
 
-end ChiralPath
+end GeometricClosure

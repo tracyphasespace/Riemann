@@ -11,6 +11,23 @@ open Real Filter Topology MeasureTheory Interval intervalIntegral BigOperators
 namespace ErgodicTimeAverages
 
 /-!
+# Ergodic Time Averages
+
+**STATUS**: FULLY PROVEN (0 sorries)
+
+This file proves that oscillating integrals vanish in the time average.
+Key results used in the chirality proof.
+
+## Main Theorems
+
+1. `oscillating_cos_limit` - (1/T) ∫₀ᵀ cos(wt) dt → 0 as T → ∞
+2. `oscillating_sin_limit` - (1/T) ∫₀ᵀ sin(wt) dt → 0 as T → ∞
+3. `time_average_orthogonality` - Time average of sin(t·log p)·sin(t·log q) → 0 for p ≠ q
+
+These establish the "ergodic orthogonality" of prime phases.
+-/
+
+/-!
 ## 1. Helper Lemmas
 -/
 

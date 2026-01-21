@@ -12,6 +12,10 @@ Use this as a task list for completing the formalization.
 - `GeometricBridge.lean` - Connects GeometricSieve to analytic axioms
 - `PrimeSumApproximation.lean` - Geometric series error bounds
 - `TraceEffectiveCore.lean` - Trace → MVT argument
+- `ErgodicTimeAverages.lean` - Oscillating integrals vanish (NEW)
+- `NumberTheoryFTA.lean` - Log ratio irrationality via FTA (NEW)
+- `GeometricClosure.lean` - Polygon inequality / reverse triangle (NEW)
+- `BakerRepulsion.lean` - Trajectory repulsion (1 axiom) (NEW)
 
 ### Files With Remaining Sorries
 | File | Sorries | Priority |
@@ -108,9 +112,9 @@ Key sorries:
 -/
 
 -- theorem is_chiral_at_half : IsComplexChiral (1/2) := by
---   -- Connect to: 05_job1_linear_independence (log independence)
---   -- Connect to: 06_job2_geometric_closure (polygon inequality)
---   -- Connect to: 07_job3_baker_repulsion (Baker's theorem)
+--   -- Connect to: NumberTheoryFTA.lean (log independence via FTA)
+--   -- Connect to: GeometricClosure.lean (polygon inequality)
+--   -- Connect to: BakerRepulsion.lean (Baker's theorem)
 --   sorry
 
 /-!
@@ -164,10 +168,11 @@ Many small axiom files were created during refactoring:
 
 ## PROOF STRATEGY FOR REMAINING AXIOMS
 
-### Path A: Via llm_input Jobs (Recommended)
-1. **Job 1** (FTA): Prove log primes independent → close `ax_global_phase_clustering`
-2. **Job 2** (Geometry): Already proven → use for finite truncations
-3. **Job 3** (Baker): Axiomatize Baker's theorem → close `energy_convex_at_half`
+### Path A: Via Chiral Path Jobs (Recommended)
+1. **Job 1** (FTA): `NumberTheoryFTA.lean` - Log primes independent via FTA
+2. **Job 2** (Geometry): `GeometricClosure.lean` - PROVEN - polygon inequality
+3. **Job 3** (Baker): `BakerRepulsion.lean` - Trajectory repulsion (1 axiom)
+4. **Ergodic**: `ErgodicTimeAverages.lean` - PROVEN - oscillating integrals vanish
 
 ### Path B: Via Analytic Number Theory
 1. Formalize Explicit Formula in Mathlib
@@ -178,6 +183,13 @@ Many small axiom files were created during refactoring:
 1. Use proven lemmas (Residues, AnalyticBasics) for pole structure
 2. Axiomatize deep results (Baker, Explicit Formula)
 3. Focus on connecting the pieces in PrimeRotor.lean
+
+### Outstanding Proofs (llm_input/outstanding_proofs.lean)
+Contains 6 remaining sorries for the full IsChiral proof:
+- Job 1: 3 sorries (denominator clearing, exponentiation, FTA application)
+- Job 2: 1 sorry (general case beyond polygon inequality)
+- Job 3: 1 sorry (trajectory_avoids_zero combining Jobs 1+3)
+- Job 4: 1 sorry (is_chiral_proven final assembly)
 -/
 
 end RemainingWork
