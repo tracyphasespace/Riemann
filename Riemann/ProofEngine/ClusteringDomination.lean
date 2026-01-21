@@ -51,7 +51,7 @@ namespace ProofEngine.ClusteringDomination
 
 /-- The weighted cosine sum (phase clustering indicator). -/
 def weightedCosSum (primes : List ℕ) (σ t : ℝ) : ℝ :=
-  primes.foldl (fun acc p =>
+  primes.foldl (fun (acc : ℝ) (p : ℕ) =>
     acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)) 0
 
 /--
