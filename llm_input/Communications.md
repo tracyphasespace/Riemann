@@ -68,6 +68,51 @@ BLOCKER: (if failed, what's missing)
 
 ---
 
+## CRITICAL: Proof Strategies
+
+### 1. Rosetta Stone Technique
+**Use abstract Mathlib lemmas, NOT domain-specific reasoning.**
+
+```lean
+-- BAD: Trying to prove zeta-specific facts directly
+theorem zeta_thing : ... := by
+  -- "zeta has a pole at s=1" - no Mathlib support!
+  sorry
+
+-- GOOD: Find abstract Mathlib lemma that applies
+theorem zeta_thing : ... := by
+  -- Use: tendsto_inv_nhdsGT_zero (abstract: 1/x → ∞ as x → 0⁺)
+  -- Use: Tendsto.comp to compose with translation
+  exact tendsto_inv_nhdsGT_zero.comp h_translation
+```
+
+The Mathlib lemma is the "Rosetta Stone" - it translates your domain problem into pure math that Lean already knows.
+
+### 2. ALWAYS Use Small Helper Lemmas
+**Lake struggles with deeply nested proofs. Decompose into atomic helpers.**
+
+```lean
+-- BAD: Complex nested proof
+theorem big_theorem : P := by
+  have step1 : A := by
+    have substep : X := by long_proof  -- Lake timeout!
+    exact use_substep substep
+  exact final step1
+
+-- GOOD: Separate helper lemmas
+lemma helper_substep : X := by simple_proof
+lemma helper_step1 : A := use_substep helper_substep
+theorem big_theorem : P := final helper_step1
+```
+
+**Rules:**
+- Max 3-4 tactics per proof
+- Each helper proves ONE fact
+- Name helpers descriptively: `pole_term_pos`, `sum_nonneg`
+- If proof needs `have` inside `have`, extract to helper
+
+---
+
 ## Techniques Reference
 
 ```lean

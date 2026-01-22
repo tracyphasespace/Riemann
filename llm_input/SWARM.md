@@ -16,8 +16,10 @@
 2. NEVER spawn sub-agents or Task calls
 3. NEVER modify files outside your ONE assigned target
 4. NEVER exceed 10 tool calls - return with status after that
-5. ALWAYS return structured result (see format below)
-6. ONE proof attempt per agent - do not retry indefinitely
+5. TIMEOUT after 5 minutes - if no result, return immediately
+6. ALWAYS return structured result (see format below)
+7. ONE proof attempt per agent - do not retry indefinitely
+8. USE OPUS ONLY - Haiku is worthless for Lean 4.27 API
 
 WORKFLOW:
 1. Read the target file to understand context (1-2 tool calls)
@@ -85,6 +87,7 @@ YOUR TASK: Fix the sorry at [FILE]:[LINE] - [LEMMA_NAME]
 - DO NOT spawn sub-agents
 - DO NOT modify other files
 - Maximum 10 tool calls, then return result
+- TIMEOUT: 5 minutes max - return immediately if stuck
 - ONE proof attempt only
 
 ## WORKFLOW
@@ -109,6 +112,17 @@ BLOCKER: [issue if FAILED]
 - nhdsWithin_le_nhds for filter restriction
 - tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
 - Complex.normSq_eq_norm_sq : normSq z = ‖z‖²
+
+## CRITICAL STRATEGIES
+
+### Rosetta Stone: Use abstract Mathlib lemmas, NOT zeta-specific reasoning
+Search for general lemmas like tendsto_inv_nhdsGT_zero, Differentiable.comp, etc.
+The abstract lemma is the "translation key" to Lean's math library.
+
+### Helper Lemmas: ALWAYS decompose complex proofs
+- Max 3-4 tactics per proof
+- If you need `have` inside `have`, extract to separate lemma
+- Name helpers: `energy_differentiable`, `gamma_ne_zero_in_strip`
 ```
 
 ---
@@ -138,10 +152,10 @@ KillShell(shell_id="xxx")
 1. **Launch batch** (4-6 agents on different files)
 2. **Monitor every 2-3 min** with `TaskOutput(block=False)`
 3. **Collect results** as each agent finishes
-4. **Kill stragglers** after 10 minutes
-5. **Run single `lake build`** after all agents done
+4. **Kill stragglers** after 5 minutes (STRICT)
+5. **DO NOT run `lake build`** - AI1 handles all builds
 6. **Verify with grep** for remaining sorries
-7. **Commit successful proofs**
+7. **Report results** to AI1 for integration
 
 ---
 
