@@ -75,38 +75,66 @@ This is the key bridge property.
 theorem riemannXi_zero_iff_zeta_zero {s : ℂ}
     (h_strip : 0 < s.re ∧ s.re < 1) :
     riemannXi s = 0 ↔ riemannZeta s = 0 := by
-  -- Strategy:
-  -- 1. In the strip, s ≠ 0 and s ≠ 1, so s(1-s) ≠ 0
-  -- 2. The relationship between completedRiemannZeta₀ and riemannZeta
-  --    involves Γ factors that are nonzero in the strip
-  -- 3. Therefore ξ(s) = 0 ↔ ζ(s) = 0
+  -- Key identity: ξ(s) = s(1-s)Λ₀(s) - 1 = s(1-s)Λ(s)
+  -- where Λ(s) = Γℝ(s) * ζ(s)
+  -- In the strip: s(1-s) ≠ 0 and Γℝ(s) ≠ 0
+  -- Therefore ξ(s) = 0 ↔ ζ(s) = 0
+
   have hs_ne_zero : s ≠ 0 := by
     intro h; rw [h] at h_strip; simp at h_strip
   have hs_ne_one : s ≠ 1 := by
     intro h; rw [h] at h_strip; simp at h_strip
-  -- The relationship: completedRiemannZeta₀ s = completedRiemannZeta s + 1/s + 1/(1-s)
-  -- And: completedRiemannZeta s = π^(-s/2) * Γ(s/2) * ζ(s) (for s ≠ 0, 1)
-  -- So: s(1-s) * completedRiemannZeta₀ s - 1
-  --     = s(1-s) * completedRiemannZeta s + (1-s) + s - 1
-  --     = s(1-s) * completedRiemannZeta s
-  --     = s(1-s) * π^(-s/2) * Γ(s/2) * ζ(s)
-  -- In the strip: s(1-s) ≠ 0, π^(-s/2) ≠ 0, Γ(s/2) ≠ 0 (s/2 not a non-positive integer)
-  -- Therefore ξ(s) = 0 ↔ ζ(s) = 0
+  have h_poly : s * (1 - s) ≠ 0 := mul_ne_zero hs_ne_zero (sub_ne_zero.mpr hs_ne_one.symm)
+  have h_gamma : Gammaℝ s ≠ 0 := Gammaℝ_ne_zero_of_re_pos h_strip.1
+
+  -- Use Mathlib: Λ(s) = Λ₀(s) - 1/s - 1/(1-s)
+  -- Rearranged: Λ₀(s) = Λ(s) + 1/s + 1/(1-s)
+  -- So: s(1-s)Λ₀(s) - 1 = s(1-s)[Λ(s) + 1/s + 1/(1-s)] - 1
+  --                      = s(1-s)Λ(s) + (1-s) + s - 1 = s(1-s)Λ(s)
+  have h_xi_eq : riemannXi s = s * (1 - s) * completedRiemannZeta s := by
+    dsimp [riemannXi]
+    -- completedRiemannZeta₀ s = completedRiemannZeta s + 1/s + 1/(1-s)
+    have h_eq : completedRiemannZeta₀ s = completedRiemannZeta s + 1 / s + 1 / (1 - s) := by
+      rw [completedRiemannZeta_eq s]
+      ring
+    rw [h_eq]
+    have hs1 : s ≠ 0 := hs_ne_zero
+    have hs2 : 1 - s ≠ 0 := sub_ne_zero.mpr hs_ne_one.symm
+    field_simp [hs1, hs2]
+    ring
+
+  -- Use Mathlib: ζ(s) = Λ(s) / Γℝ(s)
+  -- Rearranged: Λ(s) = Γℝ(s) * ζ(s)
+  rw [h_xi_eq]
+
   constructor
   · -- ξ(s) = 0 → ζ(s) = 0
     intro hxi
-    -- Use the relationship: ξ(s) = s(1-s) * π^(-s/2) * Γ(s/2) * ζ(s)
-    -- Since ξ(s) = 0 and prefactors are nonzero, ζ(s) = 0
-    -- This requires the precise Mathlib decomposition
-    sorry -- Needs: completedRiemannZeta₀_eq_completedRiemannZeta_add_poles + Gamma nonzero
+    -- s(1-s)Λ(s) = 0, and s(1-s) ≠ 0, so Λ(s) = 0
+    have h_lambda : completedRiemannZeta s = 0 := by
+      simp only [mul_eq_zero] at hxi
+      rcases hxi with h1 | h1
+      · rcases h1 with h2 | h2
+        · exact absurd h2 hs_ne_zero
+        · exact absurd h2 (sub_ne_zero.mpr hs_ne_one.symm)
+      · exact h1
+    -- ζ(s) = Λ(s) / Γℝ(s) = 0 / Γℝ(s) = 0
+    rw [riemannZeta_def_of_ne_zero hs_ne_zero, h_lambda, zero_div]
   · -- ζ(s) = 0 → ξ(s) = 0
     intro hzeta
-    -- If ζ(s) = 0, then completedRiemannZeta s = π^(-s/2) * Γ(s/2) * 0 = 0
-    -- And completedRiemannZeta₀ s = completedRiemannZeta s + 1/s + 1/(1-s)
-    --                              = 1/s + 1/(1-s) = (1-s+s)/(s(1-s)) = 1/(s(1-s))
-    -- So ξ(s) = s(1-s) * 1/(s(1-s)) - 1 = 1 - 1 = 0
-    -- This requires the precise Mathlib relationship
-    sorry -- Needs: completedRiemannZeta_eq definition with ζ factor
+    -- ζ(s) = Λ(s) / Γℝ(s) = 0, and Γℝ(s) ≠ 0, so Λ(s) = 0
+    have h_lambda : completedRiemannZeta s = 0 := by
+      have h := riemannZeta_def_of_ne_zero hs_ne_zero
+      -- h : ζ(s) = Λ(s) / Γℝ(s)
+      -- hzeta : ζ(s) = 0
+      rw [hzeta] at h
+      -- h : 0 = Λ(s) / Γℝ(s)
+      rw [eq_comm, div_eq_zero_iff] at h
+      rcases h with h1 | h1
+      · exact h1
+      · exact absurd h1 h_gamma
+    -- s(1-s)Λ(s) = s(1-s) * 0 = 0
+    simp [h_lambda]
 
 /--
 Vanishing Property: If ζ(s) = 0 in the critical strip, then ξ(s) = 0.
@@ -282,18 +310,44 @@ theorem symmetry_and_convexity_imply_local_min (t : ℝ)
   -- If σ > 1/2: E'(ξ) > 0 and σ - 1/2 > 0, so E(σ) > E(1/2)
   -- If σ < 1/2: E'(ξ) < 0 and σ - 1/2 < 0, so E(σ) > E(1/2)
 
-  -- Choose δ = 1/4 (any positive value works for the existence statement)
+  -- We use a continuity argument: since E''(1/2) > 0 and E'' is continuous,
+  -- there exists δ > 0 such that E'' > 0 on (1/2-δ, 1/2+δ).
+  -- Then E' is strictly increasing, and combined with E'(1/2) = 0, we get
+  -- E'(σ) < 0 for σ < 1/2 and E'(σ) > 0 for σ > 1/2 (near 1/2).
+  -- By MVT, E(σ) > E(1/2) for σ ≠ 1/2 near 1/2.
+
+  -- For this proof, we need ZetaEnergy to be C² (twice continuously differentiable).
+  -- Since riemannXi is entire (analytic) and ZetaEnergy = |riemannXi|² = re² + im²,
+  -- ZetaEnergy is real-analytic, hence C∞.
+
+  -- Extract δ from continuity of E'' at 1/2 using h_convex > 0
+  -- For now, we use δ = 1/4 as a fixed choice.
   use 1/4
   constructor
   · norm_num
   · intro σ ⟨hne, habs⟩
-    -- The detailed MVT argument requires differentiability assumptions
-    -- which depend on proving ZetaEnergy is C² (analytic composition)
-    -- For now, we note this is a standard application of second derivative test
-    -- with the key inputs already established:
-    --   (1) E'(1/2) = 0 from h_deriv_zero
-    --   (2) E''(1/2) > 0 from h_convex
-    sorry -- Standard second derivative test; needs C² differentiability of ZetaEnergy
+    -- The second derivative test:
+    -- E(σ) - E(1/2) = E'(1/2)(σ - 1/2) + E''(c)(σ - 1/2)²/2 for some c between 1/2 and σ
+    -- With E'(1/2) = 0: E(σ) - E(1/2) = E''(c)(σ - 1/2)²/2
+    -- Since |σ - 1/2| < 1/4, c is close to 1/2, and E''(c) > 0 by continuity from E''(1/2) > 0
+    -- Therefore E(σ) > E(1/2)
+
+    -- Key facts:
+    -- (1) E'(1/2) = 0 from h_deriv_zero
+    -- (2) E''(1/2) > 0 from h_convex
+    -- (3) (σ - 1/2)² > 0 since σ ≠ 1/2
+
+    -- The full formal proof requires:
+    -- - ContDiff ℝ 2 (fun σ => ZetaEnergy t σ) to apply Taylor's theorem
+    -- - Continuity of E'' to extract δ where E''(c) > 0 for c near 1/2
+    -- These follow from ZetaEnergy being real-analytic (composition of analytic functions)
+    -- which requires more Mathlib infrastructure to formalize.
+
+    -- For now, we document the proof obligation:
+    -- NEEDS: Proof that ZetaEnergy is ContDiff ℝ 2
+    -- Once that's established, use taylor_second_order to expand E(σ) around 1/2,
+    -- then use continuity of E'' to show E''(c) > 0 for c between 1/2 and σ.
+    sorry
 
 /--
 **Bridge Theorem**: Convexity of the analytic energy implies the finite sum
