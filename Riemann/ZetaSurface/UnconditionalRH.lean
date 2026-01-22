@@ -44,7 +44,6 @@ The randomness is not a hypothesis; it is a consequence of arithmetic.
 
 import Riemann.ZetaSurface.UniversalStiffness
 import Riemann.ZetaSurface.ZetaLinkClifford
-import Riemann.ProofEngine.Axioms
 import Riemann.GlobalBound.ErgodicSNR
 import Riemann.GlobalBound.Ergodicity
 import Riemann.GlobalBound.ArithmeticGeometry
@@ -216,9 +215,12 @@ theorem Riemann_Hypothesis_Unconditional (s : ℂ)
   -- This combines the geometric force with energy minimum to prove s.re = 1/2.
   have h_zero_min : CliffordRH.ZeroHasMinNorm s.re s.im primes :=
     ProofEngine.ax_zero_implies_norm_min s h_zero h_strip primes h_large
+  -- Use EnergySymmetry.convexity_implies_norm_strict_min which doesn't require h_approx
+  have h_convex : ProofEngine.EnergySymmetry.EnergyIsConvexAtHalf s.im := by
+    sorry -- Energy convexity at critical line
   have h_energy : CliffordRH.NormStrictMinAtHalf s.im primes :=
-    ProofEngine.ax_norm_strict_min_at_half s.im primes h_large
-  exact ZetaLinkClifford.RH_from_NormMinimization
+    ProofEngine.EnergySymmetry.convexity_implies_norm_strict_min s.im primes h_large h_convex
+  exact Riemann.ZetaSurface.ZetaLinkClifford.RH_from_NormMinimization
     s.re s.im h_strip primes h_zero_min h_energy
 
 /-!

@@ -130,10 +130,14 @@ then the Signal-to-Noise Ratio diverges to infinity.
 -/
 theorem snr_diverges_to_infinity (primes : List ℕ)
     (h_corr : PairCorrelationBound primes)
-    (h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
+    (_h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
     Tendsto (fun t => IdealEnergy primes.toFinset t / |InteractionEnergy primes.toFinset t|)
-            atTop atTop :=
-  ProofEngine.snr_diverges_to_infinity_proven primes h_corr h_signal_grows
+            atTop atTop := by
+  -- Strategy: Use h_corr to show Noise grows slower than Signal
+  -- Then Signal/|Noise| → ∞ follows from asymptotic comparison
+  obtain ⟨_α, hα_lt, _h_bound⟩ := h_corr
+  -- With α < 1: Signal = O(T) and Noise = O(T^α), so SNR ~ T^(1-α) → ∞
+  sorry
 
 /-!
 ## 4. The Main Stability Theorem
@@ -147,9 +151,13 @@ Analytic Energy is strictly positive.
 -/
 theorem geometry_dominates_noise_asymptotic (primes : List ℕ)
     (h_corr : PairCorrelationBound primes)
-    (h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
-    ∀ᶠ t in atTop, AnalyticEnergy primes.toFinset t > 0 :=
-  ProofEngine.geometry_dominates_noise_proven primes h_corr h_signal_grows
+    (_h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
+    ∀ᶠ t in atTop, AnalyticEnergy primes.toFinset t > 0 := by
+  -- Strategy: From SNR → ∞, eventually Signal > |Noise|
+  -- Then AnalyticEnergy = Signal + Noise > 0 by ProofEngine.sum_pos_of_dominance
+  obtain ⟨_α, hα_lt, _h_bound⟩ := h_corr
+  -- With α < 1, Signal dominates Noise, so their sum is eventually positive
+  sorry
 
 /-!
 ## 5. Corollary: Stability with Prime Hypotheses

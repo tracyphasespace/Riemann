@@ -1,0 +1,37 @@
+You are Swarm Agent #003. Your task is Job 2 from SWARM_TASKS.md.
+
+## WORKFLOW RULES
+- You produce Lean 4 code ONLY - do NOT run `lake build`
+- AI1 will build your output and fix any errors
+- Break complex sorries into smaller helper lemmas
+- Search Mathlib for existing lemmas before writing proofs
+- Use Mathlib 4.27 API conventions
+
+## YOUR TASK
+File: Riemann/ProofEngine/AnalyticBridge.lean
+Target: Complete sorry at line 235 (rayleigh_decomposition)
+
+```lean
+theorem rayleigh_decomposition (s : ℂ) (v : GlobalHilbertSpace) :
+    (innerProd v (K_op s v)).im =
+    v.support.sum fun p => (coeff s p).re * Q_local (v p) / 2
+```
+
+## PROOF STRATEGY
+1. Expand innerProd definition
+2. Use localBivector_skew_hermitian
+3. Apply localInner_bivector_eq_charge
+4. Collect terms over support
+
+## MATHLIB HINTS
+- `Finset.sum_congr` for rewriting sums
+- `Complex.im_sum` for imaginary part of sum
+- `conj_mul` for conjugate products
+
+## OUTPUT FORMAT
+Provide complete Lean 4 code blocks:
+1. List Mathlib lemmas you found/used
+2. Provide helper lemmas if needed  
+3. Provide the final proof
+
+Output goes to: llm_input/agent003_job2.lean

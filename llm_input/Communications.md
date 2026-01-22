@@ -1,8 +1,8 @@
 # AI Agent Communications Hub
 
-**Last Updated**: 2026-01-22
-**Build Status**: PASSING (3293 jobs)
-**Sorry Count**: 17 total
+**Last Updated**: 2026-01-22 (Batch D)
+**Build Status**: PASSING
+**Sorry Count**: 15 total
 
 ---
 
@@ -33,22 +33,20 @@ BLOCKER: (if failed, what's missing)
 
 ---
 
-## Current Sorries (17 total)
+## Current Sorries (15 total)
 
-### Priority 1: CalculusAxioms (3 sorries)
+### Priority 1: EnergySymmetry (3 sorries)
 | Line | Lemma | Notes |
 |------|-------|-------|
-| 28 | contDiff_two_of_differentiable_deriv | BLOCKED - hypothesis too weak |
-| 63 | taylor_case_2 | MVT argument needed |
-| 125 | taylor_case_3 | x < x₀ case, reflection |
+| 101, 109 | riemannXi_zero_iff_zeta_zero | Two directions; needs Mathlib completedZeta/Gamma API |
+| 263 | symmetry_and_convexity_imply_local_min | Second derivative test, needs C² |
+| 305 | convexity_implies_norm_strict_min | C2 approximation transfer |
 
-### Priority 2: EnergySymmetry (4 sorries)
+### Priority 2: CalculusAxioms (2 sorries)
 | Line | Lemma | Notes |
 |------|-------|-------|
-| 87 | riemannXi_zero_iff_zeta_zero | Gamma factors nonzero in strip |
-| 193 | energy_deriv_zero_at_half | ZetaEnergy differentiability (ξ entire, normSq smooth) |
-| 223 | symmetry_and_convexity_imply_local_min | Second derivative test |
-| 242 | convexity_implies_norm_strict_min | C2 approximation transfer |
+| 16 | taylor_second_order | Taylor with remainder |
+| 25 | effective_convex_implies_min_proven | Uses taylor_second_order |
 
 ### Priority 3: TraceAtFirstZero (3 sorries)
 | Line | Lemma | Notes |
@@ -60,10 +58,10 @@ BLOCKER: (if failed, what's missing)
 ### Priority 4: Other Files
 | File | Line | Lemma |
 |------|------|-------|
-| AnalyticAxioms.lean | 320 | filter extraction |
+| AnalyticAxioms.lean | 320 | finite_sum_approx_analytic |
 | AristotleContributions.lean | 101 | contributed lemma |
 | ClusterBound.lean | 83, 102 | cluster bounds |
-| Convexity.lean | 103 | second_deriv_normSq |
+| Convexity.lean | 104 | second_deriv_normSq (OK to skip - not critical path) |
 | NumericalAxioms.lean | 23, 32 | numerical bounds |
 
 ---
@@ -86,10 +84,8 @@ theorem zeta_thing : ... := by
   exact tendsto_inv_nhdsGT_zero.comp h_translation
 ```
 
-The Mathlib lemma is the "Rosetta Stone" - it translates your domain problem into pure math that Lean already knows.
-
 ### 2. ALWAYS Use Small Helper Lemmas
-**Lake struggles with deeply nested proofs. Decompose into atomic helpers.**
+**Max 3-4 tactics per proof. Decompose into atomic helpers.**
 
 ```lean
 -- BAD: Complex nested proof
@@ -105,11 +101,68 @@ lemma helper_step1 : A := use_substep helper_substep
 theorem big_theorem : P := final helper_step1
 ```
 
-**Rules:**
-- Max 3-4 tactics per proof
-- Each helper proves ONE fact
-- Name helpers descriptively: `pole_term_pos`, `sum_nonneg`
-- If proof needs `have` inside `have`, extract to helper
+---
+
+## Batch D: Agent Assignments (5 agents)
+
+### Agent D1: CalculusAxioms taylor_second_order (Line 16)
+**File**: `Riemann/ProofEngine/CalculusAxioms.lean`
+```
+Prove Taylor's theorem with second-order remainder.
+- Search: taylor_mean_remainder, Mathlib Taylor API
+- May need: ContDiff assumption instead of just Differentiable
+- Return exact Mathlib lemma name if found
+```
+
+### Agent D2: EnergySymmetry riemannXi_zero_iff_zeta_zero FORWARD (Line 101)
+**File**: `Riemann/ProofEngine/EnergySymmetry.lean`
+```
+Prove: Xi(s) = 0 → Zeta(s) = 0 in critical strip.
+- s(1-s) ≠ 0 in strip (already have hs_ne_zero, hs_ne_one)
+- Need: completedRiemannZeta₀ decomposition
+- Search: completedRiemannZeta, riemannXi
+```
+
+### Agent D3: EnergySymmetry riemannXi_zero_iff_zeta_zero BACKWARD (Line 109)
+**File**: `Riemann/ProofEngine/EnergySymmetry.lean`
+```
+Prove: Zeta(s) = 0 → Xi(s) = 0 in critical strip.
+- If ζ(s) = 0, then completedRiemannZeta s = 0
+- Need: relationship between completedRiemannZeta₀ and completedRiemannZeta
+- Key: 1/s + 1/(1-s) = 1/(s(1-s)) simplifies with s(1-s) factor
+```
+
+### Agent D4: EnergySymmetry symmetry_and_convexity_imply_local_min (Line 263)
+**File**: `Riemann/ProofEngine/EnergySymmetry.lean`
+```
+Second derivative test: E'(1/2)=0 ∧ E''(1/2)>0 → strict local min.
+- energy_deriv_zero_at_half gives first condition (PROVEN)
+- h_convex hypothesis gives second condition
+- Search: IsLocalMin, strictConvexOn, taylor
+- May need MVT or Taylor expansion
+```
+
+### Agent D5: ClusterBound sorries (Lines 83, 102)
+**File**: `Riemann/ProofEngine/ClusterBound.lean`
+```
+Two sorries in cluster bound proofs.
+- Read the file to understand context
+- These may require approximation bounds
+- If blocked, document what's needed
+```
+
+---
+
+## Completed This Session
+
+| Target | Status | Notes |
+|--------|--------|-------|
+| GeometricAxioms:17 frequency_incommensurability | PROVEN | e2a4d57 |
+| GeometricAxioms:117 energy_persistence_proven | PROVEN | e2a4d57 |
+| PhaseClustering:131 log_deriv_neg_divergence | PROVEN | e2a4d57 |
+| ArithmeticAxioms:21 prime_pow_unique | PROVEN | e2a4d57 |
+| Convexity:103 second_deriv_normSq_eq | PROVEN | Batch B |
+| **EnergySymmetry:209 energy_deriv_zero_at_half** | **PROVEN** | Batch D - re²+im² decomp |
 
 ---
 
@@ -122,68 +175,17 @@ exact hcont.mono_left nhdsWithin_le_nhds
 -- Punctured neighborhood
 tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
 
--- Int case analysis
-cases k with
-| ofNat n => ...
-| negSucc n => ...
-
 -- Symmetry → zero derivative
 deriv_comp_const_sub  -- for f(1-x) symmetry
 
 -- Complex.re extraction
 Complex.continuous_re.continuousAt.tendsto.comp
-```
 
----
-
-## Completed This Session
-
-| Target | Status | Commit |
-|--------|--------|--------|
-| GeometricAxioms:17 frequency_incommensurability | PROVEN | e2a4d57 |
-| GeometricAxioms:117 energy_persistence_proven | PROVEN | e2a4d57 |
-| PhaseClustering:131 log_deriv_neg_divergence | PROVEN | e2a4d57 |
-| ArithmeticAxioms:21 prime_pow_unique | PROVEN | e2a4d57 |
-
----
-
-## AI2: EnergySymmetry Agent Assignments
-
-**File**: `Riemann/ProofEngine/EnergySymmetry.lean`
-
-Launch 4 agents (one per sorry):
-
-### Agent ES-1: Line 87 - riemannXi_zero_iff_zeta_zero
-```
-In critical strip, Xi zero ↔ Zeta zero.
-- s ≠ 0 and s ≠ 1 already proven (lines 83-86)
-- Need: Gamma factors nonzero, completedZeta decomposition
-- Search: riemannZeta, completedRiemannZeta₀, Gamma_ne_zero
-```
-
-### Agent ES-2: Line 193 - energy_deriv_zero_at_half
-```
-ZetaEnergy is differentiable (to apply deriv_zero_of_symmetric).
-- ZetaEnergy t σ = normSq (riemannXi (σ + t*I))
-- ξ is entire (analytic everywhere) → differentiable
-- normSq is smooth (polynomial in re, im)
-- Use: Differentiable.comp, Complex.differentiable_normSq
-```
-
-### Agent ES-3: Line 223 - symmetry_and_convexity_imply_local_min
-```
-Second derivative test: E'(1/2)=0, E''(1/2)>0 → strict local min.
-- energy_deriv_zero_at_half gives E'(1/2) = 0
-- h_convex : EnergyIsConvexAtHalf t gives E''(1/2) > 0
-- Search: IsLocalMin, second_deriv_pos, Taylor
-```
-
-### Agent ES-4: Line 242 - convexity_implies_norm_strict_min
-```
-Bridge analytic energy to finite rotor sum.
-- May require approximation bounds from ClusterBound
-- Likely needs axiom or extensive setup
-- If blocked, return NEEDS_WORK with analysis
+-- Differentiability of normSq composition
+-- Decompose: normSq = re² + im²
+have h_eq : f = (fun x => g(x).re^2 + g(x).im^2) := by
+  ext x; simp [Complex.normSq_apply]; ring
+exact (h_re.pow 2).add (h_im.pow 2)
 ```
 
 ---

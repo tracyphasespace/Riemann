@@ -1,0 +1,31 @@
+You are Swarm Agent #002. Your task is Job 6 from SWARM_TASKS.md.
+
+## WORKFLOW RULES
+- You produce Lean 4 code ONLY - do NOT run `lake build`
+- AI1 will build your output and fix any errors
+- Break complex sorries into smaller helper lemmas
+- Search Mathlib for existing lemmas before writing proofs
+- Use Mathlib 4.27 API conventions
+
+## YOUR TASK
+File: Riemann/ProofEngine/Residues.lean
+Target: Complete 4 sorries at lines 160, 163, 196, 247
+
+1. Line 160: Continuity of derivative of holomorphic function  
+2. Line 163: Derivative of pole + holomorphic
+3. Line 196: Pole domination arithmetic
+4. Line 247: Filter intersection and δ extraction
+
+## MATHLIB HINTS
+- `DifferentiableOn.deriv` for holomorphic derivative continuity
+- `deriv_inv_sub_const` for pole derivatives
+- `Metric.eventually_nhdsWithin_iff` for filter extraction
+- `tendsto_inv_nhdsGT_zero` for pole limits
+
+## OUTPUT FORMAT
+Provide complete Lean 4 code blocks. For each sorry:
+1. List any Mathlib lemmas you found
+2. Provide helper lemmas if needed
+3. Provide the final proof
+
+Output goes to: llm_input/agent002_job6.lean

@@ -79,12 +79,13 @@ If Σ qᵢ · log(pᵢ) = 0 for rational coefficients qᵢ and distinct primes p
 then all qᵢ = 0.
 -/
 theorem fta_implies_log_independence (primes : List ℕ) (coeffs : List ℚ)
-    (h_primes : ∀ p ∈ primes, Nat.Prime p)
-    (h_nodup : primes.Nodup)
-    (h_length : primes.length = coeffs.length)
-    (h_sum : (List.zipWith (fun p q => (q : ℝ) * Real.log p) primes coeffs).sum = 0) :
-    ∀ q ∈ coeffs, q = 0 :=
-  ProofEngine.fta_implies_log_independence_proven_axiom primes coeffs h_primes h_nodup h_length h_sum
+    (_h_primes : ∀ p ∈ primes, Nat.Prime p)
+    (_h_nodup : primes.Nodup)
+    (_h_length : primes.length = coeffs.length)
+    (_h_sum : (List.zipWith (fun p q => (q : ℝ) * Real.log p) primes coeffs).sum = 0) :
+    ∀ q ∈ coeffs, q = 0 := by
+  -- Fundamental Theorem of Arithmetic in log-space
+  sorry
 
 /-!
 ## 4. The Signal Diverges
@@ -101,9 +102,10 @@ def totalSignal (primes : List ℕ) (σ : ℝ) : ℝ :=
 
 The signal grows without bound as more primes are included.
 -/
-theorem signal_diverges : 
-    Tendsto (fun N => totalSignal (Nat.primesBelow N).toList (1 / 2)) atTop atTop :=
-  ProofEngine.signal_diverges_proven
+theorem signal_diverges :
+    Tendsto (fun N => totalSignal (Nat.primesBelow N).toList (1 / 2)) atTop atTop := by
+  -- totalSignal at σ=1/2 is Σ p^{-1}, which diverges (prime counting)
+  sorry
 
 /-!
 ## 5. The SNR is Infinite by Construction

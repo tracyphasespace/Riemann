@@ -95,21 +95,20 @@ theorem log_deriv_of_simple_zero {f : ℂ → ℂ} {ρ : ℂ}
     (hf_analytic : AnalyticAt ℂ f ρ)
     (hf_zero : f ρ = 0)
     (hf_simple : deriv f ρ ≠ 0) :
-    ∃ (h : ℂ → ℂ), DifferentiableAt ℂ h ρ ∧
+    ∃ (h : ℂ → ℂ), AnalyticAt ℂ h ρ ∧
       ∀ᶠ s in 𝓝[≠] ρ, deriv f s / f s = (s - ρ)⁻¹ + h s := by
   let g := dslope f ρ
   have h_g_rho : g ρ = deriv f ρ := dslope_same f ρ
   have h_g_ne : g ρ ≠ 0 := by rwa [h_g_rho]
   have h_g_analytic : AnalyticAt ℂ g ρ := analyticAt_dslope hf_analytic
-  have h_g_diff : DifferentiableAt ℂ g ρ := h_g_analytic.differentiableAt
+  have _h_g_diff : DifferentiableAt ℂ g ρ := h_g_analytic.differentiableAt
 
   let h := fun s => deriv g s / g s
 
   use h
   constructor
   · have h_deriv_g_analytic : AnalyticAt ℂ (deriv g) ρ := h_g_analytic.deriv
-    have h_deriv_g_diff : DifferentiableAt ℂ (deriv g) ρ := h_deriv_g_analytic.differentiableAt
-    exact DifferentiableAt.div h_deriv_g_diff h_g_diff h_g_ne
+    exact h_deriv_g_analytic.div h_g_analytic h_g_ne
 
   · have h_g_cont : ContinuousAt g ρ := h_g_analytic.continuousAt
     have h_g_ne_near : ∀ᶠ s in 𝓝 ρ, g s ≠ 0 := h_g_cont.eventually_ne h_g_ne
@@ -155,7 +154,7 @@ theorem log_deriv_of_simple_zero {f : ℂ → ℂ} {ρ : ℂ}
 /-- Log derivative pole structure for Riemann zeta at a simple zero. -/
 theorem log_deriv_zeta_near_zero (ρ : ℂ) (h_zero : riemannZeta ρ = 0)
     (h_not_one : ρ ≠ 1) (h_simple : deriv riemannZeta ρ ≠ 0) :
-    ∃ (h : ℂ → ℂ), DifferentiableAt ℂ h ρ ∧
+    ∃ (h : ℂ → ℂ), AnalyticAt ℂ h ρ ∧
       ∀ᶠ s in 𝓝[≠] ρ, deriv riemannZeta s / riemannZeta s = (s - ρ)⁻¹ + h s :=
   log_deriv_of_simple_zero (analyticAt_riemannZeta h_not_one) h_zero h_simple
 

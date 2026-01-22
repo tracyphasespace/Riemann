@@ -10,6 +10,9 @@ import Mathlib.Data.Nat.Prime.Basic
 noncomputable section
 open Real Complex BigOperators Finsupp
 
+-- Use star (†) for conjugation: star z = conj z for complex numbers
+local notation "conj" => star
+
 namespace AnalyticBridge
 
 /-!
@@ -67,11 +70,7 @@ The Global Hilbert Space H.
 We use Finsupp (finite support) for algebraic proofs.
 In a full analytic setting, this would be completed to l²(Primes, ℂ²).
 -/
-def GlobalHilbertSpace := Primes →₀ LocalSpace
-
-instance : Zero GlobalHilbertSpace := Finsupp.instZero
-instance : Add GlobalHilbertSpace := Finsupp.instAdd
-instance : Neg GlobalHilbertSpace := Finsupp.instNeg
+abbrev GlobalHilbertSpace := Primes →₀ LocalSpace
 
 -- ==============================================================================
 -- SECTION 2: THE BIVECTOR OPERATORS (B_p)
@@ -93,7 +92,8 @@ def localBivector (v : LocalSpace) : LocalSpace :=
 
 /-- Squaring the local bivector gives negation -/
 lemma localBivector_sq (v : LocalSpace) : localBivector (localBivector v) = -v := by
-  simp only [localBivector, Prod.neg_mk, neg_neg]
+  simp only [localBivector]
+  ext <;> simp
 
 /--
 Global Operator B_p.
@@ -105,8 +105,8 @@ def B_op (p : Primes) (v : GlobalHilbertSpace) : GlobalHilbertSpace :=
 /-- B_p² = -1 on the local component -/
 lemma B_op_sq_neg_local (p : Primes) (v : GlobalHilbertSpace) :
     (B_op p (B_op p v)) p = -(v p) := by
-  simp only [B_op, Finsupp.update_self]
-  exact localBivector_sq (v p)
+  unfold B_op
+  simp only [Finsupp.coe_update, Function.update_self, localBivector_sq]
 
 -- ==============================================================================
 -- SECTION 3: THE OPERATOR K(s) (THE GENERATOR OF FLOW)
@@ -123,14 +123,17 @@ The coefficient a_p(s) = log(p) / p^s is the Dirichlet coefficient.
 
 /-- The Dirichlet coefficient a_p(s) = log p / p^s -/
 def coeff (s : ℂ) (p : Primes) : ℂ :=
-  (Real.log (p : ℕ)) / ((p : ℕ) : ℂ) ^ s
+  (Real.log p.val) / (p.val : ℂ) ^ s
 
 /-- Coefficient is real when s is real -/
 lemma coeff_real_of_real (σ : ℝ) (p : Primes) :
     (coeff σ p).im = 0 := by
   simp only [coeff]
-  -- log(p) is real, p^σ is real for real σ
-  sorry
+  have hp_pos : (0 : ℝ) < p.val := Nat.cast_pos.mpr p.prop.pos
+  have hp_nonneg : (0 : ℝ) ≤ p.val := le_of_lt hp_pos
+  have h_cast : (p.val : ℂ) = ((p.val : ℝ) : ℂ) := by simp only [Complex.ofReal_natCast]
+  rw [h_cast, Complex.ofReal_cpow hp_nonneg σ, ← Complex.ofReal_div]
+  exact Complex.ofReal_im _
 
 /--
 The Operator K(s).
@@ -163,7 +166,12 @@ def innerProd (u v : GlobalHilbertSpace) : ℂ :=
 lemma innerProd_conj_symm (u v : GlobalHilbertSpace) :
     innerProd u v = conj (innerProd v u) := by
   simp only [innerProd, localInner]
-  sorry
+  rw [Finset.union_comm]
+  rw [map_sum]
+  congr 1
+  ext p
+  simp only [map_add, map_mul, star_star]
+  ring
 
 -- ==============================================================================
 -- SECTION 5: THE RAYLEIGH IDENTITY
@@ -185,7 +193,7 @@ The key insight: The imaginary part detects symmetry breaking from σ = 1/2.
 /-- The local bivector is skew-Hermitian: ⟨u, B·v⟩ = -⟨B·u, v⟩ -/
 lemma localBivector_skew_hermitian (u v : LocalSpace) :
     localInner u (localBivector v) = -localInner (localBivector u) v := by
-  simp only [localInner, localBivector, neg_mul, mul_neg]
+  simp only [localInner, localBivector, neg_mul, mul_neg, star_neg, neg_neg]
   ring
 
 /-- The "Charge" or "Spin" of a vector in the local plane -/
@@ -195,16 +203,19 @@ def Q_local (v : LocalSpace) : ℝ :=
 /-- The inner product with the bivector is purely imaginary -/
 lemma localInner_bivector_imaginary (v : LocalSpace) :
     (localInner v (localBivector v)).re = 0 := by
-  simp only [localInner, localBivector, neg_mul]
-  -- ⟨(x,y), (-y,x)⟩ = x̄·(-y) + ȳ·x = -x̄y + ȳx
-  -- Real part: Re(-x̄y) + Re(ȳx) = -Re(x̄y) + Re(ȳx) = 0 by conjugate symmetry
-  sorry
+  simp only [localInner, localBivector, neg_mul, mul_neg]
+  simp only [Complex.add_re, Complex.neg_re, Complex.mul_re,
+             Complex.star_def, Complex.conj_re, Complex.conj_im]
+  ring
 
-/-- The imaginary part of ⟨v, B·v⟩ equals the local charge -/
+/-- The imaginary part of ⟨v, B·v⟩ equals negative the local charge
+    Algebraically verified: ⟨v, Bv⟩.im = -2(v.1.re·v.2.im - v.1.im·v.2.re) = -Q_local v -/
 lemma localInner_bivector_eq_charge (v : LocalSpace) :
-    (localInner v (localBivector v)).im = Q_local v / 2 := by
-  simp only [localInner, localBivector, Q_local]
-  sorry
+    (localInner v (localBivector v)).im = -Q_local v := by
+  simp only [localInner, localBivector, Q_local, neg_mul, mul_neg]
+  simp only [Complex.add_im, Complex.neg_im, Complex.mul_im,
+             Complex.star_def, Complex.conj_re, Complex.conj_im]
+  ring
 
 /--
 **The Rayleigh Identity**
@@ -222,16 +233,80 @@ theorem rayleigh_identity (s : ℂ) (v : GlobalHilbertSpace) :
   exact ⟨(innerProd v (K_op s v)).im, rfl⟩
 
 /--
-**Refined Rayleigh Identity**
+**Helper: Scaling inner product by a complex scalar**
+For purely imaginary inner products, Im(c * z) = Re(c) * Im(z).
+-/
+lemma im_mul_of_re_zero {c z : ℂ} (hz : z.re = 0) :
+    (c * z).im = c.re * z.im := by
+  rw [Complex.mul_im]
+  simp [hz]
+
+/--
+**Helper: Inner product with scaled bivector**
+localInner u (c • localBivector v) = c * localInner u (localBivector v)
+-/
+lemma localInner_smul_bivector (u v : LocalSpace) (c : ℂ) :
+    localInner u (c • localBivector v) = c * localInner u (localBivector v) := by
+  simp only [localInner, localBivector]
+  simp only [Prod.smul_mk, smul_eq_mul, mul_neg]
+  ring
+
+/--
+**Helper: Combining im_mul with localInner_bivector**
+The imaginary part of c * localInner v (localBivector v) equals c.re * (-Q_local v)
+-/
+lemma im_scaled_bivector_inner (v : LocalSpace) (c : ℂ) :
+    (c * localInner v (localBivector v)).im = -(c.re * Q_local v) := by
+  have hre : (localInner v (localBivector v)).re = 0 := localInner_bivector_imaginary v
+  rw [im_mul_of_re_zero hre]
+  rw [localInner_bivector_eq_charge]
+  ring
+
+/--
+**Helper: Single-prime contribution to inner product**
+When v has support at p, the inner product with single p (c • B_p v_p) contributes
+c * localInner (v p) (localBivector (v p)).
+-/
+lemma innerProd_single_bivector (p : Primes) (v : GlobalHilbertSpace) (c : ℂ)
+    (hp : p ∈ v.support) :
+    innerProd v (Finsupp.single p (c • localBivector (v p))) =
+    c * localInner (v p) (localBivector (v p)) := by
+  unfold innerProd
+  -- The single has support {p}, so union with v.support is v.support ∪ {p} = ...
+  -- For q ≠ p, single p _ q = 0 so contribution is 0
+  -- For q = p, we get localInner (v p) (c • localBivector (v p))
+  sorry
+
+/--
+**Refined Rayleigh Identity (Corrected)**
 
 The chiral energy decomposes as a weighted sum of local charges.
+
+**Sign correction**: The lemma `localInner_bivector_eq_charge` shows
+`(localInner v (localBivector v)).im = -Q_local v`, so the decomposition
+has a negative sign.
+
+**Factor correction**: The factor 1/2 was spurious - the definition of Q_local
+already includes the factor of 2, so no additional scaling is needed.
+
+**Mathematical derivation**:
+For each prime p ∈ v.support:
+1. K_op contributes: single p ((coeff s p) • localBivector (v p))
+2. Inner product gives: (coeff s p) * localInner (v p) (localBivector (v p))
+3. Since localInner with bivector is purely imaginary (re = 0):
+   Im(c * z) = c.re * z.im when z.re = 0
+4. By localInner_bivector_eq_charge: z.im = -Q_local(v p)
+5. So each term contributes: -(coeff s p).re * Q_local(v p)
+6. Summing: -(Σ_p (coeff s p).re * Q_local(v p))
 -/
 theorem rayleigh_decomposition (s : ℂ) (v : GlobalHilbertSpace) :
     (innerProd v (K_op s v)).im =
-    v.support.sum fun p => (coeff s p).re * Q_local (v p) / 2 := by
-  -- 1. Expand innerProd and K_op definitions
-  -- 2. Use localInner_bivector_imaginary to isolate imaginary parts
-  -- 3. Use localInner_bivector_eq_charge to relate to Q_local
+    -(v.support.sum fun p => (coeff s p).re * Q_local (v p)) := by
+  -- Expand K_op as sum of single contributions
+  unfold K_op
+  -- The key is that innerProd distributes over sums and each term
+  -- contributes -(coeff s p).re * Q_local (v p)
+  -- This requires careful Finsupp arithmetic which is technical
   sorry
 
 -- ==============================================================================
@@ -249,7 +324,7 @@ The character map χ_p gives the contribution of each prime.
 
 /-- The character map χ_p: Returns the p-th Euler factor -/
 def chi_p (s : ℂ) (p : Primes) : ℂ :=
-  (1 - ((p : ℕ) : ℂ) ^ (-s))⁻¹
+  (1 - (p.val : ℂ) ^ (-s))⁻¹
 
 /--
 The Observable F (Euler Product truncation).
@@ -261,8 +336,21 @@ def F_functional (s : ℂ) (primes : Finset Primes) : ℂ :=
 /-- F is nonzero in the convergence region -/
 lemma F_nonzero_of_convergent (s : ℂ) (hs : 1 < s.re) (primes : Finset Primes) :
     F_functional s primes ≠ 0 := by
-  -- Each factor (1 - p^{-s})^{-1} is nonzero for Re(s) > 1
-  sorry
+  unfold F_functional chi_p
+  rw [Finset.prod_ne_zero_iff]
+  intro p _
+  apply inv_ne_zero
+  intro h_eq
+  have h_one : (p.val : ℂ) ^ (-s) = 1 := (sub_eq_zero.mp h_eq).symm
+  have hp_pos : (0 : ℝ) < p.val := Nat.cast_pos.mpr p.prop.pos
+  have h_norm : ‖(p.val : ℂ) ^ (-s)‖ = (p.val : ℝ) ^ (-s.re) :=
+    Complex.norm_cpow_eq_rpow_re_of_pos hp_pos (-s)
+  rw [h_one, norm_one] at h_norm
+  have h_bound : (p.val : ℝ) ^ (-s.re) < 1 := by
+    apply Real.rpow_lt_one_of_one_lt_of_neg
+    · exact Nat.one_lt_cast.mpr p.prop.one_lt
+    · linarith
+  linarith
 
 /-- The logarithmic derivative of F gives the prime sum -/
 lemma log_deriv_F (s : ℂ) (primes : Finset Primes) :

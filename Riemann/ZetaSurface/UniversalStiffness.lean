@@ -372,6 +372,26 @@ theorem stiffness_list_eq_finset (primes : List ℕ) (h_nodup : primes.Nodup)
     rw [ih h_nodup_tail h_primes_tail]
     rw [List.toFinset_cons, Finset.sum_insert (mt List.mem_toFinset.mp h_not_mem)]
 
+/--
+**Universal Monotonicity from Orthogonality**
+
+If the prime axes are orthogonal (Cl(∞) structure), then the trace is monotonic.
+This is the key bridge from geometry to dynamics.
+-/
+theorem universal_monotonicity_from_orthogonality (t : ℝ) (primes : List ℕ)
+    (_h_nonempty : primes ≠ [])
+    (_h_primes : ∀ p ∈ primes, Nat.Prime p)
+    (_h_pos : ∀ p ∈ primes, 0 < (p : ℝ))
+    (_h_ortho : ∀ p q (hp : p ∈ primes) (hq : q ∈ primes), p ≠ q →
+      GlobalBound.innerProduct
+        (GlobalBound.orthogonalAxis p primes.toFinset (List.mem_toFinset.mpr hp))
+        (GlobalBound.orthogonalAxis q primes.toFinset (List.mem_toFinset.mpr hq)) = 0) :
+    CliffordRH.TraceIsMonotonic t primes := by
+  -- From orthogonality:
+  -- 1. Stiffness is strictly positive (beam_forces_derivative_sign)
+  -- 2. Positive stiffness implies monotonic trace
+  sorry
+
 /-!
 ### Summary: Two Perspectives, One Truth
 

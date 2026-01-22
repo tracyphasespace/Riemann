@@ -23,6 +23,7 @@ import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 import Mathlib.Data.Int.Basic
+import Riemann.ProofEngine.EnergySymmetry
 
 noncomputable section
 open Real Filter Topology BigOperators Complex
@@ -98,10 +99,66 @@ theorem log_ratio_irrational {p q : ℕ} (hp : p.Prime) (hq : q.Prime) (hne : p 
   -- This contradicts FTA: distinct primes can't have equal prime factorizations
   have h_log_p_pos : 0 < Real.log p := Real.log_pos (by exact_mod_cast hp.one_lt)
   have h_log_q_pos : 0 < Real.log q := Real.log_pos (by exact_mod_cast hq.one_lt)
-  have h_ratio_pos : 0 < Real.log p / Real.log q := div_pos h_log_p_pos h_log_q_pos
-  -- The ratio is positive and equals a/b, so if b ≠ 0, we can derive p^|b| = q^|a|
-  -- This contradicts unique factorization since p ≠ q are distinct primes
-  sorry -- FTA contradiction: distinct primes can't have equal powers
+  have h_log_q_ne : Real.log q ≠ 0 := ne_of_gt h_log_q_pos
+  have hb_ne : (b : ℝ) ≠ 0 := by simp [Int.cast_ne_zero.mpr hb]
+  -- From log(p)/log(q) = a/b, get b·log(p) = a·log(q)
+  have h_cross : (b : ℝ) * Real.log p = (a : ℝ) * Real.log q := by
+    field_simp [h_log_q_ne] at h_eq ⊢
+    linarith
+  -- Handle signs: b·log(p) = a·log(q) implies |b|·log(p) = |a|·log(q)
+  have h_abs_cross : (b.natAbs : ℝ) * Real.log p = (a.natAbs : ℝ) * Real.log q := by
+    have hb_abs : |(b : ℝ)| = (b.natAbs : ℝ) := by simp [Int.cast_abs]
+    have ha_abs : |(a : ℝ)| = (a.natAbs : ℝ) := by simp [Int.cast_abs]
+    calc (b.natAbs : ℝ) * Real.log p
+        = |(b : ℝ)| * Real.log p := by rw [← hb_abs]
+      _ = |(b : ℝ) * Real.log p| := by rw [abs_mul, abs_of_pos h_log_p_pos]
+      _ = |(a : ℝ) * Real.log q| := by rw [h_cross]
+      _ = |(a : ℝ)| * Real.log q := by rw [abs_mul, abs_of_pos h_log_q_pos]
+      _ = (a.natAbs : ℝ) * Real.log q := by rw [ha_abs]
+  -- From |b|·log(p) = |a|·log(q), get log(p^|b|) = log(q^|a|)
+  have h_abs : Real.log (p ^ b.natAbs) = Real.log (q ^ a.natAbs) := by
+    rw [Real.log_pow, Real.log_pow]
+    exact h_abs_cross
+  -- Since log is injective on positive reals, p^|b| = q^|a|
+  have h_pow_eq : p ^ b.natAbs = q ^ a.natAbs := by
+    have hp_pos : 0 < (p : ℝ) := Nat.cast_pos.mpr hp.pos
+    have hq_pos : 0 < (q : ℝ) := Nat.cast_pos.mpr hq.pos
+    have hp_pow_pos : 0 < (p : ℝ) ^ b.natAbs := pow_pos hp_pos _
+    have hq_pow_pos : 0 < (q : ℝ) ^ a.natAbs := pow_pos hq_pos _
+    -- log_injOn_pos gives us (p:ℝ)^n = (q:ℝ)^m
+    have h_cast_eq : (p : ℝ) ^ b.natAbs = (q : ℝ) ^ a.natAbs :=
+      Real.log_injOn_pos hp_pow_pos hq_pow_pos h_abs
+    -- Use exact_mod_cast to convert between ↑p^n and ↑(p^n)
+    exact_mod_cast h_cast_eq
+  -- This contradicts FTA: if p^m = q^n with p, q prime and p ≠ q, we get a contradiction
+  -- Case 1: If b = 0, then p^0 = 1 = q^|a|, so q^|a| = 1, impossible since q is prime ≥ 2
+  by_cases hb_zero : b = 0
+  · simp [hb_zero] at hb
+  · -- b ≠ 0, so |b| ≥ 1
+    have hb_natAbs_pos : 0 < b.natAbs := Int.natAbs_pos.mpr hb_zero
+    -- If a = 0, then q^0 = 1 = p^|b|, impossible
+    by_cases ha_zero : a = 0
+    · -- When a = 0: p^|b| = q^0 = 1, contradicting p prime
+      have h_q_pow_zero : q ^ a.natAbs = 1 := by simp [ha_zero]
+      rw [h_q_pow_zero] at h_pow_eq
+      have h_p_eq_one : p = 1 ∨ b.natAbs = 0 := Nat.pow_eq_one.mp h_pow_eq
+      cases h_p_eq_one with
+      | inl h => exact hp.ne_one h
+      | inr h =>
+        have : b.natAbs ≠ 0 := hb_natAbs_pos.ne'
+        exact this h
+    · have ha_natAbs_pos : 0 < a.natAbs := Int.natAbs_pos.mpr ha_zero
+      -- Now we have p^m = q^n with m, n ≥ 1 and p ≠ q both prime
+      -- p divides q^n, so p divides q by Prime.dvd_of_dvd_pow
+      have h_p_dvd_q : p ∣ q ^ a.natAbs := by
+        rw [← h_pow_eq]
+        exact dvd_pow_self p hb_natAbs_pos.ne'
+      have h_p_dvd_q' : p ∣ q := hp.dvd_of_dvd_pow h_p_dvd_q
+      -- Since q is prime and p divides q, we have p = 1 or p = q
+      have : p = 1 ∨ p = q := hq.eq_one_or_self_of_dvd p h_p_dvd_q'
+      cases this with
+      | inl h => exact hp.ne_one h
+      | inr h => exact hne h
 
 /--
 **LEMMA: sin(t·log p) = 0 implies t·log p = k·π for some integer k**
@@ -211,23 +268,24 @@ theorem chirality_implies_centering_clifford (σ : ℝ) (hσ : 0 < σ ∧ σ < 1
   sorry
 
 /-!
-## 4. Complex Chirality via Completed Zeta (Main Theorem)
+## 4. Complex Chirality via Riemann Xi (Main Theorem)
 
 This section implements the bridge from Chirality to RH using:
-1. The completed zeta ξ(s) = completedRiemannZeta₀(s) for its symmetry ξ(s) = ξ(1-s)
-2. The convexity framework from ConvexityCore
+1. The Riemann Xi function ξ(s) for its symmetry ξ(s) = ξ(1-s)
+2. The convexity framework from EnergySymmetry
 3. Energy persistence from FTA-based orthogonality above
 -/
 
 /--
-The Complex Sieve Curve is the completed Riemann Zeta function ξ(s).
+The Complex Sieve Curve is the Riemann Xi function ξ(s).
 We use ξ instead of ζ because:
 - ξ(s) = ξ(1-s) gives exact symmetry around σ = 1/2
 - Same zeros as ζ(s) in the critical strip
 - Entire function (no poles)
+- Strictly zero at zeta zeros
 -/
 def ComplexSieveCurve (σ : ℝ) (t : ℝ) : ℂ :=
-  completedRiemannZeta₀ (σ + t * Complex.I)
+  ProofEngine.EnergySymmetry.riemannXi (σ + t * Complex.I)
 
 /--
 Complex Chirality: The velocity of the sieve curve is bounded away from zero.
@@ -243,17 +301,23 @@ Follows from ξ(s) = ξ(1-s) and Schwarz reflection.
 lemma complex_sieve_symmetry (σ t : ℝ) :
     ‖ComplexSieveCurve σ t‖ = ‖ComplexSieveCurve (1 - σ) t‖ := by
   unfold ComplexSieveCurve
-  -- Use functional equation: ξ(s) = ξ(1-s)
-  -- Need: 1 - (σ + t*I) relates to (1-σ) + t*I via functional equation + Schwarz
-  sorry -- Needs: completedRiemannZeta₀_one_sub + Schwarz reflection
+  -- Use functional equation: ξ(s) = ξ(1-s) and Schwarz reflection
+  -- ξ(σ + it) → ξ(1 - (σ + it)) = ξ((1-σ) - it)
+  -- Then |ξ((1-σ) - it)| = |ξ((1-σ) + it)| by ξ(conj s) = conj(ξ(s))
+  sorry -- Requires Schwarz reflection for completedRiemannZeta₀
 
 /--
 **Symmetry implies T'(1/2) = 0**: The derivative of |ξ|² vanishes at σ = 1/2.
 -/
 lemma complex_sieve_deriv_at_half (t : ℝ) :
     deriv (fun σ => ‖ComplexSieveCurve σ t‖ ^ 2) (1 / 2) = 0 := by
-  -- Symmetric function has zero derivative at center
-  sorry
+  -- ‖ComplexSieveCurve σ t‖ ^ 2 = ZetaEnergy t σ (both are normSq of riemannXi)
+  have h_eq : ∀ σ, ‖ComplexSieveCurve σ t‖ ^ 2 = ProofEngine.EnergySymmetry.ZetaEnergy t σ := by
+    intro σ
+    simp only [ComplexSieveCurve, ProofEngine.EnergySymmetry.ZetaEnergy]
+    rw [← Complex.normSq_eq_norm_sq]
+  simp only [h_eq]
+  exact ProofEngine.EnergySymmetry.energy_deriv_zero_at_half t
 
 /--
 **Main Theorem: Complex Chirality → Centering**
@@ -310,8 +374,8 @@ theorem RH_from_chirality
     s.re = 1/2 := by
   by_contra h_ne
   -- ξ and ζ share zeros in the strip
-  have h_xi_zero : completedRiemannZeta₀ s = 0 := by
-    sorry -- Standard: shared zeros away from poles
+  have h_xi_zero : ProofEngine.EnergySymmetry.riemannXi s = 0 := by
+    apply ProofEngine.EnergySymmetry.riemannXi_zero_of_zeta_zero s h_zero h_strip
   have h_chiral := h_chiral_uniform s.re h_strip.1 h_strip.2 h_ne
   exact chirality_implies_centering s.re h_ne h_chiral ⟨s.im, by simp [ComplexSieveCurve, h_xi_zero]⟩
 

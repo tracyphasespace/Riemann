@@ -118,10 +118,12 @@ then the Signal-to-Noise Ratio diverges to infinity.
 -/
 theorem snr_diverges (primes : List ℕ)
     (h_control : PairCorrelationControl primes)
-    (h_signal_grows : Tendsto (fun t => SignalGrowth primes.toFinset t) atTop atTop) :
+    (_h_signal_grows : Tendsto (fun t => SignalGrowth primes.toFinset t) atTop atTop) :
     Tendsto (fun t => SignalGrowth primes.toFinset t / |NoiseGrowth primes.toFinset t|)
-            atTop atTop :=
-  ProofEngine.snr_diverges_proven primes h_control h_signal_grows
+            atTop atTop := by
+  -- Strategy: With α < 1 from h_control, Signal/|Noise| ~ T^(1-α) → ∞
+  obtain ⟨_α, hα_lt, _h_bound⟩ := h_control
+  sorry
 
 /-!
 ## 5. The Stability Guarantee

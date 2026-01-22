@@ -27,7 +27,8 @@ lemma dirichlet_abs_convergent (primes : List ℕ) (σ : ℝ) (hσ : 1 / 2 < σ)
 lemma cos_sum_bounded (primes : List ℕ) (σ : ℝ) (t : ℝ) :
     |primes.foldl (fun acc p => acc + Real.rpow (p : ℝ) (-σ) * Real.cos (t * Real.log p)) 0| ≤
     primes.foldl (fun acc p => acc + Real.rpow (p : ℝ) (-σ)) 0 := by
-  -- |cos| ≤ 1, so weighted sum of cosines ≤ sum of weights
+  -- Strategy: Use |cos| ≤ 1 and triangle inequality
+  -- Agent proof needs refinement for foldl structure
   sorry
 
 -- NOTE: construction_is_chiral_proven and construction_is_bounded_proven

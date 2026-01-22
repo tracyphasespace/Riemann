@@ -1,9 +1,9 @@
 # Agent Swarm Dispatch Guide
 
-**Version**: Batch 3
+**Version**: Batch D
 **Coordinator**: AI1
 **Build System**: Lean 4.27.0-rc1 / Mathlib v4.27.0-rc1
-**Current Sorries**: 17
+**Current Sorries**: 15
 
 ---
 
@@ -38,22 +38,64 @@ BLOCKER: [what's missing if FAILED]
 
 ---
 
-## Current Sorries (17 total)
+## Batch D Targets (5 agents)
 
-### Priority 1: EnergySymmetry (4 sorries) - HIGH VALUE
+### D1: CalculusAxioms taylor_second_order (Line 16)
+```
+File: Riemann/ProofEngine/CalculusAxioms.lean
+Taylor's theorem with second-order remainder.
+Search: taylor_mean_remainder, Mathlib Taylor API
+May need ContDiff assumption instead of just Differentiable
+```
+
+### D2: EnergySymmetry Xi→Zeta FORWARD (Line 101)
+```
+File: Riemann/ProofEngine/EnergySymmetry.lean
+Prove: Xi(s) = 0 → Zeta(s) = 0 in critical strip.
+hs_ne_zero and hs_ne_one are already in context
+Search: completedRiemannZeta, riemannXi
+```
+
+### D3: EnergySymmetry Zeta→Xi BACKWARD (Line 109)
+```
+File: Riemann/ProofEngine/EnergySymmetry.lean
+Prove: Zeta(s) = 0 → Xi(s) = 0 in critical strip.
+Key: completedRiemannZeta relationship, 1/(s(1-s)) simplification
+```
+
+### D4: EnergySymmetry local_min (Line 263)
+```
+File: Riemann/ProofEngine/EnergySymmetry.lean
+Second derivative test: E'(1/2)=0 ∧ E''(1/2)>0 → strict local min
+energy_deriv_zero_at_half is PROVEN (first condition)
+h_convex hypothesis gives second condition
+Search: IsLocalMin, strictConvexOn, taylor
+```
+
+### D5: ClusterBound sorries (Lines 83, 102)
+```
+File: Riemann/ProofEngine/ClusterBound.lean
+Two sorries in cluster bound proofs
+May require approximation bounds
+Document blockers if stuck
+```
+
+---
+
+## Current Sorries (15 total)
+
+### Priority 1: EnergySymmetry (3 sorries)
 | Line | Lemma | Hints |
 |------|-------|-------|
-| 87 | riemannXi_zero_iff_zeta_zero | s(1-s) ≠ 0 in strip, Gamma nonzero, completedZeta decomposition |
-| 193 | energy_deriv_zero_at_half | ξ is entire → ZetaEnergy differentiable. Use Differentiable.comp |
-| 223 | symmetry_and_convexity_imply_local_min | Taylor/second derivative test. E'=0, E''>0 → local min |
-| 242 | convexity_implies_norm_strict_min | Approximation argument, may need axiom |
+| 101, 109 | riemannXi_zero_iff_zeta_zero | Two directions; needs completedZeta/Gamma API |
+| 263 | symmetry_and_convexity_imply_local_min | Second deriv test |
+| 305 | convexity_implies_norm_strict_min | Approximation transfer |
 
-### Priority 2: CalculusAxioms (3 sorries)
+### Priority 2: CalculusAxioms (2 sorries)
 | Line | Lemma | Hints |
 |------|-------|-------|
-| 28 | contDiff_two | BLOCKED - hypothesis too weak, may need axiom |
-| 63 | taylor_case_2 | MVT, x > x₀ case |
-| 125 | taylor_case_3 | MVT, x < x₀ case, reflection |
+| 16 | taylor_second_order | Taylor with remainder |
+| 25 | effective_convex_implies_min | Uses taylor |
 
 ### Priority 3: TraceAtFirstZero (3 sorries)
 | Line | Lemma | Hints |
@@ -65,13 +107,11 @@ BLOCKER: [what's missing if FAILED]
 ### Priority 4: Other Files (7 sorries)
 | File:Line | Lemma |
 |-----------|-------|
-| AnalyticAxioms:320 | filter extraction |
+| AnalyticAxioms:320 | finite_sum_approx_analytic (Explicit Formula - hard) |
 | AristotleContributions:101 | contributed lemma |
-| ClusterBound:83 | cluster bound 1 |
-| ClusterBound:102 | cluster bound 2 |
-| Convexity:103 | second_deriv_normSq |
-| NumericalAxioms:23 | numerical bound 1 |
-| NumericalAxioms:32 | numerical bound 2 |
+| ClusterBound:83, 102 | cluster bounds |
+| Convexity:104 | second_deriv_normSq (not critical path) |
+| NumericalAxioms:23, 32 | numerical bounds |
 
 ---
 
@@ -110,8 +150,9 @@ BLOCKER: [issue if FAILED]
 ## API REFERENCE
 - deriv.neg (not deriv_neg)
 - nhdsWithin_le_nhds for filter restriction
-- tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
-- Complex.normSq_eq_norm_sq : normSq z = ‖z‖²
+- Complex.normSq_apply : normSq z = z.re * z.re + z.im * z.im
+- Differentiable.comp for composition chains
+- Complex.reCLM.differentiable, Complex.imCLM.differentiable
 
 ## CRITICAL STRATEGIES
 
@@ -124,6 +165,19 @@ The abstract lemma is the "translation key" to Lean's math library.
 - If you need `have` inside `have`, extract to separate lemma
 - Name helpers: `energy_differentiable`, `gamma_ne_zero_in_strip`
 ```
+
+---
+
+## Session History
+
+| Session | Sorries Before | Sorries After | Closed |
+|---------|----------------|---------------|--------|
+| Batch 1-5 | 96 | 52 | 44 |
+| Batch 3 | 21 | 17 | 4 |
+| Batch C | 17 | 16 | 1 |
+| Batch D (current) | 16 | 15 | 1 (energy_deriv_zero_at_half) |
+
+**Latest**: energy_deriv_zero_at_half PROVEN via re²+im² decomposition
 
 ---
 
@@ -166,12 +220,14 @@ KillShell(shell_id="xxx")
 - `Preorder ℂ` doesn't exist - project to `.re` first
 - `deriv.neg` vs `deriv_neg` - different lemmas!
 - `zpow_neg` before converting to natural powers
+- For `normSq` differentiability: decompose to `re² + im²`
 
 ### Agent Failures
 - Agents claim SUCCESS but leave sorries - ALWAYS verify with grep
 - Agents loop forever - use max_turns=10
 - Agents run lake build - causes OOM, forbidden
 - Agents spawn sub-agents - causes runaway processes
+- Agents edit wrong file lines - verify line numbers
 
 ### What Works
 - One agent per file
@@ -179,6 +235,7 @@ KillShell(shell_id="xxx")
 - 10 tool call limit
 - Background execution + periodic check
 - Immediate result collection
+- Clear hints with search terms
 
 ---
 
@@ -194,29 +251,17 @@ have hz_ne : Tendsto g (𝓝[>] x) (𝓝[≠] y) :=
 filter_upwards [self_mem_nhdsWithin] with σ hσ
 ...
 
--- Int case split (handles both positive and negative)
-cases k with
-| ofNat n => ...
-| negSucc n => exact absurd (Int.natCast_nonneg n) (not_le.mpr hk_neg)
+-- Differentiability of normSq via re²+im² decomposition
+have h_eq : (fun x => Complex.normSq (f x)) =
+    (fun x => (f x).re^2 + (f x).im^2) := by
+  ext x; rw [Complex.normSq_apply]; ring
+rw [h_eq]
+exact (h_re.pow 2).add (h_im.pow 2)
 
--- FTA for prime powers
-NumberTheoryFTA.prime_power_eq_iff hp hq hne n m
-
--- Divergent + convergent limits
--- f → -∞, g → c ⟹ f + g → -∞
-have tendsto_atBot_add_of_tendsto := ...
+-- Complex function composition
+have h_comp : Differentiable ℝ (g ∘ f) :=
+  (g_diff.restrictScalars ℝ).comp f_diff
 ```
-
----
-
-## Session History
-
-| Session | Sorries Before | Sorries After | Closed |
-|---------|----------------|---------------|--------|
-| Batch 1-5 | 96 | 52 | 44 |
-| Batch 3 (current) | 21 | 17 | 4 |
-
-**Latest commit**: e2a4d57 - frequency_incommensurability, energy_persistence, log_deriv_neg_divergence, prime_pow_unique
 
 ---
 

@@ -63,13 +63,12 @@ namespace GlobalBound
 /--
 **Theorem: Ergodic Noise Bound**
 -/
-theorem ergodic_noise_eventually_small (S :Finset ℕ) (h_primes : ∀ p ∈ S, Nat.Prime p)
-    (h_nonempty : S.Nonempty) :
+theorem ergodic_noise_eventually_small (S :Finset ℕ) (_h_primes : ∀ p ∈ S, Nat.Prime p)
+    (_h_nonempty : S.Nonempty) :
     ∀ ε > 0, ∀ᶠ t in atTop, |NoiseGrowth S t| < ε * SignalGrowth S t := by
-  intro ε hε
-  -- Uses ergodic_noise_is_little_o
-  have h_o := ergodic_noise_is_little_o S h_primes h_nonempty
-  exact h_o.def hε
+  intro _ε _hε
+  -- Uses ergodic_noise_is_little_o (Noise = o(Signal))
+  sorry
 
 /--
 **Theorem: Signal Eventually Positive**
@@ -87,10 +86,12 @@ theorem signal_eventually_positive (S : Finset ℕ) (h_nonempty : S.Nonempty)
 /--
 **Theorem: Ergodicity Implies Little-o**
 -/
-theorem ergodic_noise_is_little_o (S : Finset ℕ) (h_primes : ∀ p ∈ S, Nat.Prime p)
-    (h_nonempty : S.Nonempty) :
-    (fun t => |NoiseGrowth S t|) =o[atTop] (fun t => SignalGrowth S t) :=
-  ProofEngine.ergodic_noise_is_little_o_proven S h_primes h_nonempty
+theorem ergodic_noise_is_little_o (S : Finset ℕ) (_h_primes : ∀ p ∈ S, Nat.Prime p)
+    (_h_nonempty : S.Nonempty) :
+    (fun t => |NoiseGrowth S t|) =o[atTop] (fun t => SignalGrowth S t) := by
+  -- From ergodicity: time average of Noise → 0, time average of Signal → L > 0
+  -- Therefore |Noise|/|Signal| → 0 as t → ∞
+  sorry
 
 /-!
 ## 3. Constructing PairCorrelationControl from Ergodicity
@@ -100,10 +101,12 @@ theorem ergodic_noise_is_little_o (S : Finset ℕ) (h_primes : ∀ p ∈ S, Nat.
 **Theorem: Ergodicity Implies Pair Correlation Control**
 -/
 theorem ergodic_implies_pair_correlation (primes :List ℕ)
-    (h_primes : ∀ p ∈ primes, Nat.Prime p)
-    (h_nonempty : primes ≠ []) :
-    ∃ (control : PairCorrelationControl primes), control.α < 1 :=
-  ProofEngine.ergodic_implies_pair_correlation_proven primes h_primes h_nonempty
+    (_h_primes : ∀ p ∈ primes, Nat.Prime p)
+    (_h_nonempty : primes ≠ []) :
+    ∃ (control : PairCorrelationControl primes), control.α < 1 := by
+  -- From ergodicity: Noise = o(Signal) with rate T^{-ε}
+  -- This gives α = 1 - ε < 1
+  sorry
 
 /-!
 ## 6. Summary: The Complete Proof Architecture
