@@ -21,9 +21,32 @@ For C² functions, f(x) = f(x₀) + f'(x₀)(x-x₀) + f''(c)(x-x₀)²/2 for so
 lemma taylor_second_order {f : ℝ → ℝ} {x₀ x : ℝ} (hf : ContDiff ℝ 2 f) :
     ∃ c ∈ Icc (min x₀ x) (max x₀ x),
       f x = f x₀ + (deriv f x₀) * (x - x₀) + (deriv (deriv f) c) * (x - x₀)^2 / 2 := by
-  -- Use Mathlib's taylor_mean_remainder_lagrange or similar
-  -- Key: ContDiff ℝ 2 f gives us the required smoothness for Taylor expansion
-  sorry
+  rcases lt_trichotomy x₀ x with hlt | heq | hgt
+  · -- Case x₀ < x: use Mathlib's taylor_mean_remainder_lagrange_iteratedDeriv
+    have hf' : ContDiffOn ℝ 2 f (Icc x₀ x) := hf.contDiffOn
+    obtain ⟨c, hc_mem, hc_eq⟩ := taylor_mean_remainder_lagrange_iteratedDeriv hlt hf'
+    use c
+    constructor
+    · simp only [min_eq_left (le_of_lt hlt), max_eq_right (le_of_lt hlt)]
+      exact ⟨le_of_lt hc_mem.1, le_of_lt hc_mem.2⟩
+    · -- Convert taylorWithinEval to our form
+      -- taylorWithinEval f 1 (Icc x₀ x) x₀ x = f x₀ + deriv f x₀ * (x - x₀)
+      -- iteratedDeriv 2 f = deriv (deriv f)
+      -- Need to relate these and solve for f x
+      sorry
+  · -- Case x₀ = x: trivial
+    subst heq
+    use x₀
+    simp [min_self, max_self, Icc_self, mem_singleton_iff]
+  · -- Case x < x₀: reflect the argument
+    -- Apply the x₀ < x case to (f, x, x₀) and adjust
+    have hf' : ContDiffOn ℝ 2 f (Icc x x₀) := hf.contDiffOn
+    obtain ⟨c, hc_mem, hc_eq⟩ := taylor_mean_remainder_lagrange_iteratedDeriv hgt hf'
+    use c
+    constructor
+    · simp only [min_eq_right (le_of_lt hgt), max_eq_left (le_of_lt hgt)]
+      exact ⟨le_of_lt hc_mem.1, le_of_lt hc_mem.2⟩
+    · sorry
 
 /-- 
 Replacement for `ax_effective_critical_convex_implies_near_min`.
