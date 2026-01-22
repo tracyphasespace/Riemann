@@ -1,181 +1,150 @@
-# AI Agent Communications Hub
+# AI2 Direct Work Instructions
 
-**Last Updated**: 2026-01-22 (Batch D - Updated)
+**Last Updated**: 2026-01-22
 **Build Status**: PASSING
 **Sorry Count**: 15 total
 
 ---
 
-## AGENT RULES (CRITICAL)
+## WORK MODE: DIRECT (NO AGENTS)
 
-### DO NOT:
-- **NEVER run `lake build`** - Only AI1 runs builds
-- **NEVER spawn sub-agents**
-- **NEVER modify files outside your assigned target**
-- **NEVER run indefinitely** - Complete ONE task and return
+**AI2**: Work on sorries directly. Do NOT spawn agents - they cause lockups.
 
-### DO:
-- Read files to understand context
-- Search with Grep/Glob for API patterns
-- Write a SINGLE proof attempt
-- Return your result (success, failure, or strategy)
-- Use max 10 tool calls per task
+### Workflow:
+1. Pick ONE sorry from the priority list below
+2. Read the file to understand context
+3. Search Mathlib for relevant lemmas (Grep/Glob)
+4. Edit the file with your proof attempt
+5. If blocked, document the blocker and move to next sorry
+6. **DO NOT run `lake build`** - AI1 handles builds
 
-### Return Format:
-```
-STATUS: [PROVEN | FAILED | NEEDS_WORK]
-FILE: path/to/file.lean
-LINE: XX
-TECHNIQUE: brief description
-CODE: (if proven, the working proof)
-BLOCKER: (if failed, what's missing)
-```
-
----
-
-## HANDLING NEEDS_WORK (FOR AI2)
-
-When an agent returns **NEEDS_WORK**, follow this process:
-
-### 1. If BLOCKER is "missing Mathlib lemma":
-- Search Mathlib docs for the lemma name
-- If lemma exists: re-dispatch agent with exact lemma name
-- If lemma doesn't exist: **ADD AS AXIOM** with clear documentation
-
-### 2. If BLOCKER is "signature mismatch":
-- AI1 will fix the signature (already done for taylor_second_order)
-- Re-dispatch agent with updated signature
-
-### 3. If BLOCKER is "needs helper lemma":
-- **CREATE THE HELPER LEMMA** first
-- Add it to the file BEFORE the main theorem
-- Then re-dispatch agent for main theorem
-
-### 4. If BLOCKER is "algebraic complexity":
-- Break into 2-3 smaller lemmas
-- Each lemma: max 3-4 tactics
-- Dispatch agents for each helper, then main theorem
-
-**EXAMPLE - Handling D2/D3 blocker:**
-```
-D2/D3 need: completedRiemannZeta₀_eq (decomposition)
-
-Option A: Search Mathlib for existing lemma
-  → Grep for "completedRiemannZeta₀" in .lake/packages/mathlib
-
-Option B: If not found, add axiom:
-  axiom completedRiemannZeta₀_eq (s : ℂ) (hs : s ≠ 0) (hs1 : s ≠ 1) :
-    completedRiemannZeta₀ s = completedRiemannZeta s + s⁻¹ + (1 - s)⁻¹
-
-Option C: Prove from definitions (if tractable)
-```
+### After each attempt:
+- Update this file with your result
+- Move to the next sorry
+- Commit progress periodically
 
 ---
 
 ## Current Sorries (15 total)
 
-### Priority 1: EnergySymmetry (3 sorries)
-| Line | Lemma | Notes |
-|------|-------|-------|
-| 101, 109 | riemannXi_zero_iff_zeta_zero | Two directions; needs completedZeta decomposition |
-| 263 | symmetry_and_convexity_imply_local_min | Second derivative test |
-| 305 | convexity_implies_norm_strict_min | C2 approximation transfer |
+### HIGH PRIORITY - Ready to attempt
 
-### Priority 2: CalculusAxioms (2 sorries) - SIGNATURE FIXED
-| Line | Lemma | Notes |
-|------|-------|-------|
-| 21 | taylor_second_order | **NOW: `ContDiff ℝ 2 f`** - search `taylor_mean_remainder` |
-| 32 | effective_convex_implies_min_proven | Uses taylor_second_order |
+#### 1. CalculusAxioms:21 - taylor_second_order
+**File**: `Riemann/ProofEngine/CalculusAxioms.lean`
+**Status**: Structure done, needs conversion
+```
+Proof structure is in place using taylor_mean_remainder_lagrange_iteratedDeriv.
+Remaining: convert taylorWithinEval to explicit form (f x₀ + deriv f x₀ * (x - x₀))
+Key: iteratedDeriv 2 f = deriv (deriv f) via iteratedDeriv_succ
+```
 
-### Priority 3: TraceAtFirstZero (3 sorries)
-| Line | Lemma | Notes |
-|------|-------|-------|
-| 77 | interval_bound | Interval arithmetic |
-| 143 | first_zero_trace_pos | Numerical bound |
-| 153 | trace_derivative_pos | Positivity argument |
+#### 2. EnergySymmetry:263 - symmetry_and_convexity_imply_local_min
+**File**: `Riemann/ProofEngine/EnergySymmetry.lean`
+**Status**: Second derivative test
+```
+Given: E'(1/2) = 0 (proven), E''(1/2) > 0 (hypothesis)
+Use: strictMonoOn_of_deriv_pos to show E' strictly increasing
+Then: E'(σ) < 0 for σ < 1/2, E'(σ) > 0 for σ > 1/2
+Conclude: E(σ) > E(1/2) for σ ≠ 1/2
+```
 
-### Priority 4: Other Files
-| File | Line | Lemma |
-|------|------|-------|
-| AnalyticAxioms.lean | 320 | finite_sum_approx_analytic |
-| AristotleContributions.lean | 101 | contributed lemma |
-| ClusterBound.lean | 83, 102 | cluster bounds |
-| Convexity.lean | 104 | second_deriv_normSq (OK to skip) |
-| NumericalAxioms.lean | 23, 32 | numerical bounds |
+#### 3. CalculusAxioms:55 - effective_convex_implies_min_proven
+**File**: `Riemann/ProofEngine/CalculusAxioms.lean`
+**Status**: Uses taylor_second_order
+```
+Once taylor_second_order is proven, this follows by:
+- Taylor expansion at 1/2
+- Second order term dominates first order (given ε < δ|σ-1/2|/2)
+```
+
+### MEDIUM PRIORITY - Need axioms or helpers
+
+#### 4-5. EnergySymmetry:101,109 - riemannXi_zero_iff_zeta_zero
+**File**: `Riemann/ProofEngine/EnergySymmetry.lean`
+**Status**: NEEDS AXIOM
+```
+BLOCKER: Mathlib lacks completedRiemannZeta₀ decomposition.
+
+Needed axiom (add to Axioms.lean if not in Mathlib):
+  axiom completedRiemannZeta₀_eq (s : ℂ) (hs : s ≠ 0) (hs1 : s ≠ 1) :
+    completedRiemannZeta₀ s = completedRiemannZeta s + s⁻¹ + (1 - s)⁻¹
+
+With this axiom, both directions follow algebraically:
+- Forward: Xi=0 → s(1-s)Λ₀=1 → s(1-s)Λ=0 → Λ=0 → ζ=0
+- Backward: ζ=0 → Λ=0 → Λ₀=1/(s(1-s)) → Xi=0
+```
+
+#### 6-7. ClusterBound:83,102
+**File**: `Riemann/ProofEngine/ClusterBound.lean`
+**Status**: NEEDS HELPER
+```
+Need c2_stability_transfer helper lemma first.
+If |f-g| < ε and g has strict min with g'' > 2ε, then f has strict min too.
+```
+
+### LOWER PRIORITY
+
+#### 8-10. TraceAtFirstZero:77,143,153
+**File**: `Riemann/ProofEngine/TraceAtFirstZero.lean`
+```
+Line 77: Interval arithmetic mem_mul - needs 16-way sign case splits
+Line 143: first_zero_trace_pos - numerical bound
+Line 153: trace_derivative_pos - positivity
+```
+
+#### 11. EnergySymmetry:305 - convexity_implies_norm_strict_min
+```
+C2 approximation transfer - depends on ClusterBound helpers
+```
+
+#### 12-15. Other files
+- AnalyticAxioms:320 - Explicit Formula (hard, skip for now)
+- AristotleContributions:101
+- Convexity:104 (not critical path)
+- NumericalAxioms:23,32
 
 ---
 
-## Batch D Status
+## Rosetta Stone Technique Summary
 
-| Agent | Task | Status | Next Action |
-|-------|------|--------|-------------|
-| D1 | taylor_second_order | NEEDS_WORK | **SIGNATURE FIXED** - re-dispatch with `ContDiff ℝ 2 f` |
-| D2 | riemannXi forward | NEEDS_WORK | Search Mathlib for decomposition lemma, or add axiom |
-| D3 | riemannXi backward | NEEDS_WORK | Same as D2 |
-| D4 | local_min | RUNNING | Wait for completion |
-| D5 | ClusterBound | NEEDS_WORK | Add `c2_stability_transfer` helper first |
+**What works:** Pure calculus/analysis proofs
+- Use abstract Mathlib lemmas like `strictMonoOn_of_deriv_pos`, `tendsto_inv_nhdsGT_zero`
+- Decompose: normSq = re² + im², then use `Differentiable.pow`
 
-### Batch D Blockers Resolved:
-- [x] D1: `taylor_second_order` signature changed to `ContDiff ℝ 2 f`
-
-### Batch D Blockers Pending:
-- [ ] D2/D3: Need `completedRiemannZeta₀_eq` decomposition
-- [ ] D5: Need `c2_stability_transfer` helper lemma
-
----
-
-## CRITICAL: Proof Strategies
-
-### 1. Rosetta Stone Technique
-**Use abstract Mathlib lemmas, NOT domain-specific reasoning.**
-
-```lean
--- GOOD: Find abstract Mathlib lemma that applies
-theorem zeta_thing : ... := by
-  exact tendsto_inv_nhdsGT_zero.comp h_translation
-```
-
-### 2. ALWAYS Use Small Helper Lemmas
-**Max 3-4 tactics per proof. Decompose into atomic helpers.**
-
-```lean
--- GOOD: Separate helper lemmas
-lemma helper_substep : X := by simple_proof
-lemma helper_step1 : A := use_substep helper_substep
-theorem big_theorem : P := final helper_step1
-```
+**What needs axioms:** Zeta-specific facts
+- `completedRiemannZeta₀` decomposition not in Mathlib
+- Add as axiom with clear mathematical justification
 
 ---
 
 ## Techniques Reference
 
 ```lean
--- Taylor with ContDiff
--- Search: taylor_mean_remainder_lagrange, taylor_mean_remainder_bound
--- Requires: ContDiff ℝ n f or ContDiffOn
+-- Taylor (Mathlib)
+taylor_mean_remainder_lagrange_iteratedDeriv
+iteratedDeriv_succ : iteratedDeriv (n+1) f = deriv (iteratedDeriv n f)
 
--- Filter nhdsWithin restriction
-exact hcont.mono_left nhdsWithin_le_nhds
+-- Monotonicity from derivative
+strictMonoOn_of_deriv_pos : Convex D → ContinuousOn f D →
+  (∀ x ∈ interior D, 0 < deriv f x) → StrictMonoOn f D
 
--- Differentiability of normSq composition (PROVEN pattern)
-have h_eq : f = (fun x => g(x).re^2 + g(x).im^2) := by
-  ext x; simp [Complex.normSq_apply]; ring
+-- Differentiability of normSq
+have h_eq : (fun x => normSq (f x)) = (fun x => (f x).re^2 + (f x).im^2) := by
+  ext x; rw [Complex.normSq_apply]; ring
 exact (h_re.pow 2).add (h_im.pow 2)
 ```
 
 ---
 
-## Completed This Session
+## Session Progress
 
-| Target | Status | Notes |
-|--------|--------|-------|
-| GeometricAxioms:17 frequency_incommensurability | PROVEN | e2a4d57 |
-| GeometricAxioms:117 energy_persistence_proven | PROVEN | e2a4d57 |
-| PhaseClustering:131 log_deriv_neg_divergence | PROVEN | e2a4d57 |
-| ArithmeticAxioms:21 prime_pow_unique | PROVEN | e2a4d57 |
-| Convexity:103 second_deriv_normSq_eq | PROVEN | Batch B |
-| **EnergySymmetry:209 energy_deriv_zero_at_half** | **PROVEN** | Batch D |
+| Sorry | Status | Notes |
+|-------|--------|-------|
+| CalculusAxioms:21 | IN_PROGRESS | Structure done |
+| EnergySymmetry:209 | PROVEN | re²+im² decomposition |
+| EnergySymmetry:101,109 | BLOCKED | Need axiom |
+| ClusterBound:83,102 | BLOCKED | Need helper |
 
 ---
 
-*AI1 is build coordinator. Agents report results here.*
+*AI1 runs builds. AI2 works directly on proofs.*
