@@ -74,19 +74,34 @@ def Interval.mul (I J : Interval) : Interval :=
    max p1 (max p2 (max p3 p4)),
    le_trans (min_le_left _ _) (le_max_left _ _)⟩
 
+/-!
+### Helper lemmas for mem_mul (Rosetta Stone: small atomic units)
+-/
+
+/-- Helper: For x ∈ [a,b], y ∈ [c,d] with x,y ≥ 0, product bounds follow from monotonicity. -/
+private lemma mul_bounds_nonneg {a b c d x y : ℝ}
+    (hx : a ≤ x ∧ x ≤ b) (hy : c ≤ y ∧ y ≤ d)
+    (hx_nn : 0 ≤ x) (hy_nn : 0 ≤ y) (ha_nn : 0 ≤ a) (hc_nn : 0 ≤ c) :
+    a * c ≤ x * y ∧ x * y ≤ b * d := by
+  constructor
+  · exact mul_le_mul hx.1 hy.1 hc_nn (le_trans ha_nn hx.1)
+  · exact mul_le_mul hx.2 hy.2 hy_nn (le_trans hx_nn hx.2)
+
+/-- Helper: Product is bounded by one of the four corners (general case). -/
+private lemma product_in_corners {a b c d x y : ℝ}
+    (hx : a ≤ x ∧ x ≤ b) (hy : c ≤ y ∧ y ≤ d) :
+    min (a*c) (min (a*d) (min (b*c) (b*d))) ≤ x * y ∧
+    x * y ≤ max (a*c) (max (a*d) (max (b*c) (b*d))) := by
+  -- The extrema of bilinear x*y on [a,b]×[c,d] occur at corners.
+  -- AI2 ATTEMPTED: nlinarith with sq_nonneg hints
+  -- FAILED: simp made no progress on le_min_iff, linarith failed
+  -- NEEDS: Different proof structure or polyrith
+  constructor <;> sorry
+
 theorem mem_mul {I J : Interval} {x y : ℝ} (hx : I.contains x) (hy : J.contains y) :
     (Interval.mul I J).contains (x * y) := by
-  -- Unpack bounds
-  obtain ⟨lx, hx_hi⟩ := hx
-  obtain ⟨ly, hy_hi⟩ := hy
-  -- The product x*y lies between the min and max of the four corner products
-  -- This is a standard result from interval arithmetic
-  constructor
-  · -- Lower bound: x*y ≥ min of corners
-    -- Uses the fact that for x ∈ [a,b] and y ∈ [c,d], x*y is bounded by corner products
-    sorry
-  · -- Upper bound: x*y ≤ max of corners
-    sorry
+  simp only [Interval.mul, Interval.contains] at *
+  exact product_in_corners hx hy
 
 /-!
 ## 3. Transcendental Bounds (Log and Cos)
