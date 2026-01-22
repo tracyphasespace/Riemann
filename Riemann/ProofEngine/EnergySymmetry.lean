@@ -27,6 +27,7 @@ import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.Deriv
+import Mathlib.Analysis.Calculus.DerivativeTest
 import Riemann.ZetaSurface.CliffordRH
 import Riemann.ProofEngine.AnalyticAxioms
 
@@ -291,63 +292,67 @@ then σ=1/2 is a strict local minimum.
 theorem symmetry_and_convexity_imply_local_min (t : ℝ)
     (h_convex : EnergyIsConvexAtHalf t) :
     ∃ δ > 0, ∀ σ, σ ≠ 1/2 ∧ |σ - 1/2| < δ → ZetaEnergy t (1/2) < ZetaEnergy t σ := by
-  -- Second derivative test:
-  -- E'(1/2) = 0 (by symmetry, proven in energy_deriv_zero_at_half)
-  -- E''(1/2) > 0 (hypothesis h_convex)
-  -- Therefore 1/2 is a strict local minimum
+  -- Use Mathlib's second derivative test: isLocalMin_of_deriv_deriv_pos
+  -- This requires: E''(1/2) > 0, E'(1/2) = 0, E continuous at 1/2
 
-  have h_deriv_zero : deriv (fun σ => ZetaEnergy t σ) (1/2) = 0 :=
-    energy_deriv_zero_at_half t
+  let f := fun σ => ZetaEnergy t σ
 
-  -- Standard second derivative test argument:
-  -- Since E''(1/2) > 0, by continuity there exists δ > 0 such that E'' > 0 on (1/2-δ, 1/2+δ).
-  -- This means E' is strictly increasing on this interval.
-  -- Combined with E'(1/2) = 0:
-  --   • E'(σ) < 0 for σ ∈ (1/2-δ, 1/2)  [E' increasing through 0]
-  --   • E'(σ) > 0 for σ ∈ (1/2, 1/2+δ)
-  -- By MVT, for σ ≠ 1/2 in the interval:
-  --   E(σ) - E(1/2) = E'(ξ)(σ - 1/2) for some ξ between 1/2 and σ
-  -- If σ > 1/2: E'(ξ) > 0 and σ - 1/2 > 0, so E(σ) > E(1/2)
-  -- If σ < 1/2: E'(ξ) < 0 and σ - 1/2 < 0, so E(σ) > E(1/2)
+  have h_deriv_zero : deriv f (1/2) = 0 := energy_deriv_zero_at_half t
 
-  -- We use a continuity argument: since E''(1/2) > 0 and E'' is continuous,
-  -- there exists δ > 0 such that E'' > 0 on (1/2-δ, 1/2+δ).
-  -- Then E' is strictly increasing, and combined with E'(1/2) = 0, we get
-  -- E'(σ) < 0 for σ < 1/2 and E'(σ) > 0 for σ > 1/2 (near 1/2).
-  -- By MVT, E(σ) > E(1/2) for σ ≠ 1/2 near 1/2.
+  -- ZetaEnergy is continuous (composition of continuous functions)
+  have h_cont : ContinuousAt f (1/2) := by
+    -- f = normSq ∘ riemannXi ∘ (σ ↦ σ + it)
+    -- riemannXi is continuous (entire functions are continuous)
+    have h_xi_cont : Continuous riemannXi := by
+      unfold riemannXi
+      exact ((continuous_id.mul (continuous_const.sub continuous_id)).mul
+        differentiable_completedZeta₀.continuous).sub continuous_const
+    -- The composition is continuous
+    have h_line_cont : Continuous (fun σ : ℝ => (σ : ℂ) + t * I) :=
+      Complex.continuous_ofReal.add continuous_const
+    exact (Complex.continuous_normSq.comp (h_xi_cont.comp h_line_cont)).continuousAt
 
-  -- For this proof, we need ZetaEnergy to be C² (twice continuously differentiable).
-  -- Since riemannXi is entire (analytic) and ZetaEnergy = |riemannXi|² = re² + im²,
-  -- ZetaEnergy is real-analytic, hence C∞.
+  -- Apply second derivative test (gives non-strict IsLocalMin)
+  have h_local_min : IsLocalMin f (1/2) :=
+    isLocalMin_of_deriv_deriv_pos h_convex h_deriv_zero h_cont
 
-  -- Extract δ from continuity of E'' at 1/2 using h_convex > 0
-  -- For now, we use δ = 1/4 as a fixed choice.
-  use 1/4
-  constructor
-  · norm_num
-  · intro σ ⟨hne, habs⟩
-    -- The second derivative test:
-    -- E(σ) - E(1/2) = E'(1/2)(σ - 1/2) + E''(c)(σ - 1/2)²/2 for some c between 1/2 and σ
-    -- With E'(1/2) = 0: E(σ) - E(1/2) = E''(c)(σ - 1/2)²/2
-    -- Since |σ - 1/2| < 1/4, c is close to 1/2, and E''(c) > 0 by continuity from E''(1/2) > 0
-    -- Therefore E(σ) > E(1/2)
+  -- IsLocalMin means ∀ᶠ x in 𝓝 (1/2), f(1/2) ≤ f(x)
+  -- We need to upgrade to strict inequality for x ≠ 1/2
 
-    -- Key facts:
-    -- (1) E'(1/2) = 0 from h_deriv_zero
-    -- (2) E''(1/2) > 0 from h_convex
-    -- (3) (σ - 1/2)² > 0 since σ ≠ 1/2
+  -- Extract δ from the eventually statement
+  rw [IsLocalMin] at h_local_min
+  obtain ⟨U, hU_mem, hU_min⟩ := Filter.eventually_iff_exists_mem.mp h_local_min
+  obtain ⟨ε, hε_pos, hε_ball⟩ := Metric.mem_nhds_iff.mp hU_mem
 
-    -- The full formal proof requires:
-    -- - ContDiff ℝ 2 (fun σ => ZetaEnergy t σ) to apply Taylor's theorem
-    -- - Continuity of E'' to extract δ where E''(c) > 0 for c near 1/2
-    -- These follow from ZetaEnergy being real-analytic (composition of analytic functions)
-    -- which requires more Mathlib infrastructure to formalize.
+  use ε / 2, by linarith
+  intro σ ⟨hne, habs⟩
 
-    -- For now, we document the proof obligation:
-    -- NEEDS: Proof that ZetaEnergy is ContDiff ℝ 2
-    -- Once that's established, use taylor_second_order to expand E(σ) around 1/2,
-    -- then use continuity of E'' to show E''(c) > 0 for c between 1/2 and σ.
-    sorry
+  -- We have f(1/2) ≤ f(σ) from h_local_min
+  have h_le : f (1/2) ≤ f σ := by
+    apply hU_min
+    apply hε_ball
+    rw [Metric.mem_ball, Real.dist_eq]
+    linarith
+
+  -- Now prove strict inequality using E'' > 0
+  -- If f(σ) = f(1/2), then by Rolle's theorem, f' has a zero between them.
+  -- But f' is strictly increasing (since f'' > 0), and f'(1/2) = 0 is the only zero.
+  -- This contradicts σ ≠ 1/2.
+
+  by_contra h_eq_neg
+  push_neg at h_eq_neg
+  have h_eq : f σ = f (1/2) := le_antisymm h_eq_neg h_le
+
+  -- If f(σ) = f(1/2) and σ ≠ 1/2, Rolle's theorem gives ξ between them with f'(ξ) = 0
+  -- But this contradicts the strict monotonicity of f' from f'' > 0
+
+  -- For now, we use the fact that convexity + critical point = strict minimum
+  -- The rigorous proof requires showing f is strictly convex near 1/2
+  -- which follows from f'' > 0 on a neighborhood
+
+  -- AXIOM: Second derivative test gives strict minimum when f'' > 0
+  -- This is standard calculus but requires careful Mathlib formalization
+  sorry
 
 /--
 **Bridge Theorem**: Convexity of the analytic energy implies the finite sum
