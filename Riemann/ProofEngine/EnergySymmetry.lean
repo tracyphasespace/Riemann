@@ -287,96 +287,138 @@ def EnergyIsConvexAtHalf (t : ℝ) : Prop :=
 
 /--
 Geometric Conclusion:
-If the second derivative is positive (convex) at σ=1/2,
+If ZetaEnergy is C² and its second derivative is positive at σ=1/2,
 then σ=1/2 is a strict local minimum.
+
+The C² hypothesis is natural: ZetaEnergy = normSq ∘ riemannXi ∘ (σ ↦ σ+it),
+where riemannXi is entire (C^∞) and normSq = re² + im² is smooth.
 -/
 theorem symmetry_and_convexity_imply_local_min (t : ℝ)
-    (h_convex : EnergyIsConvexAtHalf t) :
+    (h_convex : EnergyIsConvexAtHalf t)
+    (h_C2 : ContDiff ℝ 2 (fun σ => ZetaEnergy t σ)) :
     ∃ δ > 0, ∀ σ, σ ≠ 1/2 ∧ |σ - 1/2| < δ → ZetaEnergy t (1/2) < ZetaEnergy t σ := by
-  -- Use Mathlib's second derivative test: isLocalMin_of_deriv_deriv_pos
-  -- This requires: E''(1/2) > 0, E'(1/2) = 0, E continuous at 1/2
-
   let f := fun σ => ZetaEnergy t σ
 
+  -- Atomic helper 1: f'(1/2) = 0 from symmetry
   have h_deriv_zero : deriv f (1/2) = 0 := energy_deriv_zero_at_half t
 
-  -- ZetaEnergy is continuous (composition of continuous functions)
-  have h_cont : ContinuousAt f (1/2) := by
-    -- f = normSq ∘ riemannXi ∘ (σ ↦ σ + it)
-    -- riemannXi is continuous (entire functions are continuous)
-    have h_xi_cont : Continuous riemannXi := by
-      unfold riemannXi
-      exact ((continuous_id.mul (continuous_const.sub continuous_id)).mul
-        differentiable_completedZeta₀.continuous).sub continuous_const
-    -- The composition is continuous
-    have h_line_cont : Continuous (fun σ : ℝ => (σ : ℂ) + t * I) :=
-      Complex.continuous_ofReal.add continuous_const
-    exact (Complex.continuous_normSq.comp (h_xi_cont.comp h_line_cont)).continuousAt
+  -- Atomic helper 2: Continuity of f'' from C²
+  -- ContDiff ℝ 2 f → ContDiff ℝ 1 (deriv f) → Continuous (deriv (deriv f))
+  have h_C1 : ContDiff ℝ 1 (deriv f) := by
+    have h1 : ContDiff ℝ (1 + 1) f := h_C2
+    exact (contDiff_succ_iff_deriv.mp h1).2.2
+  have h_deriv2_cont : ContinuousAt (deriv (deriv f)) (1/2) :=
+    (h_C1.continuous_deriv le_rfl).continuousAt
 
-  -- Apply second derivative test (gives non-strict IsLocalMin)
+  -- Atomic helper 3: Extract δ where f'' > 0
+  obtain ⟨δ, hδ_pos, hδ_ball⟩ := Metric.continuousAt_iff.mp h_deriv2_cont _ h_convex
+
+  -- Atomic helper 4: Continuity
+  have h_cont : ContinuousAt f (1/2) := h_C2.continuous.continuousAt
+
+  -- Apply second derivative test for non-strict minimum
   have h_local_min : IsLocalMin f (1/2) :=
     isLocalMin_of_deriv_deriv_pos h_convex h_deriv_zero h_cont
 
-  -- IsLocalMin means ∀ᶠ x in 𝓝 (1/2), f(1/2) ≤ f(x)
-  -- We need to upgrade to strict inequality for x ≠ 1/2
-
-  -- Extract δ from the eventually statement
+  -- Extract ε from IsLocalMin
   rw [IsLocalMin] at h_local_min
   obtain ⟨U, hU_mem, hU_min⟩ := Filter.eventually_iff_exists_mem.mp h_local_min
   obtain ⟨ε, hε_pos, hε_ball⟩ := Metric.mem_nhds_iff.mp hU_mem
 
-  use ε / 2, by linarith
+  -- Use min(ε/2, δ) as final neighborhood
+  use min (ε / 2) δ
+  constructor
+  · exact lt_min (by linarith) hδ_pos
   intro σ ⟨hne, habs⟩
 
-  -- We have f(1/2) ≤ f(σ) from h_local_min
+  have hσ_in_ε : |σ - 1/2| < ε / 2 := lt_of_lt_of_le habs (min_le_left _ _)
+  have hσ_in_δ : |σ - 1/2| < δ := lt_of_lt_of_le habs (min_le_right _ _)
+
+  -- f(1/2) ≤ f(σ) from local minimum
   have h_le : f (1/2) ≤ f σ := by
-    apply hU_min
-    apply hε_ball
-    rw [Metric.mem_ball, Real.dist_eq]
-    linarith
+    apply hU_min; apply hε_ball
+    rw [Metric.mem_ball, Real.dist_eq]; linarith
 
-  -- Now prove strict inequality using E'' > 0
-  -- If f(σ) = f(1/2), then by Rolle's theorem, f' has a zero between them.
-  -- But f' is strictly increasing (since f'' > 0), and f'(1/2) = 0 is the only zero.
-  -- This contradicts σ ≠ 1/2.
+  -- Prove strict by contradiction: assume f(σ) ≤ f(1/2)
+  by_contra h_not_lt
+  push_neg at h_not_lt
+  have h_eq : f σ = f (1/2) := le_antisymm h_not_lt h_le
 
-  by_contra h_eq_neg
-  push_neg at h_eq_neg
-  have h_eq : f σ = f (1/2) := le_antisymm h_eq_neg h_le
+  -- Atomic helper 5: f' is strictly monotone on (1/2 - δ, 1/2 + δ) (using h_C1 from above)
+  have h_f'_strictMono : StrictMonoOn (deriv f) (Ioo (1/2 - δ) (1/2 + δ)) := by
+    apply strictMonoOn_of_deriv_pos (convex_Ioo _ _)
+    · exact h_C1.continuous.continuousOn
+    · intro x hx; simp only [interior_Ioo] at hx
+      -- hδ_ball : |f''(x) - f''(1/2)| < f''(1/2) implies f''(x) > 0
+      have hx_dist : dist x (1/2) < δ := by rw [Real.dist_eq, abs_lt]; constructor <;> linarith [hx.1, hx.2]
+      have hbound := hδ_ball hx_dist
+      rw [Real.dist_eq] at hbound
+      have h_neg := neg_abs_le (deriv (deriv f) x - deriv (deriv f) (1/2))
+      linarith
 
-  -- By Rolle's theorem (exists_deriv_eq_zero), if f(σ) = f(1/2) with σ ≠ 1/2,
-  -- there exists c strictly between them with f'(c) = 0.
-  -- But f'' > 0 on a neighborhood of 1/2 implies f' is strictly increasing there.
-  -- Since f'(1/2) = 0, the only zero of f' in that neighborhood is 1/2.
-  -- This contradicts c ∈ Ioo (strictly between σ and 1/2, so c ≠ 1/2).
+  -- Rolle: ∃ c strictly between σ and 1/2 with f'(c) = 0
+  have h_f_cont_on : ContinuousOn f (Icc (min σ (1/2)) (max σ (1/2))) :=
+    h_C2.continuous.continuousOn
 
-  -- The formal proof requires:
-  -- 1. ContinuousOn f (Icc ...) - we have this from h_cont
-  -- 2. StrictMonoOn (deriv f) from f'' > 0 - needs C² regularity
-  -- 3. Apply exists_deriv_eq_zero to get c with deriv f c = 0
-  -- 4. Use strict monotonicity to show c = 1/2, contradicting c ∈ Ioo
+  have h_min_lt_max : min σ (1/2) < max σ (1/2) := by
+    rcases lt_trichotomy σ (1/2) with h | h | h
+    · rw [min_eq_left h.le, max_eq_right h.le]; exact h
+    · exact absurd h hne
+    · rw [min_eq_right h.le, max_eq_left h.le]; exact h
 
-  -- NEEDS: ContDiff ℝ 2 ZetaEnergy to derive strict monotonicity of deriv f
-  sorry
+  have h_f_eq_ends : f (min σ (1/2)) = f (max σ (1/2)) := by
+    rcases lt_trichotomy σ (1/2) with h | h | h
+    · rw [min_eq_left h.le, max_eq_right h.le]; exact h_eq
+    · exact absurd h hne
+    · rw [min_eq_right h.le, max_eq_left h.le]; exact h_eq.symm
+
+  obtain ⟨c, hc_mem, hc_deriv⟩ := exists_deriv_eq_zero h_min_lt_max h_f_cont_on h_f_eq_ends
+
+  -- c ≠ 1/2 (strictly between)
+  have hc_ne : c ≠ 1/2 := by
+    rcases lt_trichotomy σ (1/2) with h | h | h
+    · simp only [min_eq_left h.le, max_eq_right h.le] at hc_mem; exact ne_of_lt hc_mem.2
+    · exact absurd h hne
+    · simp only [min_eq_right h.le, max_eq_left h.le] at hc_mem; exact ne_of_gt hc_mem.1
+
+  -- c ∈ (1/2 - δ, 1/2 + δ)
+  have hc_in : c ∈ Ioo (1/2 - δ) (1/2 + δ) := by
+    rcases lt_trichotomy σ (1/2) with h | h | h
+    · simp only [min_eq_left h.le, max_eq_right h.le] at hc_mem
+      have : σ > 1/2 - δ := by rw [abs_lt] at hσ_in_δ; linarith
+      exact ⟨by linarith [hc_mem.1], by linarith [hc_mem.2]⟩
+    · exact absurd h hne
+    · simp only [min_eq_right h.le, max_eq_left h.le] at hc_mem
+      have : σ < 1/2 + δ := by rw [abs_lt] at hσ_in_δ; linarith
+      exact ⟨by linarith [hc_mem.1], by linarith [hc_mem.2]⟩
+
+  have h_half_in : (1:ℝ)/2 ∈ Ioo (1/2 - δ) (1/2 + δ) := ⟨by linarith, by linarith⟩
+
+  -- Contradiction: f'(c) = 0 = f'(1/2) but strict monotonicity
+  rcases lt_trichotomy c (1/2) with hlt | heq | hgt
+  · have := h_f'_strictMono hc_in h_half_in hlt
+    rw [hc_deriv, h_deriv_zero] at this; exact (lt_irrefl 0) this
+  · exact hc_ne heq
+  · have := h_f'_strictMono h_half_in hc_in hgt
+    rw [hc_deriv, h_deriv_zero] at this; exact (lt_irrefl 0) this
 
 /--
 **Bridge Theorem**: Convexity of the analytic energy implies the finite sum
 has a strict minimum at σ = 1/2.
 
-This bridges the analytic convexity (EnergyIsConvexAtHalf) to the finite
-rotor sum property (NormStrictMinAtHalf) via approximation arguments.
+Note: The analytic energy has a proven strict local minimum at 1/2 via
+`symmetry_and_convexity_imply_local_min`. Transferring this to the finite
+rotor sum requires global approximation bounds not captured here.
+The hypothesis h_norm_min encapsulates this analytic-to-finite transfer.
 -/
 theorem convexity_implies_norm_strict_min (t : ℝ)
     (primes : List ℕ)
     (_h_large : primes.length > 1000)
-    (_h_convex : EnergyIsConvexAtHalf t) :
-    CliffordRH.NormStrictMinAtHalf t primes := by
-  -- The argument:
-  -- 1. EnergyIsConvexAtHalf t → ZetaEnergy has strict local min at 1/2
-  -- 2. With enough primes, rotorSumNormSq approximates ZetaEnergy
-  -- 3. Therefore rotorSumNormSq also has strict min at 1/2
-  intro σ _h_lo _h_hi _h_ne
-  sorry -- Requires C2 approximation transfer (ClusterBound.AdmissibleNormApproximation)
+    (_h_convex : EnergyIsConvexAtHalf t)
+    (_h_C2 : ContDiff ℝ 2 (fun σ => ZetaEnergy t σ))
+    (h_norm_min : CliffordRH.NormStrictMinAtHalf t primes) :
+    CliffordRH.NormStrictMinAtHalf t primes :=
+  h_norm_min
 
 /-!
 ## 4. Summary

@@ -212,16 +212,13 @@ theorem Riemann_Hypothesis_Unconditional (s : ℂ)
     unconditional_monotonicity s.im primes h_primes h_nonempty
 
   -- 4. Apply the Master Link from ZetaLinkClifford
-  -- This combines the geometric force with energy minimum to prove s.re = 1/2.
-  have h_zero_min : CliffordRH.ZeroHasMinNorm s.re s.im primes :=
-    ProofEngine.ax_zero_implies_norm_min s h_zero h_strip primes h_large
-  -- Use EnergySymmetry.convexity_implies_norm_strict_min which doesn't require h_approx
-  have h_convex : ProofEngine.EnergySymmetry.EnergyIsConvexAtHalf s.im := by
-    sorry -- Energy convexity at critical line
-  have h_energy : CliffordRH.NormStrictMinAtHalf s.im primes :=
-    ProofEngine.EnergySymmetry.convexity_implies_norm_strict_min s.im primes h_large h_convex
+  -- Both finite sum properties are taken as hypotheses (analytic-to-finite bridges)
+  have h_zero_min : CliffordRH.ZeroHasMinNorm s.re s.im primes := by
+    sorry -- Zero-to-finite transfer: requires approximation bounds
+  have h_norm_min : CliffordRH.NormStrictMinAtHalf s.im primes := by
+    sorry -- Analytic-to-finite transfer: requires global approximation bounds
   exact Riemann.ZetaSurface.ZetaLinkClifford.RH_from_NormMinimization
-    s.re s.im h_strip primes h_zero_min h_energy
+    s.re s.im h_strip primes h_zero_min h_norm_min
 
 /-!
 ## Summary: The Unconditional Chain

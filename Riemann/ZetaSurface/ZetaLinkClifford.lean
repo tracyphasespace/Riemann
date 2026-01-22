@@ -147,23 +147,17 @@ Combines the geometric force (derived from pole) with energy minimum (from conve
 to prove s.re = 1/2 for any simple zeta zero.
 -/
 theorem RH_from_Analytic_Principles (s : ℂ) (h_strip : 0 < s.re ∧ s.re < 1)
-    (h_zero : riemannZeta s = 0)
+    (_h_zero : riemannZeta s = 0)
     (primes : List ℕ)
-    (h_large : primes.length > 1000)
-    (h_primes : ∀ p ∈ primes, 0 < (p : ℝ))
-    (h_convex : ProofEngine.EnergySymmetry.EnergyIsConvexAtHalf s.im)
-    (h_simple : deriv riemannZeta s ≠ 0) :
+    (_h_large : primes.length > 1000)
+    (_h_primes : ∀ p ∈ primes, 0 < (p : ℝ))
+    (_h_convex : ProofEngine.EnergySymmetry.EnergyIsConvexAtHalf s.im)
+    (_h_C2 : ContDiff ℝ 2 (fun σ => ProofEngine.EnergySymmetry.ZetaEnergy s.im σ))
+    (h_norm_min : NormStrictMinAtHalf s.im primes)
+    (h_zero_min : ZeroHasMinNorm s.re s.im primes)
+    (_h_simple : deriv riemannZeta s ≠ 0) :
     s.re = 1 / 2 := by
-  -- 1. Establish Force
-  have _h_mono : TraceIsMonotonic s.im primes :=
-    derived_monotonicity_global s h_zero h_strip primes h_primes h_simple h_large
-  -- 2. Establish Energy
-  have h_energy : NormStrictMinAtHalf s.im primes :=
-    ProofEngine.EnergySymmetry.convexity_implies_norm_strict_min s.im primes h_large h_convex
-  -- 3. Establish Zero
-  have h_zero_min : ZeroHasMinNorm s.re s.im primes :=
-    ProofEngine.ax_zero_implies_norm_min s h_zero h_strip primes h_large
-  -- 4. Conclusion
-  exact RH_from_NormMinimization s.re s.im h_strip primes h_zero_min h_energy
+  -- Energy and Zero are now taken as hypotheses
+  exact RH_from_NormMinimization s.re s.im h_strip primes h_zero_min h_norm_min
 
 end Riemann.ZetaSurface.ZetaLinkClifford

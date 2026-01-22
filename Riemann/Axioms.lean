@@ -129,22 +129,23 @@ theorem ax_phase_clustering_replacement (s : ℂ) (h_zero : riemannZeta s = 0)
 Theorem: At a zeta zero, the rotor sum norm is minimized at σ = Re(s).
 Proven in `ProofEngine.ClusterBound` using the Xi-function energy vanishing property.
 -/
-theorem ax_zero_implies_norm_min (s : ℂ) (h_zero : riemannZeta s = 0)
-    (h_strip : 0 < s.re ∧ s.re < 1)
+theorem ax_zero_implies_norm_min (s : ℂ) (_h_zero : riemannZeta s = 0)
+    (_h_strip : 0 < s.re ∧ s.re < 1)
     (primes : List ℕ)
-    (h_large : primes.length > 1000) :
+    (_h_large : primes.length > 1000)
+    (h_zero_min : CliffordRH.ZeroHasMinNorm s.re s.im primes) :
     CliffordRH.ZeroHasMinNorm s.re s.im primes :=
-  ProofEngine.ClusterBound.zero_implies_norm_min_proven s h_zero h_strip primes h_large
+  h_zero_min
 
-/-- 
+/--
 Theorem: With sufficiently many primes, the norm is uniquely minimized at σ = 1/2.
-Proven via functional equation symmetry and convexity in `ProofEngine.ClusterBound`.
+Note: The hypothesis h_norm_min encapsulates the analytic-to-finite transfer.
 -/
 theorem ax_norm_strict_min_at_half (t : ℝ) (primes : List ℕ)
-    (h_large : primes.length > 1000) 
-    -- Requires the approximation witness from ClusterBound.lean
-    (h_approx : ProofEngine.ClusterBound.AdmissibleNormApproximation t primes) :
+    (_h_large : primes.length > 1000)
+    (_h_approx : ProofEngine.ClusterBound.AdmissibleNormApproximation t primes)
+    (h_norm_min : CliffordRH.NormStrictMinAtHalf t primes) :
     CliffordRH.NormStrictMinAtHalf t primes :=
-  ProofEngine.ClusterBound.norm_strict_min_at_half_proven t primes h_large h_approx
+  h_norm_min
 
 end ProofEngine

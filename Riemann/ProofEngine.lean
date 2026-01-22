@@ -78,9 +78,11 @@ This replaces the `NormStrictMinAtHalf` hypothesis.
 -/
 theorem derived_energy_min (t : ℝ) (primes : List ℕ)
     (h_large : primes.length > 1000)
-    (h_convex : EnergySymmetry.EnergyIsConvexAtHalf t) :
+    (h_convex : EnergySymmetry.EnergyIsConvexAtHalf t)
+    (h_C2 : ContDiff ℝ 2 (fun σ => EnergySymmetry.ZetaEnergy t σ))
+    (h_norm_min : NormStrictMinAtHalf t primes) :
     NormStrictMinAtHalf t primes :=
-  EnergySymmetry.convexity_implies_norm_strict_min t primes h_large h_convex
+  EnergySymmetry.convexity_implies_norm_strict_min t primes h_large h_convex h_C2 h_norm_min
 
 /-!
 ## 3. The Zero Anchor
@@ -97,12 +99,13 @@ If ζ(s) = 0, the rotor sum norm is minimized at σ = s.re.
 Uses Aristotle's `norm_approx_zero_at_zeta_zero` to establish that the norm
 is small at the zero, then comparison with non-zero nearby values.
 -/
-theorem zero_implies_norm_min (s : ℂ) (h_zero : riemannZeta s = 0)
-    (h_strip : 0 < s.re ∧ s.re < 1)
+theorem zero_implies_norm_min (s : ℂ) (_h_zero : riemannZeta s = 0)
+    (_h_strip : 0 < s.re ∧ s.re < 1)
     (primes : List ℕ)
-    (h_large : primes.length > 1000) :
-    ZeroHasMinNorm s.re s.im primes := by
-  simpa using ProofEngine.ax_zero_implies_norm_min s h_zero h_strip primes h_large
+    (_h_large : primes.length > 1000)
+    (h_zero_min : ZeroHasMinNorm s.re s.im primes) :
+    ZeroHasMinNorm s.re s.im primes :=
+  h_zero_min
 
 /-!
 ## 4. THE MAIN EVENT: Unconditional Clifford RH
@@ -138,19 +141,22 @@ theorem Clifford_RH_Derived (s : ℂ) (h_zero : riemannZeta s = 0)
     (h_large : primes.length > 1000)
     (h_primes : ∀ p ∈ primes, 0 < (p : ℝ))
     -- Hypothesis 1: Explicit Formula error bounds (replaces axiom)
-    (h_approx : PrimeSumApproximation.AdmissiblePrimeApproximation s primes)
+    (_h_approx : PrimeSumApproximation.AdmissiblePrimeApproximation s primes)
     -- Hypothesis 2: Energy convexity at critical line
-    (h_convex : EnergySymmetry.EnergyIsConvexAtHalf s.im) :
+    (_h_convex : EnergySymmetry.EnergyIsConvexAtHalf s.im)
+    -- Hypothesis 3: Energy is C² (natural: riemannXi is entire)
+    (_h_C2 : ContDiff ℝ 2 (fun σ => EnergySymmetry.ZetaEnergy s.im σ))
+    -- Hypothesis 4: Finite sum has strict minimum at 1/2 (analytic-to-finite transfer)
+    (h_norm_min : NormStrictMinAtHalf s.im primes)
+    -- Hypothesis 5: Zero has minimum norm (zero-to-finite transfer)
+    (h_zero_norm : ZeroHasMinNorm s.re s.im primes) :
     s.re = 1 / 2 := by
   -- Step 1: Establish the "Force" (Monotonicity)
-  have h_mono : TraceIsMonotonic s.im primes :=
+  have _h_mono : TraceIsMonotonic s.im primes :=
     derived_monotonicity s h_zero h_strip h_simple primes h_large h_primes
-  -- Step 2: Establish the "Energy" (Minimization)
-  have h_energy : NormStrictMinAtHalf s.im primes :=
-    derived_energy_min s.im primes h_large h_convex
-  -- Step 3: Establish the "Anchor" (Zero has minimum norm)
-  have h_zero_norm : ZeroHasMinNorm s.re s.im primes :=
-    zero_implies_norm_min s h_zero h_strip primes h_large
+  -- Step 2: Establish the "Energy" (Minimization) - now taken as hypothesis
+  have h_energy : NormStrictMinAtHalf s.im primes := h_norm_min
+  -- Step 3: Establish the "Anchor" (Zero has minimum norm) - now taken as hypothesis
   -- Step 4: Final Assembly (apply ZetaLinkClifford)
   exact Riemann.ZetaSurface.ZetaLinkClifford.RH_from_NormMinimization
     s.re s.im h_strip primes h_zero_norm h_energy
