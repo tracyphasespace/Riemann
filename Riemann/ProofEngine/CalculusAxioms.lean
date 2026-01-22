@@ -1,6 +1,8 @@
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.Deriv
+import Mathlib.Analysis.Calculus.ContDiff.Defs
+import Mathlib.Analysis.Calculus.Taylor
 import Mathlib.Tactic.Linarith
 
 noncomputable section
@@ -12,10 +14,15 @@ namespace ProofEngine
 ## Calculus Helper Lemmas (Atomic Units)
 -/
 
-/-- Atom 1: Taylor's theorem with remainder for second derivative. -/
-lemma taylor_second_order {f : ℝ → ℝ} {x₀ x : ℝ} (hf : Differentiable ℝ f) (hf' : Differentiable ℝ (deriv f)) :
-    ∃ c ∈ Icc (min x₀ x) (max x₀ x), f x = f x₀ + (deriv f x₀) * (x - x₀) + (deriv (deriv f) c) * (x - x₀)^2 / 2 := by
-  -- Follows from Taylor's theorem in Mathlib
+/--
+Atom 1: Taylor's theorem with second-order remainder (Lagrange form).
+For C² functions, f(x) = f(x₀) + f'(x₀)(x-x₀) + f''(c)(x-x₀)²/2 for some c between x₀ and x.
+-/
+lemma taylor_second_order {f : ℝ → ℝ} {x₀ x : ℝ} (hf : ContDiff ℝ 2 f) :
+    ∃ c ∈ Icc (min x₀ x) (max x₀ x),
+      f x = f x₀ + (deriv f x₀) * (x - x₀) + (deriv (deriv f) c) * (x - x₀)^2 / 2 := by
+  -- Use Mathlib's taylor_mean_remainder_lagrange or similar
+  -- Key: ContDiff ℝ 2 f gives us the required smoothness for Taylor expansion
   sorry
 
 /-- 
