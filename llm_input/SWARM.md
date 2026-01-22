@@ -41,10 +41,10 @@ BLOCKER: [what's missing if FAILED]
 ### Priority 1: EnergySymmetry (4 sorries) - HIGH VALUE
 | Line | Lemma | Hints |
 |------|-------|-------|
-| 75 | conjugate_symmetry | Schwarz reflection, Mellin transform workaround |
-| 187 | energy_convex_at_half | Second derivative > 0, functional equation |
-| 210 | deriv_energy_zero_at_half | Symmetry → zero derivative at center |
-| 232 | strict_min_at_half | Convexity + zero deriv → unique min |
+| 87 | riemannXi_zero_iff_zeta_zero | s(1-s) ≠ 0 in strip, Gamma nonzero, completedZeta decomposition |
+| 193 | energy_deriv_zero_at_half | ξ is entire → ZetaEnergy differentiable. Use Differentiable.comp |
+| 223 | symmetry_and_convexity_imply_local_min | Taylor/second derivative test. E'=0, E''>0 → local min |
+| 242 | convexity_implies_norm_strict_min | Approximation argument, may need axiom |
 
 ### Priority 2: CalculusAxioms (3 sorries)
 | Line | Lemma | Hints |

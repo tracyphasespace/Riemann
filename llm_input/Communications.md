@@ -45,10 +45,10 @@ BLOCKER: (if failed, what's missing)
 ### Priority 2: EnergySymmetry (4 sorries)
 | Line | Lemma | Notes |
 |------|-------|-------|
-| 75 | conjugate_symmetry | Schwarz reflection principle |
-| 187 | energy_convex_at_half | Second derivative argument |
-| 210 | deriv_energy_zero_at_half | Symmetry → zero derivative |
-| 232 | strict_min_at_half | Convexity + zero deriv → min |
+| 87 | riemannXi_zero_iff_zeta_zero | Gamma factors nonzero in strip |
+| 193 | energy_deriv_zero_at_half | ZetaEnergy differentiability (ξ entire, normSq smooth) |
+| 223 | symmetry_and_convexity_imply_local_min | Second derivative test |
+| 242 | convexity_implies_norm_strict_min | C2 approximation transfer |
 
 ### Priority 3: TraceAtFirstZero (3 sorries)
 | Line | Lemma | Notes |
@@ -99,6 +99,47 @@ Complex.continuous_re.continuousAt.tendsto.comp
 | GeometricAxioms:117 energy_persistence_proven | PROVEN | e2a4d57 |
 | PhaseClustering:131 log_deriv_neg_divergence | PROVEN | e2a4d57 |
 | ArithmeticAxioms:21 prime_pow_unique | PROVEN | e2a4d57 |
+
+---
+
+## AI2: EnergySymmetry Agent Assignments
+
+**File**: `Riemann/ProofEngine/EnergySymmetry.lean`
+
+Launch 4 agents (one per sorry):
+
+### Agent ES-1: Line 87 - riemannXi_zero_iff_zeta_zero
+```
+In critical strip, Xi zero ↔ Zeta zero.
+- s ≠ 0 and s ≠ 1 already proven (lines 83-86)
+- Need: Gamma factors nonzero, completedZeta decomposition
+- Search: riemannZeta, completedRiemannZeta₀, Gamma_ne_zero
+```
+
+### Agent ES-2: Line 193 - energy_deriv_zero_at_half
+```
+ZetaEnergy is differentiable (to apply deriv_zero_of_symmetric).
+- ZetaEnergy t σ = normSq (riemannXi (σ + t*I))
+- ξ is entire (analytic everywhere) → differentiable
+- normSq is smooth (polynomial in re, im)
+- Use: Differentiable.comp, Complex.differentiable_normSq
+```
+
+### Agent ES-3: Line 223 - symmetry_and_convexity_imply_local_min
+```
+Second derivative test: E'(1/2)=0, E''(1/2)>0 → strict local min.
+- energy_deriv_zero_at_half gives E'(1/2) = 0
+- h_convex : EnergyIsConvexAtHalf t gives E''(1/2) > 0
+- Search: IsLocalMin, second_deriv_pos, Taylor
+```
+
+### Agent ES-4: Line 242 - convexity_implies_norm_strict_min
+```
+Bridge analytic energy to finite rotor sum.
+- May require approximation bounds from ClusterBound
+- Likely needs axiom or extensive setup
+- If blocked, return NEEDS_WORK with analysis
+```
 
 ---
 
