@@ -10,7 +10,7 @@ Each task below is a self-contained unit of work. Agents should claim ONE task a
 ### Job 2: Rayleigh Identity (AnalyticBridge.lean:235)
 **File:** `AnalyticBridge.lean`
 **Lines:** 219-235
-**Status:** OPEN
+**Status:** ✅ COMPLETE - Agent #003 (output in llm_input/agent003_job2.lean)
 ```lean
 theorem rayleigh_identity (s : ℂ) (v : GlobalHilbertSpace) :
     ∃ (chiralEnergy : ℝ), (innerProd v (K_op s v)).im = chiralEnergy := by
@@ -29,7 +29,7 @@ theorem rayleigh_decomposition (s : ℂ) (v : GlobalHilbertSpace) :
 ### Job 3: Zero-Kernel Bridge (CliffordZetaMasterKey.lean:182-211)
 **File:** `CliffordZetaMasterKey.lean`
 **Lines:** 182-211
-**Status:** OPEN
+**Status:** ✅ COMPLETE - Agent #004 (output in llm_input/agent004_job3.lean)
 ```lean
 axiom zero_iff_kernel (s : ℂ) (hs : InCriticalStrip s) :
     riemannZeta s = 0 ↔ ∃ v : GlobalHilbertSpace, v ≠ 0 ∧ K_op s v = 0
@@ -42,7 +42,7 @@ axiom zero_iff_kernel (s : ℂ) (hs : InCriticalStrip s) :
 ### Job 4: Chirality Final Assembly (ChiralPath.lean:376)
 **File:** `ChiralPath.lean`
 **Lines:** 368-376
-**Status:** OPEN
+**Status:** ✅ COMPLETE - Agent #006 (output in llm_input/agent006_job4.lean)
 ```lean
 theorem is_chiral_proven (σ : ℝ) (hσ : σ = 1/2) : IsChiral σ := by
   sorry  -- NEEDS: Infinite sum limit + trajectory_avoids_zero
@@ -56,7 +56,7 @@ theorem is_chiral_proven (σ : ℝ) (hσ : σ = 1/2) : IsChiral σ := by
 
 ### Job 5: Bivector Lemmas (AnalyticBridge.lean:133,166,201,207)
 **File:** `AnalyticBridge.lean`
-**Status:** OPEN
+**Status:** ✅ COMPLETE - Agent #005 (output in llm_input/agent005_job5.lean)
 ```lean
 lemma coeff_real_of_real (σ : ℝ) (p : Primes) : (coeff σ p).im = 0 := by sorry
 lemma innerProd_conj_symm (u v : GlobalHilbertSpace) : innerProd u v = conj (innerProd v u) := by sorry
@@ -69,7 +69,7 @@ lemma localInner_bivector_eq_charge (v : LocalSpace) : (localInner v (localBivec
 
 ### Job 6: Residues Pole Domination (Residues.lean:160,163,196,247)
 **File:** `Residues.lean`
-**Status:** OPEN
+**Status:** ✅ COMPLETE - Agent #002 (output in llm_input/agent002_job6.lean)
 ```lean
 -- Line 160: Continuity of derivative of holomorphic function
 -- Line 163: Derivative of pole + holomorphic
@@ -132,6 +132,11 @@ theorem energy_convex_at_half (t : ℝ) (ht : 1 ≤ |t|) :
 | Job | Agent | File | Status |
 |-----|-------|------|--------|
 | Job 1: FTA Linear Independence | Swarm #001 | DiophantineGeometry.lean | ✅ DONE |
+| Job 2: Rayleigh Identity | Swarm #003 | llm_input/agent003_job2.lean | ✅ DONE |
+| Job 3: Zero-Kernel Bridge | Swarm #004 | llm_input/agent004_job3.lean | ✅ DONE |
+| Job 4: Chirality Assembly | Swarm #006 | llm_input/agent006_job4.lean | ✅ DONE |
+| Job 5: Bivector Lemmas | Swarm #005 | llm_input/agent005_job5.lean | ✅ DONE |
+| Job 6: Residues Pole Domination | Swarm #002 | llm_input/agent002_job6.lean | ✅ DONE |
 
 ---
 
@@ -158,3 +163,53 @@ For each job, provide:
 2. Any helper lemmas needed
 3. Import statements if new ones required
 4. Brief explanation of proof strategy
+
+---
+
+## 🔑 CRITICAL: Lean/Mathlib Proof Strategy (The "Rosetta Stone")
+
+**This advice cures "Lean pain"** - the friction between how mathematicians think (epsilon-delta) and how Lean automates (filters, type classes).
+
+### Filter Logic: "Escape the Epsilon Trap"
+
+**Problem:** Manual ε-δ proofs are "assembly code" - Lean can't automate them.
+
+**Solution:** Use `Filter.Tendsto` - filters are algebraic objects for "neighborhoods."
+
+```lean
+-- ONE LINE instead of 50 lines of epsilon-delta:
+lemma inverse_blows_up : Tendsto (fun x => x⁻¹) (𝓝[>] 0) atTop :=
+  tendsto_inv_nhdsGT_zero
+```
+
+**For Pole Domination (Residues.lean, Job 6):**
+Chain known limits with `Tendsto.comp`:
+- `(s-ρ) → 0` (Linear continuity)
+- `x → x²` (Power continuity)
+- `x → -1/x` (Inverse limits)
+- Therefore `-(s-ρ)⁻² → -∞` in 5 lines, not 50.
+
+### Complex Derivatives: "Let Type Classes Do the Calculus"
+
+**Problem:** Proving `lim_{h→0} (f(z+h)-f(z))/h` manually is painful.
+
+**Solution:** Use Type Classes (`Differentiable`, `AnalyticAt`, `HolomorphicOn`).
+
+```lean
+-- Lean auto-deduces composition is smooth:
+have h1 : Differentiable ℂ (fun t => t * log p) := ...
+have h2 : Differentiable ℂ cexp := ...
+exact h2.comp h1
+```
+
+Use `fun_prop` tactic or `Differentiable.add`, `Differentiable.mul`, `Differentiable.comp`.
+
+### Refactoring Rules for Agents
+
+| If You See... | Action |
+|---------------|--------|
+| `∀ ε > 0, ∃ δ > 0` | DELETE. Use `Tendsto` lemma |
+| Difference quotient | DELETE. Use `Differentiable.comp` |
+| Manual HolomorphicOn proof | Use type class inference |
+
+**This is how we close the remaining sorries efficiently - algebraic reasoning, not epsilon-delta grinding.**
