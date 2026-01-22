@@ -28,6 +28,7 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Complex
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.Deriv
 import Mathlib.Analysis.Calculus.DerivativeTest
+import Mathlib.Analysis.Calculus.LocalExtr.Rolle
 import Riemann.ZetaSurface.CliffordRH
 import Riemann.ProofEngine.AnalyticAxioms
 
@@ -343,15 +344,19 @@ theorem symmetry_and_convexity_imply_local_min (t : ℝ)
   push_neg at h_eq_neg
   have h_eq : f σ = f (1/2) := le_antisymm h_eq_neg h_le
 
-  -- If f(σ) = f(1/2) and σ ≠ 1/2, Rolle's theorem gives ξ between them with f'(ξ) = 0
-  -- But this contradicts the strict monotonicity of f' from f'' > 0
+  -- By Rolle's theorem (exists_deriv_eq_zero), if f(σ) = f(1/2) with σ ≠ 1/2,
+  -- there exists c strictly between them with f'(c) = 0.
+  -- But f'' > 0 on a neighborhood of 1/2 implies f' is strictly increasing there.
+  -- Since f'(1/2) = 0, the only zero of f' in that neighborhood is 1/2.
+  -- This contradicts c ∈ Ioo (strictly between σ and 1/2, so c ≠ 1/2).
 
-  -- For now, we use the fact that convexity + critical point = strict minimum
-  -- The rigorous proof requires showing f is strictly convex near 1/2
-  -- which follows from f'' > 0 on a neighborhood
+  -- The formal proof requires:
+  -- 1. ContinuousOn f (Icc ...) - we have this from h_cont
+  -- 2. StrictMonoOn (deriv f) from f'' > 0 - needs C² regularity
+  -- 3. Apply exists_deriv_eq_zero to get c with deriv f c = 0
+  -- 4. Use strict monotonicity to show c = 1/2, contradicting c ∈ Ioo
 
-  -- AXIOM: Second derivative test gives strict minimum when f'' > 0
-  -- This is standard calculus but requires careful Mathlib formalization
+  -- NEEDS: ContDiff ℝ 2 ZetaEnergy to derive strict monotonicity of deriv f
   sorry
 
 /--
