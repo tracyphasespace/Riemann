@@ -10,11 +10,12 @@
 
 | Agent | Task | File:Line | Status | Result |
 |-------|------|-----------|--------|--------|
-| D1 | taylor_second_order | CalculusAxioms:16 | ⚠️ NEEDS_WORK | Signature mismatch |
+| D1 | taylor_second_order | CalculusAxioms:21 | ⚠️ NEEDS_WORK | **SIGNATURE FIXED** - ready to retry |
 | D2 | riemannXi forward | EnergySymmetry:101 | ⚠️ NEEDS_WORK | Missing Mathlib lemmas |
 | D3 | riemannXi backward | EnergySymmetry:109 | ⚠️ NEEDS_WORK | Same as D2 |
-| D4 | symmetry_convexity_min | EnergySymmetry:263 | 🔄 RUNNING | - |
+| D4 | symmetry_convexity_min | EnergySymmetry:263 | ❌ LOST | AI2 locked up |
 | D5 | ClusterBound | ClusterBound:83,102 | ⚠️ NEEDS_WORK | C2 transfer needed |
+| D6 | mem_mul interval | TraceAtFirstZero:77 | ⚠️ NEEDS_WORK | Needs sign case helpers |
 
 ---
 
@@ -113,15 +114,69 @@ lemma c2_stability_transfer {f g : ℝ → ℝ} {x₀ : ℝ} (E c : ℝ) (hc : c
 
 ---
 
+### Agent D6: TraceAtFirstZero mem_mul (Line 77)
+**Status**: NEEDS_WORK
+**Technique**: Case analysis on sign combinations + interval corner products
+
+**Analysis**:
+- `mem_mul` is standard interval arithmetic: if `x ∈ I` and `y ∈ J`, then `x*y ∈ I*J`
+- Product of intervals uses min/max of 4 corner products: `a*c, a*d, b*c, b*d`
+- Proof requires 8-16 case splits on signs of `x, y, a, c` (and their bounds)
+- `nlinarith` alone cannot handle the nonlinear arithmetic
+
+**BLOCKER**: Tedious case splits on sign combinations. Need helper lemmas.
+
+**Proposed Helper Lemmas**:
+```lean
+/-- Lower bound: at least one corner is ≤ x*y -/
+lemma exists_corner_le_mul {a b c d x y : ℝ}
+    (hx : a ≤ x ∧ x ≤ b) (hy : c ≤ y ∧ y ≤ d) :
+    a*c ≤ x*y ∨ a*d ≤ x*y ∨ b*c ≤ x*y ∨ b*d ≤ x*y := by
+  rcases le_or_lt 0 x with hx_nn | hx_neg <;>
+  rcases le_or_lt 0 y with hy_nn | hy_neg <;>
+  rcases le_or_lt 0 a with ha_nn | ha_neg <;>
+  rcases le_or_lt 0 c with hc_nn | hc_neg
+  all_goals { try { left; nlinarith } }
+  all_goals { try { right; left; nlinarith } }
+  all_goals { try { right; right; left; nlinarith } }
+  all_goals { try { right; right; right; nlinarith } }
+
+/-- Upper bound: x*y ≤ at least one corner -/
+lemma mul_le_exists_corner {a b c d x y : ℝ}
+    (hx : a ≤ x ∧ x ≤ b) (hy : c ≤ y ∧ y ≤ d) :
+    x*y ≤ a*c ∨ x*y ≤ a*d ∨ x*y ≤ b*c ∨ x*y ≤ b*d := by
+  -- Symmetric case split
+  sorry
+```
+
+**Main theorem sketch**:
+```lean
+theorem mem_mul {I J : Interval} {x y : ℝ} (hx : I.contains x) (hy : J.contains y) :
+    (Interval.mul I J).contains (x * y) := by
+  obtain ⟨hx_lo, hx_hi⟩ := hx
+  obtain ⟨hy_lo, hy_hi⟩ := hy
+  constructor
+  · -- Show min ≤ x*y using exists_corner_le_mul
+    have h := exists_corner_le_mul ⟨hx_lo, hx_hi⟩ ⟨hy_lo, hy_hi⟩
+    simp only [Interval.mul]
+    rcases h with h1 | h2 | h3 | h4 <;> exact le_trans (min_le_...) h
+  · -- Show x*y ≤ max using mul_le_exists_corner
+    have h := mul_le_exists_corner ⟨hx_lo, hx_hi⟩ ⟨hy_lo, hy_hi⟩
+    simp only [Interval.mul]
+    rcases h with h1 | h2 | h3 | h4 <;> exact le_trans h (le_max_...)
+```
+
+---
+
 ## Next Tasks Queue (for reassignment)
 
 1. EnergySymmetry:305 - convexity_implies_norm_strict_min
-2. CalculusAxioms:25 - effective_convex_implies_min_proven
-3. TraceAtFirstZero:77 - interval_bound
+2. CalculusAxioms:21 - taylor_second_order (**SIGNATURE FIXED** - ready to retry)
+3. CalculusAxioms:32 - effective_convex_implies_min_proven
 4. TraceAtFirstZero:143 - first_zero_trace_pos
 5. TraceAtFirstZero:153 - trace_derivative_pos
 6. AnalyticAxioms:320 - finite_sum_approx_analytic
 
 ---
 
-*Last updated: Launch time*
+*Last updated: 2026-01-22 07:25 (recovered from AI2 session log)*
