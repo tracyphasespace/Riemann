@@ -44,6 +44,24 @@ lemma tendsto_atBot_add_bounded {f g : ℝ → ℝ} {l : Filter ℝ}
   linarith
 
 /--
+**Lemma: Filter Arithmetic for Convergent Remainder**
+If f → -∞ and g → c (converges to some real c), then f + g → -∞.
+-/
+lemma tendsto_atBot_add_convergent {α : Type*} {l : Filter α} {f g : α → ℝ} {c : ℝ}
+    (hf : Tendsto f l atBot) (hg : Tendsto g l (𝓝 c)) :
+    Tendsto (fun x => f x + g x) l atBot := by
+  refine tendsto_atBot.2 fun a => ?_
+  -- g eventually stays in (c-1, c+1), so g ≤ c+1 eventually
+  have hg_bd : ∀ᶠ x in l, g x ≤ c + 1 := by
+    have h_mem : Set.Ioo (c - 1) (c + 1) ∈ 𝓝 c :=
+      Ioo_mem_nhds (by linarith) (by linarith)
+    filter_upwards [hg.eventually h_mem] with x hx
+    exact le_of_lt hx.2
+  have hf' : ∀ᶠ x in l, f x ≤ a - (c + 1) := tendsto_atBot.1 hf (a - (c + 1))
+  filter_upwards [hf', hg_bd] with x hfx hgx
+  linarith
+
+/--
 **Lemma: Derivative of Negation (PROVEN)**
 deriv(-f) = -deriv(f), and this commutes with taking real parts.
 Uses Mathlib's `deriv.neg` from `Analysis.Calculus.Deriv.Add`.
@@ -139,15 +157,56 @@ theorem log_deriv_neg_divergence_at_zero (ρ : ℂ)
   -- 3. We want the limit of the NEGATIVE, so it goes to atBot
   have h_neg_pole : Tendsto (fun σ : ℝ => -((σ : ℂ) + ρ.im * I - ρ)⁻¹.re) (𝓝[>] ρ.re) atBot :=
     tendsto_neg_atTop_atBot.comp h_pole_lim
-  -- 4. Apply lemma: -∞ + bounded = -∞
-  have h_bounded : ∃ M : ℝ, ∀ σ, |((h (σ + ρ.im * I)).re)| ≤ M := by
-    -- h is continuous near ρ, hence bounded on compact neighborhoods
-    use 1  -- placeholder bound
-    intro σ
-    -- This follows from h being differentiable (hence continuous) at ρ
-    sorry  -- Needs: continuity of h near ρ (from _h_diff in log_deriv_zeta_near_zero)
-  -- The full proof combines h_neg_pole with h_bounded via tendsto_atBot_add_bounded
-  sorry  -- Needs: connect h_neg_pole with the full Re(-ζ'/ζ) expression
+  -- 4. The remainder h(s) converges along the horizontal approach
+  have h_cont : ContinuousAt h ρ := _h_diff.continuousAt
+  have hz : Tendsto (fun σ : ℝ => (σ : ℂ) + ρ.im * I) (𝓝[>] ρ.re) (𝓝 ρ) := by
+    have hcont : Tendsto (fun σ : ℝ => (σ : ℂ) + ρ.im * I) (𝓝 ρ.re) (𝓝 ρ) := by
+      have h1 : Tendsto (fun σ : ℝ => (σ : ℂ)) (𝓝 ρ.re) (𝓝 (ρ.re : ℂ)) :=
+        Complex.continuous_ofReal.continuousAt
+      have h2 : Tendsto (fun _ : ℝ => ρ.im * I) (𝓝 ρ.re) (𝓝 (ρ.im * I)) :=
+        tendsto_const_nhds
+      have h12 := h1.add h2
+      convert h12 using 2
+      exact (Complex.re_add_im ρ).symm
+    exact hcont.mono_left nhdsWithin_le_nhds
+  have h_rem_tendsto :
+      Tendsto (fun σ : ℝ => (-(h ((σ : ℂ) + ρ.im * I))).re) (𝓝[>] ρ.re) (𝓝 (-(h ρ)).re) := by
+    have hh : Tendsto h (𝓝 ρ) (𝓝 (h ρ)) := h_cont.tendsto
+    have hh_line : Tendsto (fun σ : ℝ => h ((σ : ℂ) + ρ.im * I)) (𝓝[>] ρ.re) (𝓝 (h ρ)) :=
+      hh.comp hz
+    have hh_line_neg : Tendsto (fun σ : ℝ => -(h ((σ : ℂ) + ρ.im * I))) (𝓝[>] ρ.re) (𝓝 (-h ρ)) :=
+      hh_line.neg
+    exact Complex.continuous_re.continuousAt.tendsto.comp hh_line_neg
+  -- 5. Show points on horizontal line with σ > ρ.re are ≠ ρ
+  have hz_ne : Tendsto (fun σ : ℝ => (σ : ℂ) + ρ.im * I) (𝓝[>] ρ.re) (𝓝[≠] ρ) := by
+    refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ hz ?_
+    filter_upwards [self_mem_nhdsWithin] with σ hσ
+    simp only [Set.mem_Ioi] at hσ
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
+    intro h_eq
+    have hre : σ = ρ.re := by
+      have := congrArg Complex.re h_eq
+      simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_im,
+        Complex.I_re, mul_zero, Complex.I_im, mul_one, sub_self] at this
+      linarith
+    linarith
+  -- 6. Transfer the pole decomposition to the horizontal line
+  have h_eq_line : ∀ᶠ (σ : ℝ) in 𝓝[>] ρ.re,
+        deriv riemannZeta ((σ : ℂ) + ρ.im * I) / riemannZeta ((σ : ℂ) + ρ.im * I)
+          = (((σ : ℂ) + ρ.im * I) - ρ)⁻¹ + h ((σ : ℂ) + ρ.im * I) :=
+    hz_ne.eventually _h_eq
+  have h_congr :
+      (fun σ : ℝ => (-(deriv riemannZeta (σ + ρ.im * I) / riemannZeta (σ + ρ.im * I))).re)
+        =ᶠ[𝓝[>] ρ.re]
+      (fun σ : ℝ => (-(((σ : ℂ) + ρ.im * I - ρ)⁻¹)).re + (-(h ((σ : ℂ) + ρ.im * I))).re) := by
+    filter_upwards [h_eq_line] with σ hσ
+    simp only [hσ, neg_add, Complex.add_re, Complex.neg_re]
+  -- 7. Combine: -∞ + convergent = -∞
+  have h_sum :
+      Tendsto (fun σ : ℝ => (-(((σ : ℂ) + ρ.im * I - ρ)⁻¹)).re + (-(h ((σ : ℂ) + ρ.im * I))).re)
+        (𝓝[>] ρ.re) atBot :=
+    tendsto_atBot_add_convergent h_neg_pole h_rem_tendsto
+  exact h_sum.congr' h_congr.symm
 
 /-!
 ## 2. The Derivative Divergence (Stiffness)
