@@ -440,26 +440,18 @@ because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Resi
 
 ---
 
-## Current Sorry Count: 25 actual (2026-01-23)
+## Current Sorry Count: 13 actual (2026-01-23)
 
 **Critical Path**: SORRY-FREE ✓ (ProofEngine.lean, EnergySymmetry.lean, ClusterBound.lean)
 
-### AI1 Assigned (14 sorries) - Complex/Technical
+### Remaining Sorries
 
 | File | Lines | Count | Domain |
 |------|-------|-------|--------|
-| CliffordZetaMasterKey.lean | 366, 732, 868, 1042 | 4 | Clifford algebra |
-| TraceAtFirstZero.lean | 263, 295, 311 | 3 | Interval arithmetic |
+| TraceAtFirstZero.lean | 263 | 1 | Interval arithmetic (BLOCKED) |
 | ChiralPath.lean | 279, 376 | 2 | Baker's theorem |
-| Ergodicity.lean | 54, 304, 316, 343 | 4 | Ergodic theory |
 | AnalyticBridgeEuler.lean | 143 | 1 | Euler product |
-
-### AI2 Assigned (11 sorries) - Systematic/Straightforward
-
-| File | Lines | Count | Domain |
-|------|-------|-------|--------|
-| ArithmeticGeometry.lean | 89, 124 | 2 | Signal/prime bounds |
-| ErgodicSNRAxioms.lean | 65, 78 | 2 | Edge cases |
+| ErgodicSNRAxioms.lean | 65, 78 | 2 | Edge cases (intentional) |
 | AnalyticBridge.lean | 340 | 1 | Rayleigh decomp |
 | AristotleContributions.lean | 132 | 1 | Zeta conjugate |
 | ConservationAxioms.lean | 109 | 1 | Conservation |
@@ -468,9 +460,12 @@ because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Resi
 | UniversalStiffness.lean | 393 | 1 | Stiffness bound |
 
 **Completed (no sorries):**
-- UnconditionalRH.lean ✓ (NEW - explicit transfer hypotheses)
-- ErgodicSNR.lean ✓ (NEW - signal_eventually_positive etc.)
+- CliffordZetaMasterKey.lean ✓ (CLEANED - deleted false lemmas)
+- Ergodicity.lean ✓ (AI2 completed)
+- UnconditionalRH.lean ✓ (explicit transfer hypotheses)
+- ErgodicSNR.lean ✓ (signal_eventually_positive etc.)
 - InteractionTerm.lean ✓ (snr_diverges_to_infinity proven)
+- TraceAtFirstZero.lean: deleted 2 FALSE theorems (trace_tail_bounded, trace_monotone_from_large_set)
 - MotorCore.lean ✓
 - AnalyticBasics.lean ✓
 - Residues.lean ✓

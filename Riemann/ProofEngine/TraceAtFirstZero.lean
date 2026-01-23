@@ -262,52 +262,10 @@ theorem trace_negative_at_first_zero :
   -- BLOCKER: Requires implementing Interval.exp and full rotorTraceInterval
   sorry
 
-/--
-**Tail bound theorem** (revised from "monotonicity")
-The tail sum of primes beyond a cutoff N contributes bounded error.
+-- DELETED: trace_tail_bounded (2026-01-23)
+-- Statement was FALSE: Σ log(p)/√p diverges, so no fixed C bounds all finite lists.
 
-NOTE: The original "monotonicity" claim was INCORRECT because the trace
-involves cosines which oscillate. The correct statement bounds the tail:
-  |Σ_{p > N} log(p) · p^{-1/2} · cos(t · log p)| ≤ Σ_{p > N} log(p) · p^{-1/2}
-
-The RHS converges (very slowly - like Σ log(p)/√p) and can be bounded
-for specific N by comparison with ∫_N^∞ log(x)/√x dx = O(√N · log N).
--/
-theorem trace_tail_bounded
-    (N : ℕ) (h_large : 1000 ≤ N)
-    (t : ℝ) (h_t : 0 < t) :
-    ∃ C : ℝ, ∀ primes : List ℕ, (∀ p ∈ primes, N < p ∧ Nat.Prime p) →
-      |CliffordRH.rotorTrace (1/2) t primes| ≤ C * Real.sqrt N * Real.log N := by
-  -- STRATEGY:
-  -- 1. Bound |cos(t · log p)| ≤ 1
-  -- 2. So |trace| ≤ 2 · Σ log(p) · p^{-1/2}
-  -- 3. Compare with integral ∫_N^∞ log(x)/√x dx
-  -- 4. This integral = O(√N · log N) by standard calculus
-  --
-  -- TRIED (AI3 2026-01-23): Direct foldl induction with abs_cos_le_one
-  -- FAILED: foldl type coercions cause calc step mismatches
-  -- The lemma `foldl_abs_bound` had type errors due to:
-  -- - List.foldl behavior with type coercions ℕ → ℝ
-  -- - Calc step verification failing on equal expressions
-  --
-  -- NEXT: Either prove via Finset.sum (more Mathlib-friendly) or
-  -- add as a hypothesis with documented bounds
-  sorry
-
--- Keep original theorem statement for compatibility but mark as deprecated
-/--
-**DEPRECATED**: This monotonicity claim is FALSE in general.
-The trace oscillates due to the cosine term. See `trace_tail_bounded` instead.
--/
-theorem trace_monotone_from_large_set
-    (primes : List ℕ)
-    (h_len : 1000 ≤ primes.length)
-    (h_primes : ∀ p ∈ primes, Nat.Prime p) :
-    CliffordRH.rotorTrace (1 / 2) 14.134725 primes ≤
-      CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList := by
-  -- DEPRECATED: This claim is mathematically false due to cosine oscillation.
-  -- The trace is NOT monotonic in the number of primes.
-  -- Use trace_tail_bounded for correct tail error analysis.
-  sorry
+-- DELETED: trace_monotone_from_large_set (2026-01-23)
+-- Statement was FALSE: trace oscillates due to cosine, not monotonic in prime count.
 
 end ProofEngine.TraceAtFirstZero

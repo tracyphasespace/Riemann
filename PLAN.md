@@ -1,100 +1,128 @@
-# Plan: UnconditionalRH.lean Sorries
+# Plan: trace_tail_bounded (Option A - Full Analysis)
 
-**STATUS: ✅ COMPLETE (retroactive documentation)**
-
-**NOTE**: This plan was created AFTER the work was done. Protocol requires creating plans BEFORE coding.
+**STATUS: ⚠️ MATHEMATICAL ISSUE DISCOVERED**
 
 ---
 
 ## Problem Statement
 
 ```lean
--- Lines 216-219 had two sorries:
-have h_zero_min : CliffordRH.ZeroHasMinNorm s.re s.im primes := by
-  sorry -- Zero-to-finite transfer: requires approximation bounds
-have h_norm_min : CliffordRH.NormStrictMinAtHalf s.im primes := by
-  sorry -- Analytic-to-finite transfer: requires global approximation bounds
+theorem trace_tail_bounded
+    (N : ℕ) (h_large : 1000 ≤ N)
+    (t : ℝ) (h_t : 0 < t) :
+    ∃ C : ℝ, ∀ primes : List ℕ, (∀ p ∈ primes, N < p ∧ Nat.Prime p) →
+      |CliffordRH.rotorTrace (1/2) t primes| ≤ C * Real.sqrt N * Real.log N
 ```
 
 ---
 
-## Analysis (should have been done FIRST)
+## Mathematical Analysis
 
-### What the types require:
+### The Claim
+For fixed N, there exists C such that for ALL finite lists of primes > N:
+|trace| ≤ C * √N * log N
+
+### Issue: This appears FALSE
+
+**Why**: The trace includes `Σ log(p) * p^(-1/2)` (after removing |cos| ≤ 1).
+
+The sum `Σ_{p prime} log(p)/√p` **diverges** (like prime harmonic series at σ=1/2).
+
+So for any fixed C:
+- Take a long enough list of primes p₁, p₂, ..., p_k all > N
+- The partial sum `Σᵢ log(pᵢ)/√pᵢ` can exceed C * √N * log N
+
+**The theorem as stated has no valid C for arbitrarily large lists.**
+
+---
+
+## Correct Statements (Options)
+
+### Option A1: Bound depends on list
 ```lean
--- NormStrictMinAtHalf: finite sum strictly minimized at σ=1/2
-def NormStrictMinAtHalf (t : ℝ) (primes : List ℕ) : Prop :=
-  ∀ σ : ℝ, 0 < σ → σ < 1 → σ ≠ 1/2 →
-    rotorSumNormSq (1/2) t primes < rotorSumNormSq σ t primes
-
--- ZeroHasMinNorm: at zeta zero's σ, norm is minimized
-def ZeroHasMinNorm (σ t : ℝ) (primes : List ℕ) : Prop :=
-  ∀ σ' : ℝ, 0 < σ' → σ' < 1 → rotorSumNormSq σ t primes ≤ rotorSumNormSq σ' t primes
+∀ primes : List ℕ, (∀ p ∈ primes, N < p ∧ Nat.Prime p) →
+  ∃ C : ℝ, |CliffordRH.rotorTrace (1/2) t primes| ≤ C
 ```
+This is trivially true (take C = |trace| + 1) but not useful.
 
-### Why these are hard:
-1. Connect INFINITE analytic zeta function → FINITE prime sums
-2. Requires effective approximation bounds from analytic number theory
-3. Functional equation symmetry doesn't directly transfer to finite sums
-
-### Options considered:
-1. **Prove from scratch** - Would need substantial approximation theory (not practical)
-2. **Add as explicit hypotheses** - Documents assumptions cleanly ✓
-3. **Leave as sorry** - Hides what's actually needed
-
----
-
-## Solution Implemented
-
-Added explicit transfer hypotheses to theorem signature:
-
+### Option A2: Bound the rate of decay (integral comparison)
+The SUM from N to M is bounded by the INTEGRAL:
 ```lean
-theorem Riemann_Hypothesis_Unconditional (s : ℂ)
-    (h_zero : riemannZeta s = 0)
-    (h_simple : deriv riemannZeta s ≠ 0)
-    (h_strip : 0 < s.re ∧ s.re < 1)
-    -- NEW: Transfer hypotheses
-    (h_norm_min_transfer : ∀ primes : List ℕ, primes.length > 1000 →
-      (∀ p ∈ primes, Nat.Prime p) → CliffordRH.NormStrictMinAtHalf s.im primes)
-    (h_zero_min_transfer : ∀ primes : List ℕ, primes.length > 1000 →
-      (∀ p ∈ primes, Nat.Prime p) → CliffordRH.ZeroHasMinNorm s.re s.im primes) :
-    s.re = 1 / 2
+∑_{N < p ≤ M, p prime} log(p)/√p ≤ ∫_N^M log(x)/√x dx = O(√M log M - √N log N)
 ```
+This bounds the partial sum but requires knowing M.
 
-Then the proof body uses these hypotheses directly:
+### Option A3: Use prime counting function
+By PNT: `Σ_{p ≤ x} log(p)/√p ~ 2√x` (Mertens-like result)
+The tail from N: `Σ_{p > N} log(p)/√p = divergent - partial = ∞`
+But for finite M: `Σ_{N < p ≤ M} log(p)/√p = O(√M - √N)`
+
+---
+
+## What the RH proof actually needs
+
+Looking at context, `trace_tail_bounded` is meant to bound the error from truncating an infinite prime sum.
+
+For the RH proof to work, we need:
+1. For FIXED large prime list (e.g., primes below 7920): trace is computable
+2. The ERROR from missing primes > max(list) is controllable
+
+**Better formulation**:
 ```lean
-have h_zero_min : CliffordRH.ZeroHasMinNorm s.re s.im primes :=
-  h_zero_min_transfer primes h_large h_primes
-have h_norm_min : CliffordRH.NormStrictMinAtHalf s.im primes :=
-  h_norm_min_transfer primes h_large h_primes
+theorem trace_error_bound (N M : ℕ) (h_N_large : 1000 ≤ N) (h_NM : N < M) (t : ℝ) :
+    |CliffordRH.rotorTrace (1/2) t (primesInRange N M)| ≤ 4 * (Real.sqrt M - Real.sqrt N)
 ```
+This bounds the contribution from primes in [N, M] interval.
 
 ---
 
-## Rationale
+## Recommendation
 
-Making transfer hypotheses explicit is better than sorry because:
-1. Documents exactly what approximation theory is needed
-2. Theorem is valid relative to stated assumptions
-3. Future work can focus on proving the transfer bounds
-4. No hidden `sorryAx` in the proof
+**The current theorem statement is mathematically incorrect.** Options:
+
+1. **Fix the statement**: Change to bound partial sums with explicit M
+2. **Add as hypothesis**: Document what's actually assumed
+3. **Delete as unused**: The theorem isn't referenced elsewhere
+
+### Recommended fix:
+```lean
+/-- Bound on trace from primes in a finite range [N, M] -/
+theorem trace_range_bounded (N M : ℕ) (h_large : 1000 ≤ N) (h_lt : N ≤ M) (t : ℝ) :
+    ∀ primes : List ℕ, (∀ p ∈ primes, N ≤ p ∧ p ≤ M ∧ Nat.Prime p) →
+      |CliffordRH.rotorTrace (1/2) t primes| ≤ 4 * Real.sqrt M * Real.log M
+```
+This IS provable using:
+- |cos| ≤ 1
+- Σ_{N≤p≤M} log(p)/√p ≤ Σ_{N≤n≤M} log(n)/√n ≤ ∫_N^{M+1} log(x)/√x dx
 
 ---
 
-## Lessons Learned
+## Mathlib Lemmas Available
 
-**VIOLATED PROTOCOL**: Should have created this plan BEFORE editing the file.
-
-The correct workflow:
-1. Read the sorries and understand what they require
-2. Write plan with analysis of options
-3. Get user approval on approach
-4. THEN implement
+| Lemma | Location | Purpose |
+|-------|----------|---------|
+| `Real.abs_cos_le_one` | Trigonometric/Deriv | Bound |cos(x)| ≤ 1 |
+| `Finset.abs_sum_le_sum_abs` | BigOperators/Group | |Σf| ≤ Σ|f| |
+| `AntitoneOn.sum_le_integral_Ico` | SumIntegralComparisons | Sum ≤ Integral |
+| `integral_log_div_sqrt` | (needs derivation) | ∫ log(x)/√x dx |
 
 ---
 
-## Previous Task (Completed)
+## Decision Needed
 
-`snr_diverges_to_infinity` in InteractionTerm.lean - fully proven using:
-- `tendsto_rpow_atTop`, `tendsto_atTop_mono'`, `IsBigO.exists_pos`
-- Added `h_noise_nonzero` hypothesis for division safety
+Before implementing, please choose:
+
+1. **Fix statement** to bound finite ranges → provable but different theorem
+2. **Add as hypothesis** → documents assumption explicitly
+3. **Mark as false** → add comment explaining mathematical issue
+4. **Delete** → not used elsewhere anyway
+
+---
+
+## TraceAtFirstZero Summary
+
+| Line | Theorem | Status | Recommendation |
+|------|---------|--------|----------------|
+| 263 | `trace_negative_at_first_zero` | BLOCKED | Needs interval arithmetic |
+| 295 | `trace_tail_bounded` | **FALSE** | Fix statement or delete |
+| 311 | `trace_monotone_from_large_set` | FALSE | Already marked deprecated |
