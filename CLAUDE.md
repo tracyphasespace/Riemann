@@ -29,7 +29,13 @@ pgrep -x lake || echo "No lake process running"
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| - | - | - | (No active locks) |
+| AnalyticBridge.lean | AI2 | 2026-01-22 | rayleigh_decomposition |
+
+### AI1 Findings (for AI2 to use)
+
+**LinearIndependenceSolved.lean:37 `clear_denominators`** ✓ PROVEN:
+- KEY LEMMA: `Rat.mul_den_eq_num : q * q.den = q.num`
+- Proof: `obtain ⟨k, hk⟩ := h_dvd; use num * k; rw [hk]; push_cast; rw [← mul_assoc, Rat.mul_den_eq_num]`
 
 **Protocol:**
 1. Check file is not locked before editing

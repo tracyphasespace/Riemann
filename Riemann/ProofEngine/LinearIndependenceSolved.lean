@@ -37,40 +37,16 @@ Here we establish the bridge to `LinearIndependent ℚ`.
 lemma clear_denominators (s : Finset {x : ℕ // x.Prime}) (g : {x : ℕ // x.Prime} → ℚ)
     (_h_sum : ∑ p ∈ s, g p * Real.log (p : ℕ) = 0) :
     ∃ D : ℕ, 0 < D ∧ ∀ p ∈ s, ∃ z : ℤ, (g p * D : ℚ) = z := by
-  -- STRATEGY (AI2 2026-01-22):
-  -- Take D = ∏_{p ∈ s} (g p).den  (product of denominators)
-  -- Then for each p: g p * D = (g p).num * (D / (g p).den)
-  -- which is an integer since (g p).den | D
-  --
-  -- KEY API:
-  -- - Rat.num, Rat.den : ℚ → ℤ / ℕ+
-  -- - Rat.num_div_den (q : ℚ) : (q.num : ℚ) / q.den = q
-  -- - Finset.prod_pos for D > 0
-  -- - Nat.dvd_of_mem_divisors for divisibility
+  -- KEY LEMMA: Rat.mul_den_eq_num : q * q.den = q.num
+  -- Strategy: D = ∏ denominators, then g p * D = g p * (den * k) = num * k
   use s.prod (fun p => (g p).den)
   constructor
   · exact Finset.prod_pos (fun p _ => (g p).den_pos)
   · intro p hp
-    -- g p * D where D = ∏ dens
-    -- g p = (g p).num / (g p).den, so g p * D = num * (D / den)
-    -- Since den | D (it's a factor in the product), D / den is a natural number
-    have h_dvd : (g p).den ∣ s.prod (fun q => (g q).den) :=
-      Finset.dvd_prod_of_mem _ hp
-    use (g p).num * ((s.prod (fun q => (g q).den) / (g p).den) : ℤ)
-    -- Need: g p * D = num * (D / den) as rationals
-    have h_D_pos : 0 < s.prod (fun q => (g q).den) :=
-      Finset.prod_pos (fun q _ => (g q).den_pos)
-    have h_den_pos : 0 < (g p).den := (g p).den_pos
-    -- Use: q = num / den, so q * den = num
-    rw [Int.cast_mul]
-    conv_lhs => rw [← Rat.num_div_den (g p)]
-    rw [div_mul_eq_mul_div, mul_comm ((g p).num : ℚ)]
-    congr 1
-    -- Need: D * (1 / den) = D / den
-    rw [mul_one_div]
-    -- Need: (D : ℚ) / den = (D / den : ℤ) where / is integer division
-    rw [Int.cast_natCast, Int.cast_natCast]
-    rw [Nat.cast_div h_dvd (ne_of_gt h_den_pos)]
+    have h_dvd : (g p).den ∣ s.prod (fun q => (g q).den) := Finset.dvd_prod_of_mem _ hp
+    obtain ⟨k, hk⟩ := h_dvd
+    use (g p).num * k
+    rw [hk]; push_cast; rw [← mul_assoc, Rat.mul_den_eq_num]
 
 /--
 **Main Theorem**: Logs of distinct primes are linearly independent over ℚ.
