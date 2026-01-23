@@ -39,36 +39,20 @@ theorem rotorTrace_first1000_lt_bound_proven :
     CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList < -5 :=
   rotorTrace_first1000_lt_bound_axiom
 
-/--
-**Numerical Axiom: Trace Tail Bound**
+/-!
+## DELETED: rotorTrace_monotone_from_first1000_axiom
 
-For large prime sets (≥1000 primes), the trace is bounded by the
-trace over primesBelow 7920.
+**WHY DELETED (2026-01-23)**: This axiom was FALSE.
 
-**Mathematical Note**: This is a WEAK form of tail control. The trace
-oscillates due to cosine terms, so true monotonicity is FALSE.
-This axiom captures that sufficiently large sets have controlled tails.
+The trace oscillates due to cosine terms: T(σ,t) = Σ log(p)·p^{-σ}·cos(t·log p).
+The cosine phases are incommensurable, so the sum behaves like a random walk,
+NOT monotonically. Adding more primes can increase OR decrease the trace.
 
-**Why This is an Axiom**: The tail behavior requires:
-- Bounding Σ_{p > N} log(p) · p^{-1/2} · cos(t · log p)
-- Integral comparison: ∫_N^∞ log(x)/√x dx = O(√N · log N)
-- Careful error analysis for the oscillating sum
+**Correct approach**: Use the Explicit Formula axioms (Category 3) which properly
+handle the oscillating tail via error bounds, not monotonicity claims.
 
-See `TraceAtFirstZero.trace_tail_bounded` for the corrected mathematical statement.
+See also: TraceAtFirstZero.lean where `trace_monotone_from_large_set` was
+similarly deleted for the same reason.
 -/
-axiom rotorTrace_monotone_from_first1000_axiom
-    (primes : List ℕ)
-    (h_len : 1000 ≤ primes.length)
-    (h_primes : ∀ p ∈ primes, Nat.Prime p) :
-    CliffordRH.rotorTrace (1 / 2) 14.134725 primes ≤
-      CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList
-
-theorem rotorTrace_monotone_from_first1000_proven
-    (primes : List ℕ)
-    (h_len : 1000 ≤ primes.length)
-    (h_primes : ∀ p ∈ primes, Nat.Prime p) :
-    CliffordRH.rotorTrace (1 / 2) 14.134725 primes ≤
-      CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList :=
-  rotorTrace_monotone_from_first1000_axiom primes h_len h_primes
 
 end ProofEngine

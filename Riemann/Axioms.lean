@@ -97,17 +97,15 @@ theorem ax_rotorTrace_first1000_lt_bound :
     CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList < -5 :=
   ProofEngine.rotorTrace_first1000_lt_bound_proven
 
-/-- 
-Theorem: With ≥1000 primes, the rotor trace is no larger than the first-1000-prime value.
-Proven in `ProofEngine.NumericalAxioms` (Monotonicity).
+/-!
+**DELETED**: `ax_rotorTrace_monotone_from_first1000` (2026-01-23)
+
+This theorem was removed because the underlying axiom was FALSE.
+The trace oscillates (random walk behavior), not monotonic.
+See `ProofEngine.NumericalAxioms` for details.
+
+Use Explicit Formula bounds (Category 3 axioms) for tail control instead.
 -/
-theorem ax_rotorTrace_monotone_from_first1000
-    (primes : List ℕ)
-    (h_len : 1000 ≤ primes.length)
-    (h_primes : ∀ p ∈ primes, Nat.Prime p) :
-    CliffordRH.rotorTrace (1 / 2) 14.134725 primes ≤
-      CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList :=
-  ProofEngine.rotorTrace_monotone_from_first1000_proven primes h_len h_primes
 
 /--
 Theorem: Zeta zero implies negative phase clustering on (0,1).

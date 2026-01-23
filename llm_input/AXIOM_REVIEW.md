@@ -9,17 +9,21 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 31 | After cleanup |
+| **Unique Axioms** | 30 | After cleanup |
 | **Archived** | 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
-| **Deleted** | 1 | coeff_sym_factorization_axiom (FALSE) |
-| **Core Path** | 12 | Used by main theorem chain |
+| **Deleted** | 2 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom |
+| **Core Path** | 11 | Used by main theorem chain |
 | **Auxiliary** | 19 | Supporting infrastructure |
 
 ---
 
-## Category 1: Numerical Verification (2 axioms)
+## Category 1: Numerical Verification (1 axiom)
 
 These encode Wolfram-verified computations that would require native interval arithmetic.
+
+**DELETED (2026-01-23)**: `rotorTrace_monotone_from_first1000_axiom` - FALSE. The trace
+oscillates due to cosine terms (random walk behavior), not monotonic. Use Explicit Formula
+bounds for tail control instead.
 
 ### 1.1 `rotorTrace_first1000_lt_bound_axiom`
 **File**: `ProofEngine/NumericalAxioms.lean:35`
@@ -34,24 +38,6 @@ axiom rotorTrace_first1000_lt_bound_axiom :
 **Justification**: Wolfram Cloud computation gives trace ≈ -5.955. Interval arithmetic confirms the bound.
 
 **Why Axiom**: Would require native interval arithmetic library + certified cos/log/power functions.
-
----
-
-### 1.2 `rotorTrace_monotone_from_first1000_axiom`
-**File**: `ProofEngine/NumericalAxioms.lean:59`
-
-```lean
-axiom rotorTrace_monotone_from_first1000_axiom
-    (primes : List ℕ) (h_len : 1000 ≤ primes.length) (h_primes : ∀ p ∈ primes, Nat.Prime p) :
-    CliffordRH.rotorTrace (1/2) 14.134725 primes ≤
-      CliffordRH.rotorTrace (1/2) 14.134725 (Nat.primesBelow 7920).toList
-```
-
-**Meaning**: For large prime sets (≥1000 primes), the trace is bounded by the trace over primesBelow 7920.
-
-**Justification**: Tail bound via integral comparison ∫_N^∞ log(x)/√x dx = O(√N · log N).
-
-**Why Axiom**: Requires careful error analysis for oscillating sums.
 
 ---
 
@@ -447,6 +433,7 @@ axiom scalarPart (n : ℕ) : ClElement n → ℝ
 
 **Deleted**:
 - `coeff_sym_factorization_axiom` - FALSE when s.re = 1/2 and s.im ≠ 0
+- `rotorTrace_monotone_from_first1000_axiom` - FALSE: trace oscillates (random walk), not monotonic
 
 **Remaining potential duplicates** (kept for now):
 - `rayleigh_Phi_pos` - Similar to Q_pos but different signature
