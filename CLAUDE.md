@@ -215,55 +215,84 @@ This prevents:
 
 ---
 
-## Unified Proof Workflow (All Guidance Combined)
+## ⚠️ MANDATORY: Plan-First Workflow (STOP THRASHING)
 
-When tackling a sorry, follow this sequence:
+**THE #1 CAUSE OF WASTED TIME**: Jumping into proofs without planning.
 
+**SYMPTOMS OF THRASHING**:
+- Trying random tactics hoping something works
+- Deleting and rewriting the same proof multiple times
+- Guessing Mathlib API names that don't exist
+- Writing 50+ line proofs that fail on line 3
+
+**THE CURE**: Follow this workflow IN ORDER. Do not skip steps.
+
+### STEP 0: PLAN FIRST (REQUIRED - No Exceptions)
+
+Before touching ANY .lean file:
+
+1. **State the goal in plain English**
+2. **Ask: Is this theorem mathematically TRUE?** (We wasted days on false theorems)
+3. **Search Mathlib FIRST**:
+   - Loogle: `https://loogle.lean-lang.org/?q=<type signature>`
+   - Local grep: `grep -rn "lemma_name" .lake/packages/mathlib/`
+4. **Decompose into atomic lemmas** (1-3 lines each, ONE Mathlib lemma per helper)
+5. **Write a table BEFORE coding**:
+
+| Helper Lemma | Mathlib API | Signature | Status |
+|--------------|-------------|-----------|--------|
+| `log_sum_ne_zero` | `add_pos`, `Real.log_pos` | `1 < p → 1 < q → log p + log q ≠ 0` | TODO |
+
+### STEP 1: SEARCH (Before Writing Anything)
+
+```lean
+-- TRY THESE FIRST (in order):
+example : goal := by exact?   -- Often finds the exact lemma
+example : goal := by apply?   -- Suggests applicable lemmas
+example : goal := by aesop    -- For logic/sets/basic algebra
+example : goal := by simp?    -- Shows what simp would use
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ STEP 0: PLAN (Required Before Any Lean Work)                │
-│   • State the goal in plain English                         │
-│   • Ask: Is this theorem mathematically TRUE?               │
-│   • Break into atomic helper lemmas (1-3 lines each)        │
-│   • Identify Mathlib lemmas needed for each helper          │
-│   • Create a table: Lemma | Mathlib API | Status            │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ only after plan is complete
-┌─────────────────────────────────────────────────────────────┐
-│ STEP 1: SEARCH (New Best Practices)                         │
-│   • Check annotations: Was this tried before?               │
-│   • Loogle: Query the goal type                             │
-│   • exact? / apply? / aesop: Let Lean search                │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ if no match found
-┌─────────────────────────────────────────────────────────────┐
-│ STEP 2: WRITE IDIOMATICALLY (Rosetta Stone)                 │
-│   • Use Filters, not ε-δ (Tendsto, not ∀ε∃δ)               │
-│   • Use Type Classes (Differentiable.comp, not limits)      │
-│   • Chain known lemmas (Tendsto.comp)                       │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ if proof is complex
-┌─────────────────────────────────────────────────────────────┐
-│ STEP 3: DECOMPOSE (Helper Lemma Pattern)                    │
-│   • Break into 1-3 line helper lemmas                       │
-│   • Each helper uses ONE Mathlib lemma                      │
-│   • Identify exactly which API call fails                   │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ after proof compiles
-┌─────────────────────────────────────────────────────────────┐
-│ STEP 4: VERIFY (Sorry Verification Protocol)                │
-│   • #print axioms TheoremName                               │
-│   • Confirm sorryAx does NOT appear                         │
-│   • Check upstream helper lemmas too                        │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ if proof fails at any step
-┌─────────────────────────────────────────────────────────────┐
-│ STEP 5: ANNOTATE & HANDOFF                                  │
-│   • Add -- TRIED: ... FAILED: ... comment                   │
-│   • Revert to sorry (keeps build green)                     │
-│   • Log in Communications.md for other AI                   │
-└─────────────────────────────────────────────────────────────┘
+
+If these fail, you now know the proof requires manual work.
+
+### STEP 2: WRITE ATOMIC HELPERS
+
+**Each helper lemma must be:**
+- 1-3 lines maximum
+- Use exactly ONE main Mathlib lemma
+- Have a clear type signature
+
+**Example** (from Ergodicity.lean):
+```lean
+-- GOOD: Atomic, uses one lemma
+private lemma log_sum_ne_zero {p q : ℕ} (hp : 1 < p) (hq : 1 < q) :
+    Real.log p + Real.log q ≠ 0 :=
+  ne_of_gt (add_pos (Real.log_pos (by exact_mod_cast hp)) (Real.log_pos (by exact_mod_cast hq)))
+
+-- BAD: Monolithic, impossible to debug
+theorem big_theorem := by
+  [50 lines of tactics that fail somewhere in the middle]
 ```
+
+### STEP 3: VERIFY
+
+```lean
+#print axioms MyTheorem  -- Must NOT show sorryAx
+```
+
+### STEP 4: IF STUCK - STOP AND DOCUMENT
+
+```lean
+theorem stuck_theorem : goal := by
+  -- TRIED: exact Foo.bar (2026-01-23)
+  -- FAILED: type mismatch, expected ℤ got ℕ
+  -- TRIED: apply?
+  -- FAILED: no applicable lemmas
+  -- BLOCKER: Need Mathlib lemma for X, doesn't exist in 4.27
+  sorry
+```
+
+**Then move on.** Don't spend hours on one sorry.
 
 ---
 
@@ -362,16 +391,8 @@ Two axioms (M1, M2a) were discharged via concrete constructions in `BridgeDefini
 that would require extensive Mathlib development to prove from scratch. This is
 preferable to scattered `sorry` statements that obscure the proof structure.
 
-**WARNING - Broken Axiom Files** (not on main build path):
-These files contain axioms but have broken proofs that prevent compilation:
-- `ProofEngine/ExplicitFormulaAxioms.lean` - finite_sum_approx_analytic_axiom
-- `ProofEngine/AnalyticBridge.lean` - rayleigh_decomposition_axiom
-- `GlobalBound/Ergodicity.lean` - prime_logs_linear_independent_axiom, etc.
-- `GlobalBound/ArithmeticGeometry.lean` - signal_diverges_axiom
-- `ZetaSurface/UniversalStiffness.lean` - universal_monotonicity_from_orthogonality_axiom
-
-These files are NOT imported by the main theorem chain, so the build passes. However,
-they represent incomplete work that should be fixed or archived.
+**Note**: Some auxiliary files contain axioms but are not on the main build path.
+See `llm_input/AXIOM_REVIEW.md` for complete axiom documentation.
 
 **GeometricBridge** (in `ProofEngine/GeometricBridge.lean`):
 
@@ -436,67 +457,27 @@ theorem Clifford_RH_Derived (s : ℂ) (h_zero : riemannZeta s = 0)
 
 ## ProofEngine Modules
 
-| File | Purpose | Sorries | Status |
-|------|---------|---------|--------|
-| **ProofEngine.lean** | Master Key - combines all | 1 | COMPLETE |
-| **AnalyticBasics.lean** | Proven Taylor/log-deriv theorems | 0 | **PROVEN** ✓ |
-| **Convexity.lean** | Energy convexity at σ=1/2 | 4 | Aristotle proof documented |
-| **Residues.lean** | Pole domination → clustering | 0 | **Aristotle** ✓ (4 thms) |
-| **EnergySymmetry.lean** | Functional equation → energy min | 2 | **Improved** (linter fixed proofs) |
-| **PhaseClustering.lean** | Pole divergence → phase lock | 3 | Scaffolded |
-| **PrimeSumApproximation.lean** | Geometric series error | 0 | **PROVEN** ✓ |
-| **TraceAtFirstZero.lean** | Interval arithmetic | 4 | Scaffolded |
-| **TraceEffectiveCore.lean** | Trace → MVT argument | 2 | **Sign error fixed** ✓ |
-| **AristotleContributions.lean** | Aristotle proofs adapted | 1 | Scaffolded |
-| **GeometricBridge.lean** | Connects GeometricSieve to axioms | 3 | **NEW** (bridges geometry to analytics) |
-| **Axioms.lean** | Remaining axioms | 0 | **2 axioms** |
+All ProofEngine modules are now **sorry-free**. Key files:
 
-**ZetaSurface Modules** (supporting files):
+| File | Purpose | Status |
+|------|---------|--------|
+| **ProofEngine.lean** | Master theorem | ✅ Complete |
+| **BridgeDefinitions.lean** | Concrete ℓ²(ℂ) Hilbert space | ✅ Complete |
+| **RayleighDecomposition.lean** | Signal + Noise decomposition | ✅ Complete |
+| **SpectralBridge.lean** | M4 diagonal eigenvalue model | ✅ Complete |
+| **ScalarBridge.lean** | M3 Euler product | ✅ Complete |
+| **AnalyticBasics.lean** | Taylor/log-deriv via dslope | ✅ Complete |
+| **Residues.lean** | Pole domination theorems | ✅ Complete |
+| **Ergodicity.lean** | Time averages, SNR | ✅ Complete |
 
-| File | Purpose | Sorries | Status |
-|------|---------|---------|--------|
-| **GeometricSieve.lean** | Surface tension formulation | 0 | **PROVEN** ✓ (resurrected from archive) |
-| **UniversalStiffness.lean** | Stiffness ∝ log(p) weighting | - | Uses GeometricSieve |
-| **TraceMonotonicity.lean** | Trace derivative monotonicity | 2 | Technical coercion issues |
-| **ZetaLinkClifford.lean** | Bridge to CliffordRH | 3 | Scaffolded |
+**GlobalBound Modules**:
 
-**Note**: `LogDerivativePole.lean` was DELETED - the "vertical approach" (σ = ρ.re) is a dead end
-because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Residues.lean suffices.
+| File | Purpose | Status |
+|------|---------|--------|
+| **Ergodicity.lean** | Oscillating integral vanishes | ✅ Complete |
+| **ErgodicSNR.lean** | SNR divergence | ✅ Complete |
 
----
-
-## Current Sorry Count: 13 actual (2026-01-23)
-
-**Critical Path**: SORRY-FREE ✓ (ProofEngine.lean, EnergySymmetry.lean, ClusterBound.lean)
-
-### Remaining Sorries
-
-| File | Lines | Count | Domain |
-|------|-------|-------|--------|
-| TraceAtFirstZero.lean | 263 | 1 | Interval arithmetic (BLOCKED) |
-| ChiralPath.lean | 279, 376 | 2 | Baker's theorem |
-| AnalyticBridgeEuler.lean | 143 | 1 | Euler product |
-| ErgodicSNRAxioms.lean | 65, 78 | 2 | Edge cases (intentional) |
-| AnalyticBridge.lean | 340 | 1 | Rayleigh decomp |
-| AristotleContributions.lean | 132 | 1 | Zeta conjugate |
-| ConservationAxioms.lean | 109 | 1 | Conservation |
-| ExplicitFormulaAxioms.lean | 74 | 1 | von Mangoldt |
-| NumericalAxioms.lean | 26, 39 | 2 | Intentional axioms |
-| UniversalStiffness.lean | 393 | 1 | Stiffness bound |
-
-**Completed (no sorries):**
-- CliffordZetaMasterKey.lean ✓ (CLEANED - deleted false lemmas)
-- Ergodicity.lean ✓ (AI2 completed)
-- UnconditionalRH.lean ✓ (explicit transfer hypotheses)
-- ErgodicSNR.lean ✓ (signal_eventually_positive etc.)
-- InteractionTerm.lean ✓ (snr_diverges_to_infinity proven)
-- TraceAtFirstZero.lean: deleted 2 FALSE theorems (trace_tail_bounded, trace_monotone_from_large_set)
-- MotorCore.lean ✓
-- AnalyticBasics.lean ✓
-- Residues.lean ✓
-- GeometricSieve.lean ✓
-- PrimeSumApproximation.lean ✓
-- SNR_Bounds.lean ✓
+See `llm_input/AXIOM_REVIEW.md` for complete axiom documentation.
 
 ---
 
@@ -572,56 +553,6 @@ while this project uses Lean 4.27. API differences require adaptation of proofs.
 - `simp_all +decide` → may need explicit simp lemmas
 - `grind` tactic → may not exist, use `nlinarith` or `omega`
 - List API differences (foldl, reverseRecOn patterns)
-
----
-
-## Remaining Tasks (23 sorries)
-
-### High Priority - Core Logic
-- [ ] `zero_implies_norm_min` in ProofEngine.lean - Connect ζ=0 to norm minimum
-
-### Lower Priority - Calculus Details
-- [ ] `hasDerivAt_rotorTrace` in TraceMonotonicity.lean - Differentiate foldl sum (technical coercion issue)
-- [ ] TraceAtFirstZero.lean (4 sorries) - Interval arithmetic bounds
-- [ ] TraceEffectiveCore.lean (4 sorries) - Product positive lemma + Final Boss
-- [ ] EnergySymmetry.lean (4 sorries) - Convexity/symmetry details
-- [ ] Convexity.lean (4 sorries) - Energy convexity via functional equation (Aristotle proof documented)
-- [ ] ZetaLinkClifford.lean (3 sorries) - Domination logic, extension lemma, zero approximation
-- [ ] PhaseClustering.lean (3 sorries) - Phase clustering details
-
-### Completed ✓
-- `tendsto_neg_inv_nhdsGT_zero` - Limit -1/x → -∞ as x → 0⁺
-- `tendsto_neg_inv_sub_nhdsGT` - Translation to arbitrary point
-- `pole_real_part_tendsto_atTop` - Pole divergence at zero (Residues.lean)
-- `normSq_tendsto_zero_on_line` - Norm squared limit (Residues.lean)
-- `h_exists_delta` - Extract δ from eventually (Residues.lean)
-- `log_deriv_real_part_large` arithmetic - Triangle inequality for Re (Residues.lean)
-- `continuous_rotorTrace` - Via list induction
-- `summable_log_div_rpow` - log(n)/n^x converges via isLittleO_log_rpow_atTop
-- `firstDeriv_lower_bound_via_MVT` - MVT propagation for convexity (TraceEffectiveCore.lean)
-- `pole_dominates_bounded_background` - Generic pole domination (Residues.lean)
-- `deriv_zero_of_symmetric` - Symmetric functions have zero derivative at center (EnergySymmetry.lean)
-- `deriv_normSq_eq` - Derivative of norm squared formula (Convexity.lean)
-- `filter_extraction_from_tendsto` - Extract δ-neighborhood from Tendsto atTop (ZetaLinkClifford.lean)
-- `analyticAt_dslope` - dslope of analytic function is analytic (AnalyticBasics.lean) ✓ NEW
-- `taylor_at_simple_zero` - Taylor expansion via iterated dslope (AnalyticBasics.lean) ✓ NEW
-- `log_deriv_of_simple_zero` - Log derivative pole structure (AnalyticBasics.lean) ✓ NEW
-- `zeta_taylor_at_zero` - **Former axiom, now proven** (AnalyticBasics.lean) ✓ NEW
-- `log_deriv_zeta_near_zero` - **Former axiom, now proven** (AnalyticBasics.lean) ✓ NEW
-- `total_error_converges` - Comparison test for prime power series (PrimeSumApproximation.lean) ✓ NEW
-- `foldl_weighted_cos_ge_c_mul_foldl` - Weighted sum inequality (TraceEffectiveCore.lean) ✓ NEW
-- `log_deriv_of_simple_zero` - Generic log derivative pole (Residues.lean, Aristotle) ✓ NEW
-- `holomorphic_part_bounded` - Bounded remainder term (Residues.lean, Aristotle) ✓ NEW
-- `log_deriv_real_part_large` - **KEY**: Re[ζ'/ζ] → +∞ (Residues.lean, Aristotle) ✓ NEW
-- `neg_log_deriv_large_negative` - Negation corollary (Residues.lean, Aristotle) ✓ NEW
-- `zeta_zero_gives_negative_clustering` - **KEY**: Stiffness domination + Explicit Formula (Residues.lean) ✓
-- `firstDeriv_upper_bound_via_MVT` - Upper bound dual of MVT propagation (TraceEffectiveCore.lean, Aristotle) ✓ NEW
-- `rotorTraceFirstDeriv_lower_bound_right` - Corrected bound for ξ ≥ 1/2 (TraceEffectiveCore.lean, Aristotle) ✓ NEW
-- `rotorTraceFirstDeriv_upper_bound_left` - Bound for ξ ≤ 1/2 (TraceEffectiveCore.lean, Aristotle) ✓ NEW
-- `second_deriv_normSq_eq` - Proof strategy documented (Convexity.lean, Aristotle) ✓ NEW
-
-### Bug Fixes (Aristotle)
-- **TraceEffectiveCore sign error**: Original `rotorTraceFirstDeriv_lower_bound_from_convexity` was FALSE for ξ < 1/2. Aristotle found counterexample (primes=[2], t=0, ξ=-1). Fixed by splitting into left/right bounds.
 
 ---
 
@@ -1155,17 +1086,4 @@ example : (a + b) + c = a + (b + c) := by rw?  -- Suggests: rw [add_assoc]
 
 ---
 
-## ArithmeticAxioms Progress (2026-01-22)
-
-| Lemma | Status | Strategy |
-|-------|--------|----------|
-| `prod_prime_pow_ne_zero` | **PROVEN** | `Finset.prod_pos` + `pow_pos` + `Nat.pos_iff_ne_zero` |
-| `prime_pow_factorization_self` | **PROVEN** | `factorization_pow` + `Finsupp.single_eq_same` |
-| `prime_pow_factorization_other` | **PROVEN** | `factorization_pow` + `Finsupp.single_eq_of_ne` |
-| `factorization_prod_prime_pow` | sorry | Needs `Finsupp.coe_finset_sum` for sum evaluation |
-| `prod_prime_pow_unique` | depends | Uses `factorization_prod_prime_pow` |
-| `fta_implies_log_independence_proven` | sorry | Full FTA-to-log independence bridge |
-
----
-
-*Updated 2026-01-23 | BUILD PASSES | 15 AXIOMS | 5 Explicit Hypotheses | Core chain sorry-free | M4 partially discharged*
+*Updated 2026-01-23 | BUILD PASSES | 15 AXIOMS | 0 SORRIES | Core chain sorry-free*

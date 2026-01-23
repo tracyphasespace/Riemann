@@ -228,70 +228,95 @@ lemma prime_logs_ne_of_ne (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q) (hne
   have : (p : ℝ) = (q : ℝ) := Real.log_injOn_pos hp_pos hq_pos h_eq
   exact hne (Nat.cast_injective this)
 
-/--
-**Theorem: Orthogonality of Time Averages**
+-- Atomic 1: Sum of positive logs is positive (hence nonzero)
+private lemma log_sum_ne_zero {p q : ℕ} (hp : 1 < p) (hq : 1 < q) :
+    Real.log p + Real.log q ≠ 0 := by
+  have hp' : (1 : ℝ) < p := by exact_mod_cast hp
+  have hq' : (1 : ℝ) < q := by exact_mod_cast hq
+  have h := add_pos (Real.log_pos hp') (Real.log_pos hq')
+  exact ne_of_gt h
+
+-- Atomic 2: Difference of distinct prime logs is nonzero
+private lemma log_diff_ne_zero {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (hne : p ≠ q) :
+    Real.log p - Real.log q ≠ 0 := by
+  have h := prime_logs_ne_of_ne p q hp hq hne
+  exact sub_ne_zero.mpr h
+
+-- Atomic 3: Rewrite the integrand using product-to-sum
+private lemma integrand_eq_half_cos_diff_sub_sum (p q : ℕ) (t : ℝ) :
+    Real.sin (t * Real.log p) * Real.sin (t * Real.log q) =
+    (1 / 2) * (Real.cos ((Real.log p - Real.log q) * t) -
+               Real.cos ((Real.log p + Real.log q) * t)) := by
+  have h := sin_mul_sin_eq (t * Real.log p) (t * Real.log q)
+  convert h using 2 <;> ring
+
+/-- **Theorem: Orthogonality of Time Averages**
 lim_{T→∞} (1/T) ∫₀ᵀ sin(ω_p t) sin(ω_q t) dt = 0
--/
-theorem time_average_orthogonality (p q : ℕ) (_hp : Nat.Prime p) (_hq : Nat.Prime q)
-    (_hne : p ≠ q) :
+
+Mathematical Proof:
+1. Product-to-sum: sin(αt)·sin(βt) = ½[cos((α-β)t) - cos((α+β)t)]  [sin_mul_sin_eq]
+2. For distinct primes p ≠ q: both (log p - log q) and (log p + log q) are nonzero
+   [log_diff_ne_zero, log_sum_ne_zero]
+3. By oscillating_integral_vanishes: (1/T)∫cos(ωt) → 0 for ω ≠ 0
+4. Therefore: (1/T)∫sin·sin = ½[(1/T)∫cos(...) - (1/T)∫cos(...)] → ½(0-0) = 0
+   [Tendsto.sub, Tendsto.const_mul] -/
+theorem time_average_orthogonality (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q)
+    (hne : p ≠ q) :
     Tendsto (fun T => (1 / T) * ∫ t in Icc 0 T,
       Real.sin (t * Real.log p) * Real.sin (t * Real.log q)) atTop (nhds 0) := by
-  -- Use product-to-sum: sin α sin β = ½[cos(α-β) - cos(α+β)]
-  -- Then both terms vanish by Weyl (incommensurable frequencies)
-  have h_freq_diff : Real.log p - Real.log q ≠ 0 := by
-    have := prime_logs_ne_of_ne p q _hp _hq _hne
-    intro h
-    exact this (sub_eq_zero.mp h)
-  have h_freq_sum : Real.log p + Real.log q ≠ 0 := by
-    have hp_pos : 0 < Real.log p := Real.log_pos (by exact_mod_cast Nat.Prime.one_lt _hp)
-    have hq_pos : 0 < Real.log q := Real.log_pos (by exact_mod_cast Nat.Prime.one_lt _hq)
-    linarith
-  -- Each oscillating integral vanishes by Weyl
-  have h_term1 : Tendsto (fun T => (1 / T) * ∫ t in Icc 0 T,
-      Real.cos (t * (Real.log p - Real.log q))) atTop (nhds 0) := by
-    have := oscillating_integral_vanishes (Real.log p - Real.log q) h_freq_diff
-    simp_rw [mul_comm (Real.log p - Real.log q)] at this
-    exact this
-  have h_term2 : Tendsto (fun T => (1 / T) * ∫ t in Icc 0 T,
-      Real.cos (t * (Real.log p + Real.log q))) atTop (nhds 0) := by
-    have := oscillating_integral_vanishes (Real.log p + Real.log q) h_freq_sum
-    simp_rw [mul_comm (Real.log p + Real.log q)] at this
-    exact this
-  -- The product sin·sin splits into sum of cos terms
-  -- Each cos term vanishes, so sum vanishes
-  -- Step 1: The scaled integrals each tend to 0
-  have h_scaled_term1 : Tendsto (fun T => (1 / 2) * ((1 / T) * ∫ t in Icc 0 T,
-      Real.cos (t * (Real.log p - Real.log q)))) atTop (nhds 0) := by
-    have h1 : Tendsto (fun T => (1 / 2) * ((1 / T) * ∫ t in Icc 0 T,
-        Real.cos (t * (Real.log p - Real.log q)))) atTop (nhds ((1 / 2) * 0)) :=
-      Tendsto.const_mul (1 / 2) h_term1
-    simp only [mul_zero] at h1
-    exact h1
-  have h_scaled_term2 : Tendsto (fun T => (1 / 2) * ((1 / T) * ∫ t in Icc 0 T,
-      Real.cos (t * (Real.log p + Real.log q)))) atTop (nhds 0) := by
-    have h2 : Tendsto (fun T => (1 / 2) * ((1 / T) * ∫ t in Icc 0 T,
-        Real.cos (t * (Real.log p + Real.log q)))) atTop (nhds ((1 / 2) * 0)) :=
-      Tendsto.const_mul (1 / 2) h_term2
-    simp only [mul_zero] at h2
-    exact h2
-  -- Step 2: The limit of the difference is 0 - 0 = 0
-  have h_limit : Tendsto (fun T =>
-      (1 / 2) * ((1 / T) * ∫ t in Icc 0 T, Real.cos (t * (Real.log p - Real.log q))) -
-      (1 / 2) * ((1 / T) * ∫ t in Icc 0 T, Real.cos (t * (Real.log p + Real.log q))))
+  -- Establish nonzero frequencies
+  have h_diff_ne : Real.log p - Real.log q ≠ 0 := log_diff_ne_zero hp hq hne
+  have h_sum_ne : Real.log p + Real.log q ≠ 0 := log_sum_ne_zero hp.one_lt hq.one_lt
+  -- Apply oscillating_integral_vanishes to each component
+  have h_lim1 := oscillating_integral_vanishes (Real.log p - Real.log q) h_diff_ne
+  have h_lim2 := oscillating_integral_vanishes (Real.log p + Real.log q) h_sum_ne
+  -- Combined limit with distributed 1/2: (1/2)*A - (1/2)*B → 0
+  have h_combined : Tendsto (fun T =>
+      (1 / 2 : ℝ) * ((1 / T) * ∫ t in Icc 0 T, Real.cos ((Real.log p - Real.log q) * t)) -
+      (1 / 2 : ℝ) * ((1 / T) * ∫ t in Icc 0 T, Real.cos ((Real.log p + Real.log q) * t)))
       atTop (nhds 0) := by
-    simpa using h_scaled_term1.sub h_scaled_term2
-  -- Step 3: Show the integrands are equal pointwise, then use Filter.Tendsto.congr
-  refine Filter.Tendsto.congr ?_ h_limit
-  intro T
-  -- Need: (1/T) * ∫ sin·sin = (1/2)*(1/T)*∫cos(diff) - (1/2)*(1/T)*∫cos(sum)
-  -- Use the product-to-sum formula
-  congr 1
-  -- Show the integrals are equal by applying sin_mul_sin_eq pointwise
-  refine MeasureTheory.setIntegral_congr_fun (s := Icc (0 : ℝ) T) measurableSet_Icc ?_
-  intro t _
-  have := sin_mul_sin_eq (t * Real.log p) (t * Real.log q)
-  simp only [mul_sub, mul_add] at this
-  convert this using 2 <;> ring
+    -- Scale limits by 1/2
+    have h_lim1_scaled := h_lim1.const_mul (1 / 2 : ℝ)
+    have h_lim2_scaled := h_lim2.const_mul (1 / 2 : ℝ)
+    simp only [mul_zero] at h_lim1_scaled h_lim2_scaled
+    -- Combine: 1/2 * lim1 - 1/2 * lim2 → 0 - 0 = 0
+    have h_total := h_lim1_scaled.sub h_lim2_scaled
+    simp only [sub_zero] at h_total
+    exact h_total
+  -- Show functions are eventually equal
+  apply Tendsto.congr' _ h_combined
+  filter_upwards [eventually_gt_atTop 0] with T hT
+  -- Rewrite integrand using product-to-sum
+  have h_eq : ∫ t in Icc 0 T, Real.sin (t * Real.log p) * Real.sin (t * Real.log q) =
+      ∫ t in Icc 0 T, (1 / 2) * (Real.cos ((Real.log p - Real.log q) * t) -
+                                  Real.cos ((Real.log p + Real.log q) * t)) := by
+    apply MeasureTheory.setIntegral_congr_fun measurableSet_Icc
+    intro t _
+    exact integrand_eq_half_cos_diff_sub_sum p q t
+  rw [h_eq]
+  -- Define the two functions for clarity
+  let f := fun t : ℝ => Real.cos ((Real.log p - Real.log q) * t)
+  let g := fun t : ℝ => Real.cos ((Real.log p + Real.log q) * t)
+  -- Integrability witnesses
+  have h_integ1 : Integrable f (volume.restrict (Icc 0 T)) :=
+    (continuous_cos.comp (continuous_const.mul continuous_id)).integrableOn_Icc
+  have h_integ2 : Integrable g (volume.restrict (Icc 0 T)) :=
+    (continuous_cos.comp (continuous_const.mul continuous_id)).integrableOn_Icc
+  -- Step 1: Convert c * f to c • f for integral_smul
+  have h_smul : ∀ t, (1 / 2 : ℝ) * (f t - g t) = (1 / 2 : ℝ) • (f t - g t) :=
+    fun t => by rw [smul_eq_mul]
+  -- Step 2: Factor out constant using integral_smul
+  have h_factor : ∫ t in Icc 0 T, (1 / 2 : ℝ) * (f t - g t) =
+      (1 / 2 : ℝ) * ∫ t in Icc 0 T, (f t - g t) := by
+    simp_rw [h_smul, MeasureTheory.integral_smul, smul_eq_mul]
+  -- Step 3: Split the integral of difference
+  have h_sub := MeasureTheory.integral_sub h_integ1 h_integ2
+  -- h_sub : ∫ a in Icc 0 T, f a - g a = (∫ a in Icc 0 T, f a) - ∫ a in Icc 0 T, g a
+  -- Now rewrite with the equalities
+  simp only [f, g] at h_factor h_sub ⊢
+  rw [h_factor, h_sub]
+  -- Goal: (1/T) * (1/2 * (I1 - I2)) = (1/2 * (1/T * I1)) - (1/2 * (1/T * I2))
+  ring
 
 /-!
 ## 3. The Noise Vanishes on Average
@@ -312,11 +337,11 @@ lemma cross_term_average_zero (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q) 
   have h_factor : ∀ T, ∫ t in Icc 0 T, w * Real.sin (t * Real.log p) * Real.sin (t * Real.log q) =
       w * ∫ t in Icc 0 T, Real.sin (t * Real.log p) * Real.sin (t * Real.log q) := by
     intro T
-    -- Convert w * f t to smul form and use integral_smul
+    -- Convert w * f(t) * g(t) to w • (f(t) * g(t)) and use integral_smul
     have h_eq : ∀ t, w * Real.sin (t * Real.log p) * Real.sin (t * Real.log q) =
         w • (Real.sin (t * Real.log p) * Real.sin (t * Real.log q)) := fun t => by
-      simp only [smul_eq_mul, mul_assoc]
-    simp_rw [h_eq, MeasureTheory.integral_smul]
+      rw [smul_eq_mul]; ring
+    simp_rw [h_eq, MeasureTheory.integral_smul, smul_eq_mul]
   -- Rewrite the function using the factorization
   have h_eq : (fun T => (1 / T) * ∫ t in Icc 0 T,
       w * Real.sin (t * Real.log p) * Real.sin (t * Real.log q)) =
@@ -338,20 +363,172 @@ lemma cross_term_average_zero (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q) 
 NoiseGrowth equals the off-diagonal cross-term sum:
 `(∑ aₚ)² - ∑ aₚ² = 2·∑_{p<q} aₚ·aᵧ`
 
-Proof Strategy (documented, mechanization deferred):
-1. Expand (PrimePhaseSum)² using Finset.sum_mul_sum
-2. Split S×S into diagonal (p=q), lower (p<q), upper (p>q)
-3. Diagonal = SignalGrowth (cancels in NoiseGrowth definition)
-4. Upper = Lower by commutativity (swap p↔q bijection)
-5. Therefore: NoiseGrowth = 2 × Lower -/
+This is the standard algebraic identity for expanding a square minus diagonal.
+Mathematical proof: (Σᵢ aᵢ)² = Σᵢ,ⱼ aᵢ·aⱼ = Σᵢ aᵢ² + 2·Σᵢ<ⱼ aᵢ·aⱼ  (by symmetry of aᵢ·aⱼ = aⱼ·aᵢ)
+Therefore: (Σᵢ aᵢ)² - Σᵢ aᵢ² = 2·Σᵢ<ⱼ aᵢ·aⱼ
+
+The Finset algebra mechanization requires:
+- Finset.sum_mul_sum to expand the square
+- Partition of S×S into diagonal, lower, upper triangles
+- Bijection proof that upper = lower (via swap)
+- Arithmetic: (diag + lower + upper) - diag = 2·lower when upper = lower -/
+-- Atomic: Partition S×S into diag ∪ lower ∪ upper
+private lemma product_partition (S : Finset ℕ) :
+    S ×ˢ S = (S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 = pq.2) ∪
+             (S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2) ∪
+             (S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.2 < pq.1) := by
+  ext pq
+  simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_product]
+  constructor
+  · intro ⟨hp, hq⟩
+    rcases lt_trichotomy pq.1 pq.2 with h_lt | h_eq | h_gt
+    · exact Or.inl (Or.inr ⟨⟨hp, hq⟩, h_lt⟩)
+    · exact Or.inl (Or.inl ⟨⟨hp, hq⟩, h_eq⟩)
+    · exact Or.inr ⟨⟨hp, hq⟩, h_gt⟩
+  · intro h
+    rcases h with (⟨⟨hp, hq⟩, _⟩ | ⟨⟨hp, hq⟩, _⟩) | ⟨⟨hp, hq⟩, _⟩
+    all_goals exact ⟨hp, hq⟩
+
+-- Atomic: diag and lower are disjoint
+private lemma diag_lower_disjoint (S : Finset ℕ) :
+    Disjoint ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 = pq.2))
+             ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2)) := by
+  rw [Finset.disjoint_filter]
+  intro pq _ heq hlt
+  omega
+
+-- Atomic: lower and upper are disjoint
+private lemma lower_upper_disjoint (S : Finset ℕ) :
+    Disjoint ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2))
+             ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.2 < pq.1)) := by
+  rw [Finset.disjoint_filter]
+  intro pq _ hlt hgt
+  omega
+
+-- Atomic: (diag ∪ lower) and upper are disjoint
+private lemma diag_lower_upper_disjoint (S : Finset ℕ) :
+    Disjoint ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 = pq.2) ∪
+              (S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2))
+             ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.2 < pq.1)) := by
+  rw [Finset.disjoint_union_left]
+  constructor
+  · rw [Finset.disjoint_filter]; intro pq _ heq hgt; omega
+  · exact lower_upper_disjoint S
+
+-- Atomic: Upper sum equals lower sum by swap bijection
+private lemma upper_eq_lower_sum (S : Finset ℕ) (a : ℕ → ℝ) :
+    ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.2 < pq.1)).sum (fun pq => a pq.1 * a pq.2) =
+    ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2)).sum (fun pq => a pq.1 * a pq.2) := by
+  let swap : ℕ × ℕ → ℕ × ℕ := fun pq => (pq.2, pq.1)
+  apply Finset.sum_nbij' swap swap
+  · intro pq hpq
+    simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
+    exact ⟨⟨hpq.1.2, hpq.1.1⟩, hpq.2⟩
+  · intro pq hpq
+    simp only [Finset.mem_filter, Finset.mem_product] at hpq ⊢
+    exact ⟨⟨hpq.1.2, hpq.1.1⟩, hpq.2⟩
+  · intro pq _; rfl
+  · intro pq _; rfl
+  · intro pq _; simp only [swap]; ring
+
+-- Atomic: (p^{-1/2})^2 = p^{-1} for any p : ℕ
+private lemma rpow_neg_half_sq (p : ℕ) : ((p : ℝ) ^ (-1/2 : ℝ)) ^ 2 = (p : ℝ) ^ (-1 : ℝ) := by
+  rw [← Real.rpow_mul_natCast (Nat.cast_nonneg p) (-1/2) 2]
+  norm_num
+
+-- Atomic: Reorder the cross-term product to match goal
+private lemma cross_term_reorder (t : ℝ) (p q : ℕ) :
+    (Real.sin (t * Real.log p) * (p : ℝ) ^ (-(1/2 : ℝ))) *
+    (Real.sin (t * Real.log q) * (q : ℝ) ^ (-(1/2 : ℝ))) =
+    Real.sin (t * Real.log p) * Real.sin (t * Real.log q) *
+    ((p : ℝ) ^ (-(1/2 : ℝ))) * ((q : ℝ) ^ (-(1/2 : ℝ))) := by
+  ring
+
+-- Atomic: Diagonal sum equals sum of squares
+private lemma diag_sum_eq_sq_sum (S : Finset ℕ) (a : ℕ → ℝ) :
+    ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 = pq.2)).sum (fun pq => a pq.1 * a pq.2) =
+    S.sum (fun p => (a p)^2) := by
+  -- Use bijection: diagonal ↔ S via (p,p) ↔ p
+  apply Finset.sum_nbij' (fun pq => pq.1) (fun p => (p, p))
+  · -- hi: pq ∈ upper → pq.1 ∈ S
+    intro pq hpq
+    simp only [Finset.mem_filter, Finset.mem_product] at hpq
+    exact hpq.1.1
+  · -- hj: p ∈ S → (p,p) ∈ diagonal
+    intro p hp
+    simp only [Finset.mem_filter, Finset.mem_product, and_self, and_true]
+    exact hp
+  · -- left_inv: (pq.1, pq.1) = pq when pq.1 = pq.2
+    intro pq hpq
+    simp only [Finset.mem_filter] at hpq
+    ext
+    · rfl
+    · exact hpq.2
+  · -- right_inv: pq.1 itself
+    intro p _; rfl
+  · -- h: a (p,p).1 * a (p,p).2 = (a p)^2 when pq.1 = pq.2
+    intro pq hpq
+    simp only [Finset.mem_filter] at hpq
+    rw [hpq.2, sq]
+
 theorem noiseGrowth_eq_cross_sum_proven (S : Finset ℕ) (t : ℝ) :
     NoiseGrowth S t = 2 * ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2)).sum (fun pq =>
       Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
       ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) := by
-  -- Standard algebraic identity: (∑ a)² - ∑ a² = 2·∑_{i<j} aᵢ·aⱼ
-  -- The mathematical content is elementary; Lean mechanization requires
-  -- careful Finset.sum_bij' proofs for the bijections.
-  sorry
+  -- Define the term a_p for brevity
+  let a := fun p : ℕ => Real.sin (t * Real.log p) * (p : ℝ) ^ (-(1/2 : ℝ))
+  -- Unfold definitions
+  unfold NoiseGrowth PrimePhaseSum SignalGrowth
+  -- Step 1: Expand (Σ a)² = Σ_{p,q} a_p * a_q
+  have h_sq : (S.sum a)^2 = (S ×ˢ S).sum (fun pq => a pq.1 * a pq.2) := by
+    rw [sq, Finset.sum_mul_sum, ← Finset.sum_product']
+  -- Step 2: Partition and sum over diag ∪ lower ∪ upper
+  have h_partition := product_partition S
+  have h_disj1 := diag_lower_disjoint S
+  have h_disj2 := diag_lower_upper_disjoint S
+  -- Step 3: Rewrite sum using partition (note: + associates left)
+  have h_sum_split : (S ×ˢ S).sum (fun pq => a pq.1 * a pq.2) =
+      (((S ×ˢ S).filter (fun pq => pq.1 = pq.2)).sum (fun pq => a pq.1 * a pq.2) +
+       ((S ×ˢ S).filter (fun pq => pq.1 < pq.2)).sum (fun pq => a pq.1 * a pq.2)) +
+      ((S ×ˢ S).filter (fun pq => pq.2 < pq.1)).sum (fun pq => a pq.1 * a pq.2) := by
+    calc (S ×ˢ S).sum (fun pq => a pq.1 * a pq.2)
+        = ((S ×ˢ S).filter (fun pq => pq.1 = pq.2) ∪
+           (S ×ˢ S).filter (fun pq => pq.1 < pq.2) ∪
+           (S ×ˢ S).filter (fun pq => pq.2 < pq.1)).sum (fun pq => a pq.1 * a pq.2) := by
+            rw [← h_partition]
+      _ = ((S ×ˢ S).filter (fun pq => pq.1 = pq.2) ∪
+           (S ×ˢ S).filter (fun pq => pq.1 < pq.2)).sum (fun pq => a pq.1 * a pq.2) +
+          ((S ×ˢ S).filter (fun pq => pq.2 < pq.1)).sum (fun pq => a pq.1 * a pq.2) := by
+            exact Finset.sum_union h_disj2
+      _ = (((S ×ˢ S).filter (fun pq => pq.1 = pq.2)).sum (fun pq => a pq.1 * a pq.2) +
+           ((S ×ˢ S).filter (fun pq => pq.1 < pq.2)).sum (fun pq => a pq.1 * a pq.2)) +
+          ((S ×ˢ S).filter (fun pq => pq.2 < pq.1)).sum (fun pq => a pq.1 * a pq.2) := by
+            rw [Finset.sum_union h_disj1]
+  -- Step 4: Upper = Lower by symmetry
+  have h_symm := upper_eq_lower_sum S a
+  -- Step 5: Diagonal = Σ a²
+  have h_diag := diag_sum_eq_sq_sum S a
+  -- Step 6: SignalGrowth = Σ sin² · p⁻¹ = Σ (a p)²
+  have h_signal : S.sum (fun p => (Real.sin (t * Real.log p))^2 * (p : ℝ) ^ (-1 : ℝ)) =
+      S.sum (fun p => (a p)^2) := by
+    apply Finset.sum_congr rfl
+    intro p _
+    simp only [a, sq]
+    -- (sin * p^{-1/2})^2 = sin^2 * (p^{-1/2})^2 = sin^2 * p^{-1}
+    ring_nf
+    -- Use atomic lemma: (p^{-1/2})^2 = p^{-1}
+    rw [rpow_neg_half_sq p]
+  -- Step 7: Rewrite the cross-sum to match the goal form
+  have h_cross_rewrite : ((S ×ˢ S).filter (fun pq => pq.1 < pq.2)).sum (fun pq => a pq.1 * a pq.2) =
+      ((S ×ˢ S).filter (fun pq => pq.1 < pq.2)).sum (fun pq =>
+        Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) := by
+    apply Finset.sum_congr rfl
+    intro pq _
+    exact cross_term_reorder t pq.1 pq.2
+  -- Step 8: Combine everything
+  rw [h_sq, h_sum_split, h_symm, h_diag, h_signal, h_cross_rewrite]
+  ring
 
 -- Keep the lemma for backwards compatibility
 lemma noiseGrowth_eq_cross_sum (S : Finset ℕ) (t : ℝ) :
@@ -360,112 +537,129 @@ lemma noiseGrowth_eq_cross_sum (S : Finset ℕ) (t : ℝ) :
       ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) :=
   noiseGrowth_eq_cross_sum_proven S t
 
-theorem noise_averages_to_zero (S : Finset ℕ) (h_primes : ∀ p ∈ S, Nat.Prime p) :
-    Tendsto (fun T => (1 / T) * ∫ t in Icc 0 T, NoiseGrowth S t) atTop (nhds 0) := by
-  -- Define the set of ordered pairs (p, q) with p < q
-  let pairs : Finset (ℕ × ℕ) := (S ×ˢ S).filter (fun pq => pq.1 < pq.2)
+/-- **Theorem: Noise Time Average Vanishes**
 
-  -- Define the cross-term function for each pair
-  let crossTerm (pq : ℕ × ℕ) (t : ℝ) : ℝ :=
-    Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
-    ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))
+The time average of NoiseGrowth tends to zero:
+lim_{T→∞} (1/T) ∫₀ᵀ NoiseGrowth(S,t) dt = 0
 
-  -- Each cross-term integral average → 0
-  have h_each_term : ∀ pq ∈ pairs, Tendsto
-      (fun T => (1 / T) * ∫ t in Icc 0 T, crossTerm pq t) atTop (nhds 0) := by
-    intro pq hpq
-    -- Extract p < q from the filter condition
-    simp only [Finset.mem_filter, Finset.mem_product] at hpq
-    obtain ⟨⟨hp_mem, hq_mem⟩, hlt⟩ := hpq
-    have hp := h_primes pq.1 hp_mem
-    have hq := h_primes pq.2 hq_mem
-    have hne : pq.1 ≠ pq.2 := Nat.ne_of_lt hlt
-    -- The weight factor
-    let w : ℝ := ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))
-    -- Rewrite crossTerm as w * sin * sin
-    have h_cross_eq : ∀ t, crossTerm pq t = w * Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) := by
-      intro t
-      simp only [crossTerm]
-      ring
-    -- Apply cross_term_average_zero
-    have h_avg := cross_term_average_zero pq.1 pq.2 hp hq hne w
-    -- Show the functions are equal
-    convert h_avg using 1
-    funext T
-    congr 1
+Proof Strategy:
+1. By noiseGrowth_eq_cross_sum: NoiseGrowth = 2·Σ_{p<q} (sin·sin·weights)
+2. Each cross-term (1/T)∫sin·sin → 0 by time_average_orthogonality
+3. Finite sum of zero limits = 0 (tendsto_finset_sum)
+4. Factor: 2·0 = 0 (Tendsto.const_mul) -/
+-- Atomic lemma: cross term function is continuous
+private lemma cross_term_continuous (p q : ℕ) :
+    Continuous (fun t : ℝ => Real.sin (t * Real.log p) * Real.sin (t * Real.log q) *
+      ((p : ℝ) ^ (-(1/2 : ℝ))) * ((q : ℝ) ^ (-(1/2 : ℝ)))) := by
+  apply Continuous.mul
+  apply Continuous.mul
+  apply Continuous.mul
+  · exact continuous_sin.comp (continuous_id.mul continuous_const)
+  · exact continuous_sin.comp (continuous_id.mul continuous_const)
+  · exact continuous_const
+  · exact continuous_const
+
+-- Atomic lemma: each cross term averages to zero (with product weight)
+private lemma cross_term_product_avg_zero (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q)
+    (hpq : p < q) :
+    Tendsto (fun T => (1 / T) * ∫ t in Icc 0 T,
+      Real.sin (t * Real.log p) * Real.sin (t * Real.log q) *
+      ((p : ℝ) ^ (-(1/2 : ℝ))) * ((q : ℝ) ^ (-(1/2 : ℝ)))) atTop (nhds 0) := by
+  have hne : p ≠ q := Nat.ne_of_lt hpq
+  let w := ((p : ℝ) ^ (-(1/2 : ℝ))) * ((q : ℝ) ^ (-(1/2 : ℝ)))
+  have h_eq : ∀ T, ∫ t in Icc 0 T, Real.sin (t * Real.log p) * Real.sin (t * Real.log q) *
+      ((p : ℝ) ^ (-(1/2 : ℝ))) * ((q : ℝ) ^ (-(1/2 : ℝ))) =
+      ∫ t in Icc 0 T, w * Real.sin (t * Real.log p) * Real.sin (t * Real.log q) := by
+    intro T
     apply MeasureTheory.setIntegral_congr_fun measurableSet_Icc
     intro t _
-    exact h_cross_eq t
+    simp only [w]; ring
+  simp_rw [h_eq]
+  exact cross_term_average_zero p q hp hq hne w
 
-  -- Sum of limits is limit of sums (finite case)
-  have h_sum_limit : Tendsto
-      (fun T => pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T, crossTerm pq t))
-      atTop (nhds (pairs.sum (fun _ => (0 : ℝ)))) := by
-    apply tendsto_finset_sum
-    intro pq hpq
-    exact h_each_term pq hpq
-
-  -- Simplify: sum of zeros is zero
-  simp only [Finset.sum_const_zero] at h_sum_limit
-
-  -- Need to show: our original function equals 2 * (sum of cross-term averages)
-  -- Use noiseGrowth_eq_cross_sum to rewrite NoiseGrowth
-  have h_rewrite : ∀ T, 0 < T →
-      (1 / T) * ∫ t in Icc 0 T, NoiseGrowth S t =
-      2 * pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T, crossTerm pq t) := by
-    intro T hT
-    -- Rewrite NoiseGrowth using the cross-sum identity
-    have h_noise_eq : ∀ t, NoiseGrowth S t = 2 * pairs.sum (fun pq => crossTerm pq t) := by
-      intro t
-      rw [noiseGrowth_eq_cross_sum]
-      simp only [crossTerm]
-    -- Substitute into the integral
-    calc (1 / T) * ∫ t in Icc 0 T, NoiseGrowth S t
-        = (1 / T) * ∫ t in Icc 0 T, 2 * pairs.sum (fun pq => crossTerm pq t) := by
-            congr 1
-            apply MeasureTheory.setIntegral_congr_fun measurableSet_Icc
-            intro t _
-            exact h_noise_eq t
-      _ = (1 / T) * (2 * ∫ t in Icc 0 T, pairs.sum (fun pq => crossTerm pq t)) := by
-            congr 1
-            -- Use integral_smul for const * integral
-            have h_eq : ∀ t, (2 : ℝ) * pairs.sum (fun pq => crossTerm pq t) =
-                (2 : ℝ) • pairs.sum (fun pq => crossTerm pq t) := fun _ => by simp [smul_eq_mul]
-            simp_rw [h_eq, MeasureTheory.integral_smul]
-      _ = 2 * ((1 / T) * ∫ t in Icc 0 T, pairs.sum (fun pq => crossTerm pq t)) := by ring
-      _ = 2 * ((1 / T) * pairs.sum (fun pq => ∫ t in Icc 0 T, crossTerm pq t)) := by
-            congr 2
-            -- Interchange sum and integral (finite sum of continuous functions)
-            rw [integral_Icc_eq_integral_Ioc, ← intervalIntegral.integral_of_le hT.le]
-            rw [intervalIntegral.integral_finset_sum]
-            · congr 1
-              funext pq
-              rw [intervalIntegral.integral_of_le hT.le, integral_Icc_eq_integral_Ioc]
-            · intro pq _
-              -- Each crossTerm is continuous, hence integrable
-              apply Continuous.intervalIntegrable
-              simp only [crossTerm]
-              continuity
-      _ = 2 * pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T, crossTerm pq t) := by
-            congr 1
-            rw [Finset.mul_sum]
-
-  -- Eventually equal functions have the same limit
-  have h_eventually : (fun T => (1 / T) * ∫ t in Icc 0 T, NoiseGrowth S t) =ᶠ[atTop]
-      (fun T => 2 * pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T, crossTerm pq t)) := by
+theorem noise_averages_to_zero (S : Finset ℕ) (h_primes : ∀ p ∈ S, Nat.Prime p) :
+    Tendsto (fun T => (1 / T) * ∫ t in Icc 0 T, NoiseGrowth S t) atTop (nhds 0) := by
+  -- Step 1: Rewrite NoiseGrowth using cross-sum identity
+  have h_rewrite : ∀ t, NoiseGrowth S t = 2 * ((S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2)).sum
+      (fun pq => Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) :=
+    fun t => noiseGrowth_eq_cross_sum_proven S t
+  -- Define the pairs set for clarity
+  let pairs := (S ×ˢ S).filter (fun pq : ℕ × ℕ => pq.1 < pq.2)
+  -- Step 2: Each pair's time average → 0
+  have h_each : ∀ pq ∈ pairs, Tendsto (fun T => (1 / T) * ∫ t in Icc 0 T,
+      Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+      ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) atTop (nhds 0) := by
+    intro ⟨p, q⟩ hpq
+    simp only [pairs, Finset.mem_filter, Finset.mem_product] at hpq
+    exact cross_term_product_avg_zero p q (h_primes p hpq.1.1) (h_primes q hpq.1.2) hpq.2
+  -- Step 3: Sum of zero limits = 0 (using tendsto_finset_sum)
+  have h_sum : Tendsto (fun T => pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T,
+      Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+      ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ))))) atTop (nhds 0) := by
+    have h := tendsto_finset_sum pairs (fun pq hpq => h_each pq hpq)
+    simp only [Finset.sum_const_zero] at h
+    exact h
+  -- Step 4: Show the function equals 2 * sum (with integral interchange)
+  -- Note: The integral interchange ∫Σ = Σ∫ is valid for finite sums
+  have h_factor : ∀ᶠ T in atTop, (1 / T) * ∫ t in Icc 0 T, NoiseGrowth S t =
+      2 * pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T,
+        Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) := by
     filter_upwards [eventually_gt_atTop 0] with T hT
-    exact h_rewrite T hT
-
-  -- 2 * 0 = 0
-  have h_final : Tendsto
-      (fun T => 2 * pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T, crossTerm pq t))
-      atTop (nhds 0) := by
-    have h2 : Tendsto (fun T => 2 * pairs.sum (fun pq => (1 / T) * ∫ t in Icc 0 T, crossTerm pq t))
-        atTop (nhds (2 * 0)) := h_sum_limit.const_mul 2
-    simp only [mul_zero] at h2
-    exact h2
-
-  exact Tendsto.congr' h_eventually.symm h_final
+    -- Rewrite NoiseGrowth
+    have h1 : ∫ t in Icc 0 T, NoiseGrowth S t =
+        ∫ t in Icc 0 T, 2 * pairs.sum (fun pq =>
+          Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+          ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) := by
+      apply MeasureTheory.setIntegral_congr_fun measurableSet_Icc
+      intro t _
+      exact h_rewrite t
+    rw [h1]
+    -- Integrability of each term (uses atomic cross_term_continuous)
+    have h_integ : ∀ pq ∈ pairs, Integrable (fun t =>
+        Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ))))
+        (volume.restrict (Icc 0 T)) := by
+      intro pq _
+      exact (cross_term_continuous pq.1 pq.2).integrableOn_Icc
+    -- Factor out 2 from integrand
+    have h2_factor : ∀ t, 2 * pairs.sum (fun pq =>
+        Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) =
+        pairs.sum (fun pq => 2 * (Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ))))) := by
+      intro t
+      rw [Finset.mul_sum]
+    simp_rw [h2_factor]
+    -- Now integral of sum = sum of integrals
+    have h_integ2 : ∀ pq ∈ pairs, Integrable (fun t =>
+        2 * (Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))))
+        (volume.restrict (Icc 0 T)) := fun pq hpq => (h_integ pq hpq).const_mul 2
+    rw [MeasureTheory.integral_finset_sum pairs h_integ2]
+    -- Now move 1/T inside, and factor out 2
+    rw [Finset.mul_sum, Finset.mul_sum]
+    congr 1
+    funext pq
+    -- ∫ 2*f = 2 * ∫ f and (1/T) * (2 * ∫f) = 2 * ((1/T) * ∫f)
+    have h_const : ∫ t in Icc 0 T, 2 * (Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) =
+        2 * ∫ t in Icc 0 T, Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+        ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ))) := by
+      have h_smul : ∀ t, 2 * (Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+          ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) =
+          (2 : ℝ) • (Real.sin (t * Real.log pq.1) * Real.sin (t * Real.log pq.2) *
+          ((pq.1 : ℝ) ^ (-(1/2 : ℝ))) * ((pq.2 : ℝ) ^ (-(1/2 : ℝ)))) := fun t => by
+        rw [smul_eq_mul]
+      simp_rw [h_smul, MeasureTheory.integral_smul, smul_eq_mul]
+    rw [h_const]
+    ring
+  -- Step 5: Combine: 2 * (sum → 0) → 2 * 0 = 0
+  apply Tendsto.congr' (Filter.EventuallyEq.symm h_factor)
+  have h_final := h_sum.const_mul 2
+  simp only [mul_zero] at h_final
+  exact h_final
 
 /-!
 ## 4. The Signal Persists on Average
