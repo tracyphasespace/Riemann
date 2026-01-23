@@ -235,7 +235,8 @@ then the Signal-to-Noise Ratio diverges to infinity.
 -/
 theorem snr_diverges_to_infinity (primes : List ℕ)
     (h_corr : PairCorrelationBound primes)
-    (h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
+    (h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop)
+    (h_noise_nonzero : ∀ᶠ t in atTop, InteractionEnergy primes.toFinset t ≠ 0) :
     Tendsto (fun t => IdealEnergy primes.toFinset t / |InteractionEnergy primes.toFinset t|)
             atTop atTop := by
   -- Extract structure fields
@@ -253,12 +254,10 @@ theorem snr_diverges_to_infinity (primes : List ℕ)
     filter_upwards [h_signal_grows.eventually_gt_atTop 0] with t ht
     exact ht
 
-  -- Hypothesis: Noise eventually positive (needed for division)
-  -- This is a reasonable assumption when there's genuine interaction
+  -- Hypothesis: Noise eventually positive (from h_noise_nonzero)
   have hN_pos : ∀ᶠ t in atTop, 0 < N t := by
-    -- The noise can be zero only at isolated points
-    -- For now, we assume this from physical reasoning
-    sorry
+    filter_upwards [h_noise_nonzero] with t ht
+    exact abs_pos.mpr ht
 
   -- Step 1: Get positive bound from IsBigO
   obtain ⟨C, hC_pos, hC_wit⟩ := h_big_o.exists_pos
