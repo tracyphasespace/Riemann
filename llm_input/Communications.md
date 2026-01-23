@@ -1,13 +1,21 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-22 (clear_denominators proven)
+**Last Updated**: 2026-01-22 (fta_all_exponents_zero PROVEN!)
 **Build Status**: PASSING
-**Total Sorries**: ~46 actual in .lean files
+**Total Sorries**: 44 actual in .lean files
 **Critical Path**: SORRY-FREE ✓
 
 ### Recent Proofs (AI1):
+- `DiophantineGeometry.lean`: **fta_all_exponents_zero PROVEN** (was 2 sorries) - FILE NOW SORRY-FREE ✓
+  - Added `cast_prod_pow_eq` + `prod_eq_of_real_prod_eq` atomic helpers
+  - These provide the exp/log↔product bridge AI2 identified as blocker
 - `CliffordAxioms.lean`: primeBivector_sq + primeBivectors_commute (5→0)
 - `LinearIndependenceSolved.lean`: clear_denominators ✓ (via `Rat.mul_den_eq_num`)
+
+### 🚀 NOW UNBLOCKED (by fta_all_exponents_zero):
+- `LinearIndependenceSolved.lean:60,86` - can now apply FTA result
+- `ArithmeticAxioms.lean:99` - FTA bridge now available
+- `ChiralPath.lean:154` - already uses fta_all_exponents_zero directly
 
 ---
 
@@ -115,23 +123,25 @@ Key lemmas: `taylor_mean_remainder_lagrange_iteratedDeriv`, `uniqueDiffOn_Icc`
 -- Strategy: Use UniqueFactorizationMonoid from Mathlib
 ```
 
-### 8. DiophantineGeometry.lean:361,404 - FTA unique factorization 🔄 IN PROGRESS
-**File**: `Riemann/ProofEngine/DiophantineGeometry.lean`
+### 8. ~~DiophantineGeometry.lean:361,404~~ ✅ PROVEN (AI1 2026-01-22)
+**File**: `Riemann/ProofEngine/DiophantineGeometry.lean` - **NOW SORRY-FREE**
 ```lean
--- PROGRESS (AI2 2026-01-22):
--- Added atomic helper lemmas:
+-- COMPLETED (AI1 2026-01-22):
+-- AI2's atomic helpers were the foundation:
 --   prime_pow_factorization_self' ✓
 --   prime_pow_factorization_other' ✓
---   disjoint_prime_prods_eq_one ✓ (key FTA lemma - proven!)
+--   disjoint_prime_prods_eq_one ✓
 --   prod_prime_pow_gt_one_of_pos ✓
 --   log_prod_eq_sum_log ✓
 --
--- 2 SORRIES REMAINING (both identical "Case 3: both nonempty"):
---   Line 361 and 404 in fta_all_exponents_zero
---   BLOCKED: Need exp_sum_log_eq_prod helper to convert
---            ∑ z(p) * log p = ∑ (-z(p)) * log p (real equality)
---         to ∏ p^{z(p)} = ∏ p^{-z(p)} (natural number equality)
---   The atomic lemmas are in place; just need the conversion bridge.
+-- AI1 added the missing bridge lemmas:
+--   cast_prod_pow_eq ✓ - ↑(∏ n^e) = ∏ (↑n)^(↑e) via induction + push_cast
+--   prod_eq_of_real_prod_eq ✓ - ℕ products equal if ℝ products equal
+--
+-- Both Case 3 and Case 4 now proven using:
+--   1. exp_sum_mul_log' to convert sum equality → product equality (ℝ)
+--   2. prod_eq_of_real_prod_eq for ℕ/ℝ casting
+--   3. prod_congr + norm_cast to align exponents term-by-term
 ```
 
 ### 9. CliffordAxioms.lean - Clifford algebra 🔄 MAJOR REFACTOR (AI2 2026-01-22)
@@ -292,6 +302,7 @@ obtain ⟨s, hs_sub, hs_open, hx_s⟩ := h
 
 | File | Line | Status | Notes |
 |------|------|--------|-------|
+| DiophantineGeometry | all | **PROVEN** | fta_all_exponents_zero - FILE SORRY-FREE ✓ |
 | MotorCore.lean | N/A | **PROVEN** | All 10 lemmas complete, no sorries |
 | ProofEngine.lean | all | **PROVEN** | Core chain sorry-free via explicit hypotheses |
 | EnergySymmetry.lean | all | **PROVEN** | Bridge theorems via explicit hypotheses |
