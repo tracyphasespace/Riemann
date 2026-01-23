@@ -25,15 +25,52 @@ lemma prime_sum_approx_vonMangoldt (s : ℂ) (X : ℝ) :
 /--
 Replacement for `ax_finite_sum_approx_analytic`.
 Verified from the Explicit Formula (von Mangoldt, 1895).
+
+**STATUS (AI3 2026-01-23)**: Requires deep analytic number theory infrastructure.
+
+**Mathematical Content**:
+The von Mangoldt Explicit Formula states:
+  -ζ'/ζ(s) = Σ_ρ 1/(s-ρ) + Σ_n Λ(n)/n^s + (regular terms)
+
+where Λ(n) is the von Mangoldt function and ρ runs over nontrivial zeros.
+
+Differentiating with respect to s:
+  d/ds(-ζ'/ζ(s)) = -Σ_ρ 1/(s-ρ)² + Σ_n Λ(n)·log(n)/n^s + ...
+
+For primes, the finite sum approximates the prime contribution:
+  Σ_p log²(p)·p^{-σ}·cos(t·log(p)) ≈ Re[Σ_p log²(p)/p^s]
+
+**What This Theorem States**:
+The error between the finite prime sum and the analytic derivative of -ζ'/ζ
+is bounded by some constant E, uniformly for σ > ρ.re.
+
+**Why It Cannot Be Proven in Mathlib**:
+1. No formalization of the Explicit Formula
+2. No infrastructure for contour integration of ζ'/ζ
+3. No residue calculus for meromorphic functions
+4. The error term requires prime number theorem-level estimates
+
+**Proof Roadmap (major project)**:
+1. Formalize von Mangoldt Explicit Formula
+2. Prove error bounds for finite truncations
+3. Use Perron's formula for relating sums to integrals
+4. Apply residue theorem for pole contributions
 -/
 theorem finite_sum_approx_analytic_proven (ρ : ℂ) (primes : List ℕ) :
     ∃ (E : ℝ), 0 < E ∧ ∀ σ : ℝ, σ > ρ.re →
       abs (primes.foldl (fun acc p =>
         acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0 +
         (deriv (fun s => -(deriv riemannZeta s / riemannZeta s)) (σ + ρ.im * I)).re) < E := by
-  -- CANNOT PROVE (AI2 2026-01-22): Requires von Mangoldt Explicit Formula infrastructure
-  -- not in Mathlib. This is the fundamental approximation theorem from analytic NT.
-  -- The bound exists but proving it requires contour integration and residue calculus.
+  -- TRIED (AI2 2026-01-22, AI3 2026-01-23): Direct proof
+  -- BLOCKED: Requires von Mangoldt Explicit Formula infrastructure not in Mathlib
+  --
+  -- The mathematical argument is sound but formalizing it requires:
+  -- - Contour integration of meromorphic functions
+  -- - Residue calculus at poles
+  -- - Prime number theorem-level error estimates
+  -- - Perron's formula for Dirichlet series
+  --
+  -- This is a major formalization project in its own right.
   sorry
 
 end ProofEngine

@@ -283,6 +283,15 @@ theorem trace_tail_bounded
   -- 2. So |trace| ≤ 2 · Σ log(p) · p^{-1/2}
   -- 3. Compare with integral ∫_N^∞ log(x)/√x dx
   -- 4. This integral = O(√N · log N) by standard calculus
+  --
+  -- TRIED (AI3 2026-01-23): Direct foldl induction with abs_cos_le_one
+  -- FAILED: foldl type coercions cause calc step mismatches
+  -- The lemma `foldl_abs_bound` had type errors due to:
+  -- - List.foldl behavior with type coercions ℕ → ℝ
+  -- - Calc step verification failing on equal expressions
+  --
+  -- NEXT: Either prove via Finset.sum (more Mathlib-friendly) or
+  -- add as a hypothesis with documented bounds
   sorry
 
 -- Keep original theorem statement for compatibility but mark as deprecated

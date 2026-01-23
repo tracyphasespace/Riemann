@@ -96,19 +96,39 @@ The mathematical argument is:
 **THEOREM**: Conjugate symmetry of the completed zeta function Λ₀.
 Λ₀(s̄) = Λ₀(s)̄
 
-**BROKEN**: Uses `completedRiemannZeta_conj` which does not exist in Mathlib.
+**STATUS (AI3 2026-01-23)**: Requires proving conjugate symmetry through the
+`WeakFEPair`/`hurwitzEvenFEPair` infrastructure.
+
+**Mathlib Structure**:
+- `completedRiemannZeta₀ s = (hurwitzEvenFEPair 0).Λ₀ (s/2) / 2`
+- `hurwitzEvenFEPair` uses `evenKernel` and `cosKernel` functions
+- These kernels are defined via real Jacobi theta functions
+
+**Proof Strategy** (requires significant development):
+1. Show `evenKernel 0` is real-valued (hence invariant under conjugation)
+2. Show `cosKernel 0` is real-valued
+3. Use `Gamma_conj` for the Gamma function component
+4. Show Mellin transform respects conjugation when the kernel is real
+
+**Key Mathlib lemmas available**:
+- `Complex.Gamma_conj` : `Gamma (conj s) = conj (Gamma s)` ✓
+- `Complex.conj_cpow` : `conj x ^ n = conj (x ^ conj n)` for `x.arg ≠ π` ✓
+
+**Missing infrastructure**:
+- `WeakFEPair.Λ₀_conj` - conjugate symmetry for general WeakFEPair with real kernels
+- `completedRiemannZeta_conj` - the main theorem for Λ (not Λ₀)
 -/
 theorem completedRiemannZeta₀_conj (s : ℂ) :
     completedRiemannZeta₀ (starRingEnd ℂ s) = starRingEnd ℂ (completedRiemannZeta₀ s) := by
-  -- **BROKEN**: This proof requires `completedRiemannZeta_conj` which does NOT exist in Mathlib.
-  -- Searched Mathlib 4.27.0 - no such lemma found.
+  -- TRIED (AI3 2026-01-23): Direct proof via Mathlib infrastructure
+  -- BLOCKED: No `WeakFEPair.Λ₀_conj` or similar in Mathlib 4.27
   --
-  -- The mathematical argument would be:
-  -- Λ₀(s) = Λ(s) + 1/(s-1) - 1/s
-  -- Λ(s) = π^(-s/2) * Γ(s/2) * ζ(s)
-  -- Each component respects conjugation via Schwarz reflection principle.
-  --
-  -- To fix: Either prove `completedRiemannZeta_conj` from scratch or wait for Mathlib.
+  -- The chain would be:
+  -- 1. completedRiemannZeta₀ is defined via hurwitzEvenFEPair
+  -- 2. hurwitzEvenFEPair.Λ₀ involves Mellin transform of evenKernel
+  -- 3. evenKernel 0 = Jacobi theta function (real-valued on ℝ₊)
+  -- 4. Mellin transform of real function f: M[f](conj s) = conj(M[f](s))
+  -- 5. Each step needs separate lemmas not in Mathlib
   sorry
 
 /-!
