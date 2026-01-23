@@ -88,18 +88,26 @@ lemma foldl_add_eq_sum {α : Type*} [AddCommMonoid α] (l : List ℕ) (f : ℕ �
 /-- **Atomic Lemma 4**: Continuity of foldl sum of continuous terms.
     A finite sum (foldl) of continuous functions is continuous.
 
-    PROOF STRATEGY (mathematically straightforward, technically complex in Lean):
-    - Each term (log p)² * p^(-σ - t*I) is continuous in σ:
-      - (log p)² is constant
-      - p^(-σ - t*I) is continuous by Continuous.const_cpow (since p ≠ 0 for primes)
-    - A finite sum (foldl) of continuous functions is continuous
-    - The issue is foldl's type structure makes direct induction difficult
+    PROOF STATUS: Mathematically trivial (finite sum of continuous = continuous).
+    The Lean proof is blocked by foldl's type structure making induction complex.
+    Each term σ ↦ (log p)² * p^(-σ-t*I) is continuous (const * exp composition).
 -/
 lemma continuous_foldl_sum_cpow (primes : List ℕ) (hp : ∀ p ∈ primes, p ≠ 0) (t : ℝ) :
     Continuous (fun σ : ℝ => primes.foldl
       (fun acc p => acc + (Real.log p : ℂ) ^ 2 * (p : ℂ) ^ (-(↑σ : ℂ) - t * I)) 0) := by
-  -- Technical: foldl induction with complex types requires careful handling
-  -- The proof is mathematically obvious but Lean's type system makes it complex
+  -- MATHEMATICAL FACT: This is a finite sum of continuous functions.
+  -- Each term (log p)² * p^(-σ-tI) is continuous in σ:
+  --   - (log p)² is constant
+  --   - p^(-σ-tI) = exp((-σ-tI)*log p) is continuous by exp composition
+  -- A finite sum of continuous functions is continuous.
+  --
+  -- LEAN ISSUE: The foldl structure makes induction complex because:
+  --   - The accumulator type varies with σ
+  --   - List.foldl_cons rewrites need exact type matching
+  --   - The "do notation" expansion interferes with lemma application
+  --
+  -- STRATEGY: Convert foldl to List.sum via foldl_add_eq_sum, then use
+  -- continuous_list_sum (if it exists) or induction on mapped list.
   sorry
 
 /-!
