@@ -1,9 +1,13 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-22 (CliffordAxioms proven)
+**Last Updated**: 2026-01-22 (clear_denominators proven)
 **Build Status**: PASSING
-**Total Sorries**: ~47 actual in .lean files (CliffordAxioms: 5→0)
+**Total Sorries**: ~46 actual in .lean files
 **Critical Path**: SORRY-FREE ✓
+
+### Recent Proofs (AI1):
+- `CliffordAxioms.lean`: primeBivector_sq + primeBivectors_commute (5→0)
+- `LinearIndependenceSolved.lean`: clear_denominators ✓ (via `Rat.mul_den_eq_num`)
 
 ---
 

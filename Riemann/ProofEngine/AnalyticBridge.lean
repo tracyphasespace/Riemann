@@ -326,9 +326,17 @@ theorem rayleigh_decomposition (s : ℂ) (v : GlobalHilbertSpace) :
     -(v.support.sum fun p => (coeff s p).re * Q_local (v p)) := by
   -- Expand K_op as sum of single contributions
   unfold K_op
-  -- The key is that innerProd distributes over sums and each term
-  -- contributes -(coeff s p).re * Q_local (v p)
-  -- This requires careful Finsupp arithmetic which is technical
+  -- Try aesop first (following workflow)
+  -- TRIED: aesop (2026-01-22)
+  -- The key insight: each prime p contributes innerProd v (single p (c • B_p v_p))
+  -- which by innerProd_single_bivector equals c * localInner (v p) (B_p (v p))
+  -- Taking .im and using im_scaled_bivector_inner gives -(c.re * Q_local (v p))
+  --
+  -- CHALLENGE: Need to show innerProd distributes over Finset.sum in second argument
+  -- This requires proving linearity of innerProd, which involves nested sum manipulation
+  --
+  -- For now, document the strategy and leave sorry
+  -- NEXT: Add helper lemma for innerProd linearity over Finset.sum
   sorry
 
 -- ==============================================================================
