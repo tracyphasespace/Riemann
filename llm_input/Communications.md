@@ -38,54 +38,67 @@
 
 ---
 
-## 📋 AI2 NEXT TASK: ExplicitFormula.lean (3 sorries)
+## 📋 AI2 NEXT TASK: ArithmeticAxioms.lean (1 sorry)
 
-**File**: `Riemann/ProofEngine/ExplicitFormula.lean`
-**Sorries**: Lines 108, 325, 442
+**File**: `Riemann/ProofEngine/ArithmeticAxioms.lean`
+**Sorry**: Line 116 - `zipWith_sum_eq_finset_sum`
+
+*Note: If AI2 is currently working on PrimeRotor.lean, finish that first.*
 
 ### ⚠️ MANDATORY: Create Plan FIRST
 
 Before writing ANY Lean code, create a plan with:
-1. Plain English goal for each sorry
+1. Plain English goal
 2. Atomic lemmas needed (1-3 lines each)
 3. Mathlib API for each atomic lemma
 4. Table format: `| Lemma | Mathlib API | Status |`
 
 ### Sorry Analysis (AI1 notes):
 
-**Line 108** - `GeometricSieveContinuous`:
-- Goal: Prove foldl sum over ℂ is continuous
-- Pattern: Similar to `continuous_foldl_add` in AnalyticAxioms (just proven!)
-- Blocker: Type coercions ℕ → ℝ → ℂ cause unification issues
-- Strategy: Generalize with `init : ℝ → ℂ` parameter, use `Complex.continuous_ofReal`
-
-**Line 325** - `prime_powers_are_bounded`:
-- Goal: Bound difference between von Mangoldt and Geometric Sieve
-- Strategy: Triangle inequality + convergent series bound
-- Note: Sum over p^k (k≥2) converges for σ > 1/2
-
-**Line 442** - `finite_sum_is_bounded` (different from AnalyticAxioms version):
-- Goal: Continuity of `‖GeometricSieveSum‖`
-- Pattern: `Continuous.norm ∘ Continuous.neg ∘ foldl_continuous`
-- Depends on: Line 108 being solved first
-
-### Recommended Order:
-1. **Line 108** first (unblocks Line 442)
-2. **Line 442** (uses result from 108)
-3. **Line 325** (independent, harder)
-
-### Reference Implementation:
-See `AnalyticAxioms.lean:314-344` for `continuous_foldl_add_general` pattern:
+**Line 116** - `zipWith_sum_eq_finset_sum`:
 ```lean
-private lemma continuous_foldl_add_general {t : ℝ} (l : List ℕ) (h_pos : ∀ p ∈ l, 0 < p)
-    (init : ℝ → ℝ) (h_init : Continuous init) :
-    Continuous (fun σ : ℝ => l.foldl (fun acc p => acc + ...) (init σ)) := by
-  induction l generalizing init with
-  | nil => exact h_init
-  | cons p ps ih => apply ih; apply Continuous.add h_init; ...
+(List.zipWith (fun p q => (q : ℝ) * log p) primes coeffs).sum =
+∑ p ∈ listToSubtypeFinset primes h_primes h_nodup,
+  (getCoeffAtPrime primes coeffs p : ℝ) * log (p : ℕ)
 ```
 
-Adapt this for `ℂ` output type.
+**Goal**: Convert `List.zipWith ... .sum` to `Finset.sum` over subtype primes.
+
+**Strategy**: List induction on `primes` and `coeffs` simultaneously.
+- Base case: Both empty → `0 = 0`
+- Cons case: `(q * log p) + rest = contribution_from_p + rest`
+
+**Key Challenges**:
+1. Type coercions: `ℕ → ℝ`, `ℚ → ℝ`, subtype `{x : ℕ // x.Prime}`
+2. `getCoeffAtPrime` lookup must match zipWith indexing
+3. Need to relate `listToSubtypeFinset (p :: ps)` to `insert p (listToSubtypeFinset ps)`
+
+**Mathlib APIs to search**:
+- `List.zipWith_cons_cons` - simplify zipWith on cons
+- `List.sum_cons` - simplify sum on cons
+- `Finset.sum_insert` - add element to Finset.sum
+- `Finset.subtype` operations
+
+### Atomic Lemma Plan (suggested):
+
+| # | Lemma | Goal | Mathlib API |
+|---|-------|------|-------------|
+| A1 | `zipWith_nil` | zipWith on nil = [] | `List.zipWith_nil_left` |
+| A2 | `listToSubtypeFinset_cons` | Insert decomposition | `Finset.insert` + `List.toFinset_cons` |
+| A3 | `getCoeffAtPrime_head` | Lookup at head returns head coeff | Definition unfolding |
+| A4 | Main induction | Combine A1-A3 | `List.sum_cons` + `Finset.sum_insert` |
+
+### Pattern from successful proofs:
+```lean
+induction primes, coeffs using List.rec₂ with  -- or generalizing
+| nil, nil => simp
+| cons p ps, cons q qs, ih =>
+    simp only [List.zipWith_cons_cons, List.sum_cons]
+    rw [listToSubtypeFinset_cons, Finset.sum_insert]
+    congr 1
+    · -- head term matches
+    · -- tail by IH
+```
 
 ---
 
