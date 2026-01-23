@@ -70,6 +70,74 @@ Both are "Case 3: both s_pos and s_neg nonempty" in fta_all_exponents_zero.
 Need: exp_sum_log bridge to convert real equality to ℕ product equality.
 -/
 
+-- ==============================================================================
+-- ATOMIC HELPER LEMMAS (for unique factorization argument)
+-- ==============================================================================
+
+/-- Atomic 1: Each prime power is nonzero -/
+private lemma prime_pow_ne_zero' {p : ℕ} (hp : Nat.Prime p) (e : ℕ) : p ^ e ≠ 0 :=
+  pow_ne_zero e hp.ne_zero
+
+/-- Atomic 2: Factorization of product of prime powers -/
+private lemma factorization_prod_prime_pow' {S : Finset ℕ} (hS : ∀ p ∈ S, Nat.Prime p)
+    (e : ℕ → ℕ) (q : ℕ) :
+    (S.prod (fun p => p ^ e p)).factorization q = if q ∈ S then e q else 0 := by
+  have h_ne : ∀ p ∈ S, p ^ e p ≠ 0 := fun p hp => prime_pow_ne_zero' (hS p hp) (e p)
+  rw [Nat.factorization_prod h_ne]
+  simp only [Finsupp.coe_finset_sum, Finset.sum_apply]
+  by_cases hq : q ∈ S
+  · simp only [hq, ↓reduceIte]
+    rw [Finset.sum_eq_single q]
+    · exact Nat.factorization_pow_self (hS q hq)
+    · intro p hp hpq; rw [(hS p hp).factorization_pow, Finsupp.single_eq_of_ne (Ne.symm hpq)]
+    · intro hq'; exact absurd hq hq'
+  · simp only [hq, ↓reduceIte]
+    apply Finset.sum_eq_zero; intro p hp
+    by_cases heq : q = p
+    · exact absurd (heq ▸ hp) hq
+    · rw [(hS p hp).factorization_pow, Finsupp.single_eq_of_ne heq]
+
+/-- Atomic 3: Disjoint prime products - exponent comparison via factorization -/
+private lemma disjoint_exp_zero_of_mem_left {S T : Finset ℕ}
+    (hS : ∀ p ∈ S, Nat.Prime p) (hT : ∀ p ∈ T, Nat.Prime p)
+    (h_disj : Disjoint S T) (e f : ℕ → ℕ)
+    (h_eq : S.prod (fun p => p ^ e p) = T.prod (fun p => p ^ f p))
+    (q : ℕ) (hq : q ∈ S) : e q = 0 := by
+  have h1 : (S.prod (fun p => p ^ e p)).factorization q = e q := by
+    rw [factorization_prod_prime_pow' hS e q, if_pos hq]
+  have h2 : (T.prod (fun p => p ^ f p)).factorization q = 0 := by
+    rw [factorization_prod_prime_pow' hT f q]
+    simp only [Finset.disjoint_left.mp h_disj hq, ↓reduceIte]
+  simp_all only
+
+/-- Atomic 4: exp(a * log b) = b^a for b > 0 -/
+private lemma exp_mul_log_eq_rpow' (a b : ℝ) (hb : 0 < b) :
+    Real.exp (a * Real.log b) = b ^ a := by
+  rw [mul_comm, ← Real.rpow_def_of_pos hb]
+
+/-- Atomic 5: sum → product via exp -/
+private lemma exp_sum_mul_log' {α : Type*} (s : Finset α) (a : α → ℝ) (b : α → ℝ)
+    (hb : ∀ x ∈ s, 0 < b x) :
+    Real.exp (∑ x ∈ s, a x * Real.log (b x)) = ∏ x ∈ s, (b x) ^ (a x) := by
+  rw [Real.exp_sum]
+  apply Finset.prod_congr rfl
+  intro x hx
+  exact exp_mul_log_eq_rpow' (a x) (b x) (hb x hx)
+
+/-- Atomic 6: Cast positive ℤ to ℕ via toNat correctly -/
+private lemma int_cast_eq_nat_cast_toNat {z : ℤ} (hz : 0 < z) :
+    (z : ℝ) = ((z.toNat : ℕ) : ℝ) := by
+  have h : (z.toNat : ℤ) = z := Int.toNat_of_nonneg (le_of_lt hz)
+  calc (z : ℝ) = ((z.toNat : ℤ) : ℝ) := by rw [h]
+       _ = ((z.toNat : ℕ) : ℝ) := by norm_cast
+
+/-- Atomic 7: Prime subtype gives prime -/
+private lemma subtype_prime (p : {x : ℕ // x.Prime}) : Nat.Prime (p : ℕ) := p.2
+
+-- ==============================================================================
+-- END ATOMIC HELPERS
+-- ==============================================================================
+
 /-- Helper: Split a sum into positive, negative, and zero parts -/
 lemma sum_split_three (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ // x.Prime} → ℤ) :
     ∑ p ∈ s, (z p : ℝ) * Real.log p =
@@ -213,13 +281,19 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
           have hz : (0 : ℝ) < -(z p : ℝ) := by rw [neg_pos]; exact Int.cast_lt_zero.mpr hp.2
           exact mul_pos hz (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
         · exact h_neg_nonempty
-      -- Exponentiate h_pos_eq_neg to get product equality, then use unique factorization
-      -- The key steps:
-      -- 1. exp(sum) = product via Real.exp_sum
-      -- 2. Products are equal positive integers (need subtype → ℕ conversion)
-      -- 3. Unique factorization: equal products over disjoint primes → all exponents zero
-      -- 4. But z > 0 on s_pos and z < 0 on s_neg, so exponents are nonzero
-      -- This requires Nat.factorization machinery (proven in eq_prods_disjoint_implies_all_zero)
+      -- PROVEN STEPS (see atomic helpers above):
+      -- 1. exp(∑ a * log b) = ∏ b^a (exp_sum_mul_log')
+      -- 2. factorization of ∏ p^e gives e for p in set, 0 otherwise (factorization_prod_prime_pow')
+      -- 3. Equal products over disjoint primes → all exponents zero (disjoint_exp_zero_of_mem_left)
+      -- 4. s_pos has z > 0, so toNat > 0 (Int.toNat_pos_of_pos)
+      --
+      -- REMAINING: Bridge from subtype Finset to ℕ Finset for factorization argument
+      -- The Finset mapping (toNatFinset) and disjointness transfer are proven in test files.
+      -- Need to formalize: exp(h_pos_eq_neg) → ℕ product equality → apply disjoint_exp_zero_of_mem_left
+      --
+      -- TRIED: aesop, exact?, apply? on final goal - need intermediate casting lemmas
+      -- TRIED: Breaking into 7 atomic helpers (all compile)
+      -- BLOCKED: Real.rpow to ℕ cast for subtype primes with ℤ exponents
       sorry
   · -- p₀ ∈ s_neg, so s_neg is nonempty
     have h_neg_nonempty : s_neg.Nonempty := ⟨p₀, hp₀_neg⟩
@@ -250,7 +324,8 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
           have hz : (0 : ℝ) < -(z p : ℝ) := by rw [neg_pos]; exact Int.cast_lt_zero.mpr hp.2
           exact mul_pos hz (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
         · exact h_neg_nonempty
-      -- Same unique factorization argument as above
+      -- Same unique factorization argument as Case 3 above (lines 284-297)
+      -- BLOCKED: Same Real.rpow to ℕ cast bridge needed
       sorry
 
 -- ==============================================================================
