@@ -29,7 +29,7 @@ pgrep -x lake || echo "No lake process running"
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| AnalyticBridge.lean | AI2 | 2026-01-22 | rayleigh_decomposition |
+| DiophantineGeometry.lean | AI2 | 2026-01-22 | FTA sorries 188,219 - breaking into lemmas |
 
 ### AI1 Findings (for AI2 to use)
 
