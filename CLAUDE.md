@@ -197,7 +197,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Explicit axioms | **2** (in ProofEngine/Axioms.lean) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
-| Remaining sorries | **44** total |
+| Remaining sorries | **~35** total (verified 2026-01-22) |
 
 **Recent Progress (2026-01-22):**
 - `fta_all_exponents_zero` in DiophantineGeometry.lean - **PROVEN** (was 2 sorries - h_nat_prod in Cases 3&4)
@@ -772,8 +772,22 @@ lemma disjoint_exp_zero {S T : Finset ℕ} (hS : ∀ p ∈ S, Nat.Prime p) (hT :
   rw [h_eq] at h1; linarith
 ```
 
-**BLOCKING ISSUE**: Bridging from `Finset {x : ℕ // x.Prime}` to `Finset ℕ` for the factorization argument.
-Need: `toNatFinset` mapping + product preservation + disjointness transfer.
+**RESOLVED**: The FTA proof was completed using direct natural number manipulation with the atomic lemmas above.
+
+### exp_sum / rpow_def_of_pos (FTA Alternative Bridge)
+
+For alternative approaches converting log sums to products:
+```lean
+-- exp(∑ f) = ∏ exp(f)  (commutative Banach algebra)
+exp_sum (s : Finset ι) (f : ι → 𝔸) : exp (∑ i ∈ s, f i) = ∏ i ∈ s, exp (f i)
+  -- Location: Mathlib.Analysis.Normed.Algebra.Exponential:645
+
+-- x^y = exp(log x * y) for x > 0
+rpow_def_of_pos {x : ℝ} (hx : 0 < x) (y : ℝ) : x ^ y = exp (log x * y)
+  -- Location: Mathlib.Analysis.SpecialFunctions.Pow.Real:51
+
+-- Combining: exp(∑ z(p) * log p) = ∏ p^{z(p)} for positive primes p
+```
 
 ---
 

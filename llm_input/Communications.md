@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-22 (fta_all_exponents_zero PROVEN!)
 **Build Status**: PASSING
-**Total Sorries**: 44 actual in .lean files
+**Total Sorries**: ~35 actual in .lean files (verified 2026-01-22 build)
 **Critical Path**: SORRY-FREE ✓
 
 ### Recent Proofs (AI1):
@@ -328,7 +328,7 @@ obtain ⟨s, hs_sub, hs_open, hx_s⟩ := h
 
 ## Session Notes
 
-**Build Status**: ✅ PASSING (3053 jobs) - tested 2026-01-22
+**Build Status**: ✅ PASSING (3296 jobs) - tested 2026-01-22 build
 
 ---
 
