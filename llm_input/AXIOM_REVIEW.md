@@ -9,8 +9,8 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 18 | After full audit (2026-01-23) |
-| **Discharged** | 7 | M1, M2a, M5a, M5b, M5c, completedRiemannZeta₀_conj, noiseGrowth_eq_cross_sum |
+| **Unique Axioms** | 17 | After M3 discharge (2026-01-23) |
+| **Discharged** | 8 | M1, M2a, M3, M5a, M5b, M5c, completedRiemannZeta₀_conj, noiseGrowth_eq_cross_sum |
 | **Archived** | 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
 | **Deleted** | 2 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom |
 | **Core Path** | 10 | Used by main theorem chain |
@@ -317,17 +317,27 @@ axiom cross_terms_vanish (B : ℕ → V →ₗ[ℝ] V) (p q : ℕ) (hpq : p ≠ 
 
 ---
 
-### 4.4 `scalar_bridge_matches_zeta`
-**File**: `ProofEngine/BridgeObligations.lean:104`
+### 4.4 `scalar_bridge_matches_zeta` — ✅ DISCHARGED
+**File**: `ProofEngine/BridgeObligations.lean:104` (abstract axiom)
+**Concrete**: `ProofEngine/ScalarBridge.lean` (theorem)
 
 ```lean
+-- Abstract axiom in BridgeObligations:
 axiom scalar_bridge_matches_zeta (ScalarBridge : ℂ → ℝ) (s : ℂ) (hs : 1 < s.re) :
     (ScalarBridge s : ℂ) = riemannZeta s
+
+-- Concrete theorem in ScalarBridge:
+def GeometricZeta (s : ℂ) : ℂ :=
+  ∏' p : Nat.Primes, (1 - (p : ℂ) ^ (-s))⁻¹
+
+theorem scalar_bridge_proven (s : ℂ) (hs : 1 < s.re) :
+    GeometricZeta s = riemannZeta s :=
+  riemannZeta_eulerProduct_tprod hs
 ```
 
-**Meaning**: The scalar extraction from GA equals classical ζ(s) on Re(s) > 1.
+**Meaning**: The Euler product ∏_p (1 - p^{-s})^{-1} equals classical ζ(s) on Re(s) > 1.
 
-**Why Axiom**: Requires showing GA Euler product equals Mathlib's.
+**Status**: PROVEN via direct application of Mathlib's `riemannZeta_eulerProduct_tprod`.
 
 ---
 

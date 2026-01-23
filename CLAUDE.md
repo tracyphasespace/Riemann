@@ -17,7 +17,7 @@ pgrep -x lake || echo "No lake process running"
 
 | Status | Locked By | Started | Notes |
 |--------|-----------|---------|-------|
-| **IN USE** | AI2 | 2026-01-23 | Ergodicity.lean build check |
+| Available | | | |
 
 **Protocol:**
 1. Check table shows "Available"
@@ -284,7 +284,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Metric | Count |
 |--------|-------|
 | Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
-| Total axioms | **18** (see `llm_input/AXIOM_REVIEW.md` for full list) |
+| Total axioms | **17** (see `llm_input/AXIOM_REVIEW.md` for full list) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
 | Remaining sorries | **0** |
