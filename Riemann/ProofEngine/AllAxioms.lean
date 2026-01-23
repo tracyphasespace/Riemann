@@ -5,7 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 -- Re-export core axiom-containing modules (ones that build cleanly)
 import Riemann.ProofEngine.NumericalAxioms
-import Riemann.ProofEngine.BakerRepulsion
+-- BakerRepulsion DELETED: axiom was mathematically false (see archive/BakerRepulsion.leantxt)
+-- The Ergodic approach in RayleighDecomposition.lean supersedes the "ChiralPath" strategy
 import Riemann.ProofEngine.PhaseClustering
 import Riemann.ProofEngine.Convexity
 import Riemann.ProofEngine.BridgeObligations
@@ -30,13 +31,13 @@ used in the Riemann Hypothesis proof.
 
 ## Quick Reference
 
-### Axioms (21 unique, excluding duplicates)
+### Axioms (16 unique after cleanup)
 
 | # | Name | File | Purpose |
 |---|------|------|---------|
 | 1 | `rotorTrace_first1000_lt_bound_axiom` | NumericalAxioms | Wolfram-verified bound |
-| 2 | `rotorTrace_monotone_from_first1000_axiom` | NumericalAxioms | Tail control |
-| 3 | `bakers_repulsion_axiom` | BakerRepulsion | Transcendence bound |
+| 2 | ~~`rotorTrace_monotone_from_first1000_axiom`~~ | ~~NumericalAxioms~~ | DELETED (false) |
+| 3 | ~~`bakers_repulsion_axiom`~~ | ~~BakerRepulsion~~ | DELETED (false - Kronecker contradiction) |
 | 4 | `finite_sum_approx_analytic_axiom` | ExplicitFormulaAxioms | Explicit formula |
 | 5 | `ax_global_phase_clustering` | PhaseClustering | Global clustering |
 | 6 | `energy_convex_at_half` | Convexity | Energy convexity |

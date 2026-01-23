@@ -9,10 +9,10 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 17 | After M3 discharge (2026-01-23) |
+| **Unique Axioms** | 16 | After bakers_repulsion deletion (2026-01-23) |
 | **Discharged** | 8 | M1, M2a, M3, M5a, M5b, M5c, completedRiemannZeta₀_conj, noiseGrowth_eq_cross_sum |
-| **Archived** | 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
-| **Deleted** | 2 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom |
+| **Archived** | 5 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed, BakerRepulsion |
+| **Deleted** | 3 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom, bakers_repulsion_axiom |
 | **Core Path** | 10 | Used by main theorem chain |
 | **Auxiliary** | 17 | Supporting infrastructure |
 | **Explicit Hypotheses** | 5 | Passed to main theorem |
@@ -174,25 +174,33 @@ axiom rotorTrace_first1000_lt_bound_axiom :
 
 ---
 
-## Category 2: Baker's Theorem / Transcendence (1 axiom)
+## Category 2: Baker's Theorem / Transcendence — ❌ DELETED
 
-### 2.1 `bakers_repulsion_axiom`
-**File**: `ProofEngine/BakerRepulsion.lean:78`
+### 2.1 `bakers_repulsion_axiom` — DELETED (Mathematically False)
+**Former File**: `ProofEngine/BakerRepulsion.lean:78` (archived)
 
 ```lean
+-- DELETED AXIOM (was mathematically false):
 axiom bakers_repulsion_axiom (σ : ℝ) (S : Finset ℕ) (hS : ∀ p ∈ S, Nat.Prime p) :
     LinearIndependent ℚ (fun (p : S) => Real.log (p : ℕ)) →
     (∃ t, zeta_deriv_sum σ S t ≠ 0) →
     ∃ δ > 0, ∀ t, ‖zeta_deriv_sum σ S t‖ ≥ δ
 ```
 
-**Meaning**: If prime logs are ℚ-linearly independent, the exponential sum ∑ c_p · e^{it log p} has a uniform lower bound.
+**Why Deleted**: This axiom is **mathematically false** for the Riemann zeta function.
 
-**Justification**: Baker's Theorem (1966 Fields Medal) on linear forms in logarithms.
+**Contradiction**:
+1. At σ = 1/2, coefficients c_p = p^{-1/2} allow the polygon to close geometrically
+2. Linear independence of {log p} ⟹ phases densely cover the torus (Kronecker's theorem)
+3. Dense coverage ⟹ trajectory passes arbitrarily close to zero
+4. Therefore NO uniform δ > 0 can exist
 
-**Why Axiom**: Formalizing Baker's Theorem is a massive project (~5000+ lines).
+**Resolution**: The "ChiralPath" strategy (proving trajectory *never* hits zero) is replaced by
+the **Ergodic strategy** (proving Noise *time-averages* to zero). See:
+- `RayleighDecomposition.lean` - Signal + Noise decomposition
+- `Ergodicity.lean` - Time averages and SNR divergence
 
-**Literature**: A. Baker, "Linear forms in the logarithms of algebraic numbers" (1966).
+**Archived**: `ProofEngine/archive/BakerRepulsion.leantxt`
 
 ---
 

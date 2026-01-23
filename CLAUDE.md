@@ -284,7 +284,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Metric | Count |
 |--------|-------|
 | Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
-| Total axioms | **17** (see `llm_input/AXIOM_REVIEW.md` for full list) |
+| Total axioms | **16** (see `llm_input/AXIOM_REVIEW.md` for full list) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
 | Remaining sorries | **0** |
