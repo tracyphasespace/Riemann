@@ -43,10 +43,18 @@ private lemma prime_pow_factorization_other {p q e : ℕ} (hq : q.Prime) (hne : 
 private lemma factorization_prod_prime_pow {S : Finset ℕ} (h_primes : ∀ p ∈ S, Nat.Prime p)
     (e : ℕ → ℕ) (p : ℕ) (hp : p ∈ S) :
     (S.prod (fun q => q ^ e q)).factorization p = e p := by
-  -- The idea: factorization_prod gives ∑ (q^e(q)).factorization
-  -- At p, only the p term contributes (via prime_pow_factorization_self/other)
-  -- Needs: Finsupp.coe_finset_sum to evaluate the sum at p
-  sorry
+  -- Step 1: Product of prime powers is nonzero (needed for factorization_prod_apply)
+  have h_ne_zero : ∀ q ∈ S, q ^ e q ≠ 0 := fun q hq =>
+    Nat.pos_iff_ne_zero.mp (pow_pos (h_primes q hq).pos (e q))
+  -- Step 2: Apply factorization_prod_apply to express as sum
+  rw [Nat.factorization_prod_apply h_ne_zero]
+  -- Step 3: Use sum_eq_single_of_mem: only the p term contributes
+  rw [Finset.sum_eq_single_of_mem p hp]
+  -- Step 3a: The p term gives e p
+  · exact prime_pow_factorization_self (h_primes p hp)
+  -- Step 3b: All other terms give 0
+  · intro q hq hqp
+    exact prime_pow_factorization_other (h_primes q hq) (Ne.symm hqp)
 
 /-- Atom 2: Unique factorization for prime products (Rosetta Stone: use Nat.factorization). -/
 lemma prod_prime_pow_unique {S : Finset ℕ} (h_primes : ∀ p ∈ S, Nat.Prime p)

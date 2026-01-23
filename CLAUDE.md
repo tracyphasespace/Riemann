@@ -17,7 +17,7 @@ If a build is running, wait for it to complete before starting another.
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| (none) | | | |
+| DiophantineGeometry.lean | AI2 (Claude) | 2026-01-22 | sum_split_three line 47 |
 
 To lock a file, add it to this table. To release, remove your entry.
 
@@ -42,8 +42,9 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
 | Explicit axioms | **2** (in ProofEngine/Axioms.lean) |
 | Proven theorems | **12** (AnalyticBasics + Residues + GeometricSieve + MotorCore) |
-| Explicit hypotheses | **2** (passed as theorem arguments) |
-| Remaining sorries | **~50** actual (many in axiom files, not critical path) |
+| Explicit hypotheses | **5** (passed as theorem arguments) |
+| Remaining sorries | **~40** actual (71 grep hits include comments/docs) |
+| Critical path sorries | **0** ✓ |
 | Build jobs | ~3053 |
 
 **NEW: MotorCore.lean** (ZetaSurface/MotorCore.lean):
@@ -174,21 +175,22 @@ because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Resi
 
 ---
 
-## Current Sorry Count: ~50 actual
+## Current Sorry Count: ~40 actual
+
+**Critical Path**: SORRY-FREE ✓ (ProofEngine.lean, EnergySymmetry.lean, ClusterBound.lean)
 
 **Priority for AI2** (see `llm_input/Communications.md`):
 
 | Priority | File | Line | Description |
 |----------|------|------|-------------|
-| **HIGH** | EnergySymmetry.lean | 360 | Strict minimum upgrade |
-| **HIGH** | EnergySymmetry.lean | 379 | C2 approximation transfer |
-| **HIGH** | ClusterBound.lean | 139 | c2_stability_transfer |
-| **HIGH** | ClusterBound.lean | 167 | norm_strict_min_at_half |
-| **HIGH** | ClusterBound.lean | 187 | zero_implies_norm_min |
 | **HIGH** | Convexity.lean | 111 | second_deriv_normSq_eq |
-| **MED** | CalculusAxioms.lean | 207 | effective_convex_implies_min |
-| **MED** | LinearIndependenceSolved.lean | 148 | h_z_zero (FTA) |
-| **MED** | TraceAtFirstZero.lean | 171, 184 | Interval arithmetic |
+| **HIGH** | CalculusAxioms.lean | 27, 109 | Taylor expansion + convexity |
+| **HIGH** | AnalyticAxioms.lean | 336 | Schwarz reflection |
+| **HIGH** | TraceAtFirstZero.lean | 99, 162, 175 | Interval arithmetic |
+| **HIGH** | ArithmeticAxioms.lean | 49, 99 | FTA-related |
+| **MED** | LinearIndependenceSolved.lean | 46, 69, 86 | FTA applications |
+| **MED** | DiophantineGeometry.lean | 47, 64, 82 | API issues |
+| **MED** | CliffordAxioms.lean | 39, 45 | Clifford algebra |
 | **LOW** | Various axiom files | - | Intentionally axioms |
 
 **Completed (no sorries):**
