@@ -321,6 +321,7 @@ For each prime p ∈ v.support:
 5. So each term contributes: -(coeff s p).re * Q_local(v p)
 6. Summing: -(Σ_p (coeff s p).re * Q_local(v p))
 -/
+
 /--
 **Axiom: Rayleigh Decomposition**
 

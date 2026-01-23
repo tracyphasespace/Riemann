@@ -56,6 +56,7 @@ is bounded by some constant E, uniformly for σ > ρ.re.
 3. Use Perron's formula for relating sums to integrals
 4. Apply residue theorem for pole contributions
 -/
+
 /--
 **Axiom: Finite Sum Approximates Analytic Continuation**
 
