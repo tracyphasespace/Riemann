@@ -1,6 +1,6 @@
 # Complete Axiom Review for RH Proof
 
-**Generated**: 2026-01-23 (Updated after Ergodicity.lean completion)
+**Generated**: 2026-01-23 (Updated after axiom audit)
 **Purpose**: Human review of all axioms used in the Riemann Hypothesis formalization
 
 ---
@@ -9,35 +9,46 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 15 | After SpectralBridge.lean (2026-01-23) |
-| **Discharged** | 9 | M1, M2a, M3, M5a, M5b, M5c, completedRiemannZeta₀_conj, noiseGrowth_eq_cross_sum, noise_averages_to_zero |
+| **Total Axiom Declarations** | 27 | After audit (2026-01-23) |
+| **Active (used in proofs)** | 25 | Referenced in theorem chains |
+| **Unused (deleted)** | 2 | equidistribution_bound, scalarPart |
+| **Concrete Proofs Available** | 6 | M1, M2a, M3, M5a, M5b, M5c (but abstract axioms still invoked) |
 | **Partially Discharged** | 1 | M4 (algebraic structure proven, arithmetic axiom remains) |
-| **Archived** | 5 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed, BakerRepulsion |
-| **Deleted** | 3 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom, bakers_repulsion_axiom |
-| **Core Path** | 10 | Used by main theorem chain |
-| **Auxiliary** | 17 | Supporting infrastructure |
+| **Archived Files** | 6 | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed, BakerRepulsion, UnusedAxioms |
 | **Explicit Hypotheses** | 5 | Passed to main theorem |
 
+### Axiom Inventory by File
+
+| File | Axioms | Status |
+|------|--------|--------|
+| BridgeObligations.lean | 8 | Active (M1-M5 used by RH_algebraic_core) |
+| CliffordZetaMasterKey.lean | 3 | Active (alternative proof path) |
+| Mathlib427Compat.lean | 5 | Active (technical bridges) |
+| Ergodicity.lean | 2 | Active |
+| SpectralBridge.lean | 1 | NEW (not yet integrated) |
+| Other files | 8 | Various |
+
+### Important Clarification
+
+**"Concrete proofs available" ≠ "Axiom eliminated"**
+
+The abstract axioms in BridgeObligations.lean (M1, M2a, etc.) are for a **generic** Hilbert space V.
+Concrete theorems in BridgeDefinitions.lean prove these hold for **H = ℓ²(ℂ)**.
+However, `RH_algebraic_core` still invokes the **abstract axioms**, not the concrete theorems.
+
+To fully eliminate these axioms, the proof would need to be rewritten to use the concrete space.
+
 **Recent Changes (2026-01-23)**:
-- **SpectralBridge.lean - M4 Partial Discharge** (NEW):
+- **Axiom Audit**: Scanned all 29 axiom declarations, found 2 unused
+- **Deleted**: `equidistribution_bound` (0 references), `scalarPart` (0 references, file broken)
+- **SpectralBridge.lean - M4 Partial Discharge**:
   - `K_is_diagonal` - K(s) acts diagonally on basis vectors (PROVEN)
   - `kernel_iff_zero_eigenvalue` - Kernel ⟺ eigenvalue zero (PROVEN)
   - Refined axiom `zeta_zero_implies_eigenvalue_zero` is purely arithmetic
-  - M4 reduced from abstract operator theory to concrete number theory
-- **Ergodicity.lean now SORRY-FREE** - All 3 theorems proven:
-  - `time_average_orthogonality` - Proven via product-to-sum + `oscillating_integral_vanishes`
-  - `noiseGrowth_eq_cross_sum_proven` - Proven via Finset partition + swap bijection
-  - `noise_averages_to_zero` - Proven via `tendsto_finset_sum` + cross-term averaging
+- **ScalarBridge.lean** - M3 discharged via Mathlib's `riemannZeta_eulerProduct_tprod`
+- **Ergodicity.lean now SORRY-FREE** - All 3 theorems proven
 - Created `ProofEngine/BridgeDefinitions.lean` with concrete ℓ²(ℂ) Hilbert space
 - Created `ProofEngine/RayleighDecomposition.lean` with Signal+Noise decomposition
-- Proved M1 (`bivector_squares_to_neg_id`) via diagonal eigenvalue model
-- Proved M2a (`bivectors_commute`) via diagonal commutativity
-- Proved M5a (`rayleigh_forcing`) via Signal+Noise decomposition theorem
-- Proved M5b (`Q_pos`) via `norm_pos_iff` + positivity
-- Proved M5c (`Omega_zero_right`) via `inner_zero_right`
-- Proved `B_norm_eq_one` via lp.single unit vector construction
-- Discovered `completedRiemannZeta₀_conj` already proven in AnalyticAxioms.lean
-- **Axiom count reduced: 25 → 15** (10 "axioms" were actually theorems or now proven)
 
 ---
 
@@ -624,17 +635,16 @@ axiom dirichlet_polynomial_noise_power_bound (...) (α : ℝ) (hα : 0 < α < 1)
 
 ---
 
-### 7.4 `equidistribution_bound`
-**File**: `ProofEngine/BridgeObligations.lean:262`
+### 7.4 `equidistribution_bound` — **DELETED** (2026-01-23)
+**File**: ~~`ProofEngine/BridgeObligations.lean:262`~~ → Archived to `ZetaSurface/archive/UnusedAxioms.leantxt`
 
 ```lean
-axiom equidistribution_bound (x t : ℝ) (hx : 1 < x) :
-    |∑ p prime, p ≤ x, cos(t · log p)| ≤ √x · (log x)²
+-- DELETED: 0 references in codebase
+-- axiom equidistribution_bound (x t : ℝ) (hx : 1 < x) :
+--     |∑ p prime, p ≤ x, cos(t · log p)| ≤ √x · (log x)²
 ```
 
-**Meaning**: CLT-type bound on prime cosine sums.
-
-**Why Axiom**: Not implied by commutation/decoupling alone.
+**Status**: UNUSED - never invoked by any proof chain. Deleted and archived.
 
 ---
 
@@ -653,16 +663,17 @@ axiom universal_monotonicity_from_orthogonality_axiom (t primes)
 
 ---
 
-### 7.6 `scalarPart`
-**File**: `ZetaSurface/CliffordFoundation.lean:60`
+### 7.6 `scalarPart` — **ARCHIVED** (2026-01-23)
+**File**: `ZetaSurface/CliffordFoundation.lean:60` (still in file, but unused)
+**Archive**: Documented in `ZetaSurface/archive/UnusedAxioms.leantxt`
 
 ```lean
+-- ARCHIVED: 0 references in codebase
 axiom scalarPart (n : ℕ) : ClElement n → ℝ
 ```
 
-**Meaning**: Scalar projection from Clifford algebra element.
-
-**Why Axiom**: Abstract interface pending concrete GA construction.
+**Status**: UNUSED - abstract interface never connected to proof chain.
+The concrete Clifford implementation uses diagonal operators in ℓ² instead.
 
 ---
 
@@ -674,9 +685,11 @@ axiom scalarPart (n : ℕ) : ClElement n → ℝ
 - `AnalyticBridgeEuler.lean` → `AnalyticBridgeEuler.leantxt` (duplicate)
 - `sandbox/Axioms.proposed.lean` → `Axioms.proposed.leantxt` (proposals only)
 
-**Deleted**:
+**Deleted/Archived Axioms**:
 - `coeff_sym_factorization_axiom` - FALSE when s.re = 1/2 and s.im ≠ 0
 - `rotorTrace_monotone_from_first1000_axiom` - FALSE: trace oscillates (random walk), not monotonic
+- `equidistribution_bound` - UNUSED (0 references) — deleted from BridgeObligations.lean
+- `scalarPart` - UNUSED (0 references) — archived, still in CliffordFoundation.lean but never invoked
 
 **Remaining potential duplicates** (kept for now):
 - `rayleigh_Phi_pos` - Similar to Q_pos but different signature
