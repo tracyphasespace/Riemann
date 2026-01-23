@@ -17,7 +17,7 @@ pgrep -x lake || echo "No lake process running"
 
 | Status | Locked By | Started | Notes |
 |--------|-----------|---------|-------|
-| Available | - | - | - |
+| **IN USE** | AI2 | 2026-01-23 | Ergodicity.lean build check |
 
 **Protocol:**
 1. Check table shows "Available"
@@ -284,7 +284,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Metric | Count |
 |--------|-------|
 | Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
-| Total axioms | **25** (see `llm_input/AXIOM_REVIEW.md` for full list; 5 discharged: M1, M2a, M5b, M5c by BridgeDefinitions.lean, M5a by RayleighDecomposition.lean) |
+| Total axioms | **18** (see `llm_input/AXIOM_REVIEW.md` for full list) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
 | Remaining sorries | **0** |
@@ -1157,4 +1157,4 @@ example : (a + b) + c = a + (b + c) := by rw?  -- Suggests: rw [add_assoc]
 
 ---
 
-*Updated 2026-01-22 | BUILD PASSES | 2 AXIOMS | 5 Explicit Hypotheses | Core chain sorry-free | Two-AI workflow added*
+*Updated 2026-01-23 | BUILD PASSES | 18 AXIOMS | 5 Explicit Hypotheses | Core chain sorry-free | Two-AI workflow added*

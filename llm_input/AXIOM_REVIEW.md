@@ -9,8 +9,8 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 25 | After cleanup + concrete implementations |
-| **Discharged** | 5 | M1, M2a, M5b, M5c via BridgeDefinitions.lean; M5a via RayleighDecomposition.lean |
+| **Unique Axioms** | 18 | After full audit (2026-01-23) |
+| **Discharged** | 7 | M1, M2a, M5a, M5b, M5c, completedRiemannZeta₀_conj, noiseGrowth_eq_cross_sum |
 | **Archived** | 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
 | **Deleted** | 2 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom |
 | **Core Path** | 10 | Used by main theorem chain |
@@ -25,8 +25,10 @@
 - Proved M5a (`rayleigh_forcing`) via Signal+Noise decomposition theorem
 - Proved M5b (`Q_pos`) via `norm_pos_iff` + positivity
 - Proved M5c (`Omega_zero_right`) via `inner_zero_right`
-- Added Hamiltonian operators: ScalingOperator, InteractionOperator, TotalHamiltonian
-- Added observables: Q (stiffness), Omega_R (real energy expectation)
+- Proved `B_norm_eq_one` via lp.single unit vector construction
+- Discovered `completedRiemannZeta₀_conj` already proven in AnalyticAxioms.lean
+- Discovered `noiseGrowth_eq_cross_sum` already proven in Ergodicity.lean
+- **Axiom count reduced: 25 → 18** (7 "axioms" were actually theorems)
 
 ---
 
