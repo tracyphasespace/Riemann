@@ -94,16 +94,14 @@ theorem fta_implies_log_independence_proven (primes : List ℕ) (coeffs : List �
   -- For now, we use the logical structure: logs of distinct primes are ℚ-independent
   -- which is proven in OutstandingProofs.fta_all_exponents_zero
 
-  -- The full proof requires:
-  -- 1. Build Finset s from primes with subtype proofs
-  -- 2. Build function g : subtype → ℚ from coeffs via List.indexOf
-  -- 3. Show ∑ g(p) * log p = 0 (rewrite from zipWith sum)
-  -- 4. Clear denominators: find LCM D, define z(p) = g(p) * D as integers
-  -- 5. Apply fta_all_exponents_zero to conclude z(p) = 0
-  -- 6. Since D > 0, conclude g(p) = 0, hence coeffs[i] = 0
-
-  -- The conversion between List and Finset is tedious but straightforward.
-  -- This follows the same pattern as LinearIndependenceSolved.log_primes_linear_independent.
+  -- BLOCKED (AI2 2026-01-22): Depends on fta_all_exponents_zero from DiophantineGeometry
+  --
+  -- Strategy when FTA is complete:
+  -- 1. Build Finset s from primes via listToSubtypeFinset helper (already defined)
+  -- 2. Build function g : subtype → ℚ from coeffs via List.getElem
+  -- 3. Rewrite zipWith sum as Finset sum
+  -- 4. Apply log_primes_linear_independent or clear_denominators + FTA
+  -- 5. Extract coefficient equality from Finset result
   sorry
 
 -- NOTE: signal_diverges_proven moved to GlobalBound.ArithmeticGeometry to avoid import cycle.

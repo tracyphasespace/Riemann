@@ -34,14 +34,28 @@ and e_i, f_i also anticommute.
 -/
 theorem primeBivectors_commute_proven (n : ℕ) (i j : Fin n) (h : i ≠ j) :
     primeBivector n i * primeBivector n j = primeBivector n j * primeBivector n i := by
-  -- B_i * B_j = (e_i * f_i) * (e_j * f_j)
-  -- Use anticommutation: e_i * e_j = -e_j * e_i etc.
+  -- STRATEGY (AI2 2026-01-22):
+  -- B_i * B_j = (e_i * f_i) * (e_j * f_j) = e_i * f_i * e_j * f_j
+  -- Using ι_mul_ι_of_isOrtho (orthogonal basis vectors anticommute):
+  --   f_i * e_j = -e_j * f_i, e_i * e_j = -e_j * e_i, etc. for i ≠ j
+  -- B_i * B_j = e_i * (-e_j * f_i) * f_j = -e_i * e_j * f_i * f_j
+  --           = -(-e_j * e_i) * f_i * f_j = e_j * e_i * f_i * f_j
+  -- Similarly manipulating: = e_j * f_j * e_i * f_i = B_j * B_i
+  -- KEY MATHLIB: CliffordAlgebra.ι_mul_ι_of_isOrtho, mul_assoc
+  -- BLOCKER: Need to show basis vectors are pairwise orthogonal w.r.t. real_split_form
   sorry
 
 /-- Proven Theorem: Bivector Squares to +1. -/
 theorem primeBivector_sq_proven (n : ℕ) (i : Fin n) :
     primeBivector n i * primeBivector n i = 1 := by
-  -- (e_i * f_i) * (e_i * f_i) = -e_i * e_i * f_i * f_i = -(1) * (-1) = 1
+  -- STRATEGY (AI2 2026-01-22):
+  -- (e_i * f_i)^2 = e_i * f_i * e_i * f_i
+  -- Using f_i * e_i = -e_i * f_i (ι_mul_ι_of_isOrtho for e_i, f_i orthogonal):
+  -- = e_i * (-e_i * f_i) * f_i = -e_i * e_i * f_i * f_i
+  -- Using ι_sq_scalar: e_i^2 = Q(e_i) = +1, f_i^2 = Q(f_i) = -1
+  -- = -(+1) * (-1) = +1
+  -- KEY MATHLIB: ι_sq_scalar, ι_mul_ι_of_isOrtho, algebraMap_one
+  -- BLOCKER: Need to verify real_split_form gives Q(e_i)=1, Q(f_i)=-1, and e_i⊥f_i
   sorry
 
 end ProofEngine

@@ -117,11 +117,17 @@ Key lemmas: `taylor_mean_remainder_lagrange_iteratedDeriv`, `uniqueDiffOn_Icc`
 -- See AI2_API_Failures.md for details
 ```
 
-### 9. CliffordAxioms.lean:39,45 - Clifford algebra
+### 9. CliffordAxioms.lean:39,45 - Clifford algebra 🔄 ANNOTATED (AI2)
 **File**: `Riemann/ProofEngine/CliffordAxioms.lean`
 ```lean
--- Mathlib has: ι_mul_ι_add_swap_of_isOrtho, ι_sq_scalar
--- Blocker: QuadraticForm definition may be incorrect
+-- Line 39: primeBivectors_commute_proven - STRATEGY ANNOTATED (2026-01-22)
+--   Uses: ι_mul_ι_of_isOrtho (orthogonal vectors anticommute)
+--   BLOCKER: Need to verify basis vectors are orthogonal w.r.t. real_split_form
+-- Line 45: primeBivector_sq_proven - STRATEGY ANNOTATED (2026-01-22)
+--   Uses: ι_sq_scalar (v² = Q(v)), f_i * e_i = -e_i * f_i
+--   BLOCKER: Need Q(e_i)=1, Q(f_i)=-1, e_i⊥f_i for real_split_form
+-- Mathlib has: ι_mul_ι_of_isOrtho, ι_sq_scalar
+-- QuadraticForm definition needs verification
 ```
 
 ### 10. ClusteringDomination.lean:96 - domination proof
@@ -134,9 +140,12 @@ Key lemmas: `taylor_mean_remainder_lagrange_iteratedDeriv`, `uniqueDiffOn_Icc`
 
 ## LOWER PRIORITY - Not Critical Path
 
-### AnalyticBridge.lean:278,310
+### AnalyticBridge.lean:278,310 🔄 IN PROGRESS (AI2)
 ```lean
--- Bridge lemmas - can be axiomatized if needed
+-- Line 278: innerProd_single_bivector - PROOF ATTEMPT WRITTEN (2026-01-22)
+--   Strategy: Finset.sum_eq_single + Finsupp.single_apply + localInner_smul_bivector
+--   Needs build test
+-- Line 310: rayleigh_decomposition - depends on innerProd_single_bivector
 ```
 
 ### ExplicitFormula.lean:264,357
@@ -168,7 +177,9 @@ Key lemmas: `taylor_mean_remainder_lagrange_iteratedDeriv`, `uniqueDiffOn_Icc`
 ```lean
 -- ExplicitFormulaAxioms.lean: 18, 23, 35
 -- SieveAxioms.lean: 32
--- SNRAxioms.lean: 36
+-- SNRAxioms.lean: 36 - isBigO_ratio_divergence STRATEGY ANNOTATED (AI2 2026-01-22)
+--   Strategy: IsBigO gives |f| ≤ C*g^α, so g/|f| ≥ (1/C)*g^(1-α) → +∞
+--   BLOCKER: Extract positive C from IsBigO, handle f=0 edge case
 -- NumericalAxioms.lean: 26, 39
 -- These are intentionally axioms, not meant to be proven
 ```
@@ -348,6 +359,17 @@ Applied Mathlib 4.27 API guide to fix three helper lemmas:
 - `RH_from_Analytic_Principles` in ZetaLinkClifford.lean updated
 - `UnconditionalRH.lean` updated with sorry for h_C2 (follows from riemannXi entire)
 
-**Next Focus**: Convexity.lean:111 (second_deriv_normSq_eq) - highest priority remaining sorry
+**AI2 Session 3 (2026-01-22)**:
+- CliffordAxioms.lean:39,45 - Annotated proof strategies for bivector commutativity/squares
+  - Key Mathlib: `ι_mul_ι_of_isOrtho`, `ι_sq_scalar`
+  - BLOCKER: Need to verify `real_split_form` properties
+- SNRAxioms.lean:36 - Annotated strategy for `isBigO_ratio_divergence`
+  - Strategy: Extract bound from IsBigO, use `tendsto_atTop_mono'`
+  - BLOCKER: Handle edge cases (positive C, f=0)
+- AnalyticBridge.lean:278 - Wrote proof attempt for `innerProd_single_bivector`
+  - Strategy: `Finset.sum_eq_single` + `Finsupp.single_apply`
+  - Needs build test
+
+**Next Focus**: More 1-2 sorry files from priority list
 
 *AI1 runs builds. AI2 works directly on proofs. AI2 should consult AI2_API_Failures.md before attempting proofs.*

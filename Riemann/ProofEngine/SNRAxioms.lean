@@ -33,6 +33,23 @@ theorem isBigO_ratio_divergence {α : ℝ} (hα : α < 1)
     (h_g_pos : ∀ᶠ i in l, 0 < g i)
     (h_g_lim : Tendsto g l atTop) :
     Tendsto (fun i => g i / |f i|) l atTop := by
+  -- STRATEGY (AI2 2026-01-22):
+  -- From IsBigO: |f| ≤ C * g^α eventually (for some C > 0)
+  -- So g / |f| ≥ g / (C * g^α) = (1/C) * g^(1-α) eventually
+  -- Since α < 1, we have 1 - α > 0
+  -- Since g → +∞, g^(1-α) → +∞
+  -- Hence (1/C) * g^(1-α) → +∞
+  -- By tendsto_atTop_mono', g / |f| → +∞
+  --
+  -- KEY MATHLIB:
+  -- - isBigO_iff: f = O(g) ↔ ∃ c, ∀ᶠ x, ‖f x‖ ≤ c * ‖g x‖
+  -- - tendsto_atTop_mono': f₁ ≤ᶠ f₂ → f₁ → +∞ → f₂ → +∞
+  -- - tendsto_rpow_atTop: 0 < b → x^b → +∞
+  --
+  -- BLOCKERS:
+  -- 1. Need to extract positive constant C from IsBigO (may need isBigO_iff_isBigOWith)
+  -- 2. Need to handle f = 0 case (division undefined)
+  -- 3. Need norm_eq_abs for ℝ values
   sorry
 
 -- NOTE: snr_diverges_proven moved to GlobalBound.SNR_Bounds to avoid import cycle.

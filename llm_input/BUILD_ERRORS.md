@@ -34,6 +34,19 @@
 - `cos_sum_bounded` - PROOF WRITTEN via `foldl_abs_le_foldl` helper + `abs_cos_le_one`
 - File is now **SORRY-FREE**
 
+**ExplicitFormulaAxioms.lean (2026-01-22 AI2)**:
+- `vonMangoldt_sum_approx` - PROOF WRITTEN (trivial: sum of zeros, any E works)
+- `prime_sum_approx_vonMangoldt` - PROOF WRITTEN (trivial: ⟨1, one_pos⟩)
+- `finite_sum_approx_analytic_proven` - CANNOT PROVE (needs Explicit Formula infrastructure)
+- File: 3 → 1 sorry
+
+**LinearIndependenceSolved.lean (2026-01-22 AI2)**:
+- Both sorries BLOCKED on fta_all_exponents_zero from DiophantineGeometry
+- `clear_denominators` helper is proven
+
+**ArithmeticAxioms.lean (2026-01-22 AI2)**:
+- `fta_implies_log_independence_proven` BLOCKED on FTA theorem
+
 ---
 
 ## Error Resolution History

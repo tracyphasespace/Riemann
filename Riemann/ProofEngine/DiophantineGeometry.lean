@@ -91,14 +91,16 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
   have h_partition : s = s_pos ∪ s_neg ∪ s_zero := by
     ext p
     simp only [Finset.mem_union, Finset.mem_filter, s_pos, s_neg, s_zero]
+    -- Goal: p ∈ s ↔ ((p ∈ s ∧ 0 < z p) ∨ (p ∈ s ∧ z p < 0)) ∨ (p ∈ s ∧ z p = 0)
+    -- Union parses as (s_pos ∪ s_neg) ∪ s_zero
     constructor
     · intro hp
       rcases lt_trichotomy (z p) 0 with h | h | h
-      · right; left; exact ⟨hp, h⟩
-      · right; right; exact ⟨hp, h⟩
-      · left; exact ⟨hp, h⟩
+      · exact Or.inl (Or.inr ⟨hp, h⟩)  -- z p < 0 → s_neg
+      · exact Or.inr ⟨hp, h⟩            -- z p = 0 → s_zero
+      · exact Or.inl (Or.inl ⟨hp, h⟩)  -- 0 < z p → s_pos
     · intro h
-      rcases h with ⟨hp, _⟩ | ⟨hp, _⟩ | ⟨hp, _⟩ <;> exact hp
+      rcases h with (⟨hp, _⟩ | ⟨hp, _⟩) | ⟨hp, _⟩ <;> exact hp
 
   -- Rearranging: ∑_{pos} z_p log p = -∑_{neg} z_p log p = ∑_{neg} |z_p| log p
   have h_pos_eq_neg : ∑ p ∈ s_pos, (z p : ℝ) * Real.log (p : ℕ) =
@@ -108,8 +110,33 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
       intro p hp
       simp only [Finset.mem_filter, s_zero] at hp
       simp [hp.2]
-    -- TODO: Complete the partition arithmetic
-    sorry
+    -- Disjointness of the three filter sets
+    have h_disj_pos_neg : Disjoint s_pos s_neg := by
+      rw [Finset.disjoint_filter]
+      intro p _ h_pos h_neg
+      linarith
+    have h_disj_pos_zero : Disjoint s_pos s_zero := by
+      rw [Finset.disjoint_filter]
+      intro p _ h_pos h_zero
+      linarith
+    have h_disj_neg_zero : Disjoint s_neg s_zero := by
+      rw [Finset.disjoint_filter]
+      intro p _ h_neg h_zero
+      linarith
+    -- Combine disjointness for union
+    have h_union1 : Disjoint (s_pos ∪ s_neg) s_zero := by
+      rw [Finset.disjoint_union_left]
+      exact ⟨h_disj_pos_zero, h_disj_neg_zero⟩
+    -- Use partition to rewrite h_sum
+    have h_sum_split := h_sum
+    rw [h_partition, Finset.sum_union h_union1, Finset.sum_union h_disj_pos_neg] at h_sum_split
+    rw [h_zero_sum, add_zero] at h_sum_split
+    -- h_sum_split : ∑ s_pos + ∑ s_neg = 0, so ∑ s_pos = -∑ s_neg
+    have h_eq : ∑ p ∈ s_pos, (z p : ℝ) * Real.log (p : ℕ) =
+                -(∑ p ∈ s_neg, (z p : ℝ) * Real.log (p : ℕ)) := by linarith
+    rw [h_eq]
+    -- -(∑ (z p) * log p) = ∑ (-(z p)) * log p
+    simp only [neg_mul, Finset.sum_neg_distrib]
 
   -- Exponentiate: ∏_{pos} p^{z_p} = ∏_{neg} p^{-z_p} as positive reals
   -- Then by unique factorization of integers, both sides must equal 1
@@ -129,15 +156,40 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
 private def coeff (p : ℕ) (σ : ℝ) : ℝ := -Real.log p / (p : ℝ) ^ σ
 
 theorem dominant_prevents_closure_norm (σ : ℝ) (S : Finset ℕ)
-    (_hS : ∀ p ∈ S, Nat.Prime p) (p_dom : ℕ) (_h_mem : p_dom ∈ S)
-    (_h_dominant : |coeff p_dom σ| > ∑ p ∈ S.erase p_dom, |coeff p σ|)
+    (_hS : ∀ p ∈ S, Nat.Prime p) (p_dom : ℕ) (h_mem : p_dom ∈ S)
+    (h_dominant : |coeff p_dom σ| > ∑ p ∈ S.erase p_dom, |coeff p σ|)
     (θ : ℕ → ℝ)
-    (_h_sum : ∑ p ∈ S, (coeff p σ : ℂ) * Complex.exp ((θ p : ℂ) * Complex.I) = 0) :
+    (h_sum : ∑ p ∈ S, (coeff p σ : ℂ) * Complex.exp ((θ p : ℂ) * Complex.I) = 0) :
     False := by
-  -- AI2 ATTEMPTED: Triangle inequality argument
-  -- FAILED: API issues with coercions and lemma names
-  -- NEEDS: Correct Mathlib 4.27 API for triangle inequality argument
-  sorry
+  -- Triangle inequality: dominant term cannot be cancelled by rest
+  have h_split := Finset.sum_erase_add S (fun p => (coeff p σ : ℂ) * Complex.exp ((θ p : ℂ) * Complex.I)) h_mem
+  simp only at h_split
+  rw [h_sum, add_comm] at h_split
+  -- h_split: c_dom * e^{iθ_dom} + Σ_{others} = 0
+  have h_eq : (coeff p_dom σ : ℂ) * Complex.exp ((θ p_dom : ℂ) * Complex.I) =
+              -(∑ p ∈ S.erase p_dom, (coeff p σ : ℂ) * Complex.exp ((θ p : ℂ) * Complex.I)) :=
+    eq_neg_of_add_eq_zero_left h_split
+  -- Taking norms: ‖c_dom‖ * 1 = ‖Σ c_p * e^{iθ_p}‖
+  have h_norm := congrArg (fun z => ‖z‖) h_eq
+  simp only [norm_neg, Complex.norm_mul] at h_norm
+  have h_exp_norm : ‖Complex.exp ((θ p_dom : ℂ) * Complex.I)‖ = 1 :=
+    Complex.norm_exp_ofReal_mul_I (θ p_dom)
+  rw [h_exp_norm, mul_one] at h_norm
+  -- Triangle inequality: ‖Σ c_p * e^{iθ_p}‖ ≤ Σ |c_p|
+  have h_tri : ‖∑ p ∈ S.erase p_dom, (coeff p σ : ℂ) * Complex.exp ((θ p : ℂ) * Complex.I)‖ ≤
+               ∑ p ∈ S.erase p_dom, |coeff p σ| := by
+    calc ‖∑ p ∈ S.erase p_dom, (coeff p σ : ℂ) * Complex.exp ((θ p : ℂ) * Complex.I)‖
+        ≤ ∑ p ∈ S.erase p_dom, ‖(coeff p σ : ℂ) * Complex.exp ((θ p : ℂ) * Complex.I)‖ :=
+          norm_sum_le _ _
+      _ = ∑ p ∈ S.erase p_dom, |coeff p σ| := by
+          apply Finset.sum_congr rfl
+          intro p _
+          simp only [Complex.norm_mul, Complex.norm_exp_ofReal_mul_I, mul_one]
+          exact Complex.norm_real _
+  -- So |c_dom| ≤ Σ |c_p|, contradicting h_dominant
+  have h_c_norm : ‖(coeff p_dom σ : ℂ)‖ = |coeff p_dom σ| := Complex.norm_real _
+  rw [h_c_norm] at h_norm
+  linarith
 
 -- ==============================================================================
 -- PROOF 3: CHIRALITY FROM UNIFORM BOUND (Solved)

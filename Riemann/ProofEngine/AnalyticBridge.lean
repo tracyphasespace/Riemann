@@ -272,10 +272,32 @@ lemma innerProd_single_bivector (p : Primes) (v : GlobalHilbertSpace) (c : ℂ)
     innerProd v (Finsupp.single p (c • localBivector (v p))) =
     c * localInner (v p) (localBivector (v p)) := by
   unfold innerProd
-  -- The single has support {p}, so union with v.support is v.support ∪ {p} = ...
-  -- For q ≠ p, single p _ q = 0 so contribution is 0
-  -- For q = p, we get localInner (v p) (c • localBivector (v p))
-  sorry
+  -- KEY INSIGHT (AI2 2026-01-22):
+  -- The sum is over v.support ∪ (single p _).support
+  -- For q ≠ p: Finsupp.single p _ q = 0, so localInner (v q) 0 = 0
+  -- For q = p: localInner (v p) (c • localBivector (v p)) = c * localInner (v p) (localBivector (v p))
+  --
+  -- STRATEGY: The sum collapses to single term at p
+  -- Need: Finsupp.single_apply, localInner_smul_bivector
+  -- Need to show localInner _ 0 = 0 for terms where single evaluates to 0
+  have h_single : ∀ q, Finsupp.single p (c • localBivector (v p)) q =
+      if q = p then c • localBivector (v p) else 0 := fun q => by
+    simp only [Finsupp.single_apply]
+    split_ifs <;> simp
+  -- Sum over union; terms where single = 0 contribute 0
+  conv_lhs => rw [Finset.sum_eq_single p]
+  · -- The p term
+    simp only [Finsupp.single_eq_same]
+    exact localInner_smul_bivector (v p) (v p) c
+  · -- Terms q ≠ p: single p _ q = 0, so localInner (v q) 0 = 0
+    intro q _ hqp
+    simp only [Finsupp.single_apply, hqp, ↓reduceIte, localInner]
+    simp
+  · -- p not in union? But hp : p ∈ v.support, so p ∈ v.support ∪ _
+    intro hp_neg
+    exfalso
+    apply hp_neg
+    exact Finset.mem_union_left _ hp
 
 /--
 **Refined Rayleigh Identity (Corrected)**
