@@ -35,6 +35,41 @@ It resolves previous `sorry` blocks using standard Mathlib number theory and ana
 -- PROOF 1: FTA APPLICATION (FULLY PROVEN)
 -- ==============================================================================
 
+/-!
+## AI1/AI2 Findings (2026-01-22) for fta_all_exponents_zero sorries
+
+### Key Lemmas Found:
+- `one_lt_pow₀`: 1 < x → n ≠ 0 → 1 < x^n (works for ℝ)
+- `one_le_pow₀`: 1 ≤ x → 1 ≤ x^n (works for ℝ)
+- `Finset.one_le_prod`: (∀ i, 1 ≤ f i) → 1 ≤ ∏ f i (needs PosMulMono, ℝ has it)
+- `one_lt_mul_of_lt_of_le`: 1 < a → 1 ≤ b → 1 < a * b
+- `Finset.mul_prod_erase`: ∏ S = f p₀ * ∏ (S.erase p₀)
+
+### Working Proof for prod_prime_pow_gt_one_of_pos:
+```lean
+private lemma prod_prime_pow_gt_one_of_pos (S : Finset {x : ℕ // x.Prime})
+    (e : {x : ℕ // x.Prime} → ℕ) (p₀ : {x : ℕ // x.Prime}) (hp₀ : p₀ ∈ S)
+    (he₀ : 0 < e p₀) :
+    1 < S.prod (fun p => ((p : ℕ) : ℝ) ^ (e p : ℕ)) := by
+  rw [← Finset.mul_prod_erase S _ hp₀]
+  have h1 : (1 : ℝ) < ((p₀ : ℕ) : ℝ) ^ (e p₀) :=
+    one_lt_pow₀ (Nat.one_lt_cast.mpr p₀.2.one_lt) he₀.ne'
+  have h2 : (1 : ℝ) ≤ (S.erase p₀).prod (fun p => ((p : ℕ) : ℝ) ^ (e p)) := by
+    apply Finset.one_le_prod; intro p; exact one_le_pow₀ (Nat.one_le_cast.mpr p.2.one_le)
+  exact one_lt_mul_of_lt_of_le h1 h2
+```
+
+### AI2 Attempted Helpers (had type errors, need fixing):
+- `prime_pow_factorization_self'`: (p^e).factorization p = e
+- `prime_pow_factorization_other'`: (q^e).factorization p = 0 for p ≠ q
+- `disjoint_prime_prods_eq_one`: Key FTA step using factorization comparison
+- `log_prod_eq_sum_log`: Real.log (∏ f) = ∑ Real.log (f p)
+
+### Remaining Sorries (lines 297, 328):
+Both are "Case 3: both s_pos and s_neg nonempty" in fta_all_exponents_zero.
+Need: exp_sum_log bridge to convert real equality to ℕ product equality.
+-/
+
 /-- Helper: Split a sum into positive, negative, and zero parts -/
 lemma sum_split_three (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ // x.Prime} → ℤ) :
     ∑ p ∈ s, (z p : ℝ) * Real.log p =
