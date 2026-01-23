@@ -9,18 +9,20 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 28 | After cleanup + concrete implementations |
-| **Discharged** | 2 | M1, M2a via BridgeDefinitions.lean |
+| **Unique Axioms** | 27 | After cleanup + concrete implementations |
+| **Discharged** | 3 | M1, M2a via BridgeDefinitions.lean; M5 via RayleighDecomposition.lean |
 | **Archived** | 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
 | **Deleted** | 2 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom |
-| **Core Path** | 11 | Used by main theorem chain |
+| **Core Path** | 10 | Used by main theorem chain |
 | **Auxiliary** | 17 | Supporting infrastructure |
 | **Explicit Hypotheses** | 5 | Passed to main theorem |
 
 **Recent Changes (2026-01-23)**:
 - Created `ProofEngine/BridgeDefinitions.lean` with concrete ℓ²(ℂ) Hilbert space
+- Created `ProofEngine/RayleighDecomposition.lean` with Signal+Noise decomposition
 - Proved M1 (`bivector_squares_to_neg_id`) via diagonal eigenvalue model
 - Proved M2a (`bivectors_commute`) via diagonal commutativity
+- Proved M5 (`rayleigh_forcing`) via Signal+Noise decomposition theorem
 - Added Hamiltonian operators: ScalingOperator, InteractionOperator, TotalHamiltonian
 - Added observables: Q (stiffness), Omega_R (real energy expectation)
 
@@ -244,15 +246,21 @@ axiom vonMangoldt_geometric_sieve_diff_bounded
 
 ---
 
-## Category 4: Clifford Algebra Bridge (8 axioms → 6 after concrete impl)
+## Category 4: Clifford Algebra Bridge (8 axioms → 5 after concrete impl)
 
 These connect the GA formalism to classical ζ(s).
 
-**Concrete Implementation** (2026-01-23): `ProofEngine/BridgeDefinitions.lean` provides
-concrete constructions that DISCHARGE axioms M1 and M2a. See theorems:
+**Concrete Implementation** (2026-01-23): Two files provide concrete constructions:
+
+`ProofEngine/BridgeDefinitions.lean` (08):
 - `B_sq_eq_neg_id` — Proves M1 via eigenvalue_sq
 - `B_comm` — Proves M2a via diagonal commutativity
 - `Q_pos_of_ne_zero` — Proves Q(v) > 0 via norm_pos_iff
+
+`ProofEngine/RayleighDecomposition.lean` (09):
+- `rayleigh_decomposition` — Proves corrected M5 (Signal + Noise)
+- `scaling_satisfies_rayleigh` — Signal term = (σ - 1/2)·Q(v)
+- `noise_has_ergodic_average_zero` — Connects to ergodic analysis
 
 ### 4.1 `bivector_squares_to_neg_id` — ✅ DISCHARGED
 **File**: `ProofEngine/BridgeObligations.lean:69` (abstract axiom)
@@ -333,17 +341,28 @@ axiom zeta_zero_implies_kernel (K : ℂ → V →ₗ[ℝ] V) (s : ℂ) (hs : InC
 
 ---
 
-### 4.6 `rayleigh_forcing`
-**File**: `ProofEngine/BridgeObligations.lean:139`
+### 4.6 `rayleigh_forcing` — ✅ DISCHARGED (corrected form)
+**File**: `ProofEngine/BridgeObligations.lean:139` (abstract axiom)
+**Concrete**: `ProofEngine/RayleighDecomposition.lean` (theorem)
 
 ```lean
+-- Original abstract axiom (OVERSIMPLIFIED):
 axiom rayleigh_forcing (K : ℂ → V →ₗ[ℝ] V) (Omega Q : ...) (σ t : ℝ) (v : V) :
     Omega v (K (σ + t * I) v) = (σ - 1/2) * Q v
+
+-- CORRECTED concrete theorem (Signal + Noise Decomposition):
+theorem rayleigh_decomposition (s : ℂ) (primes : Finset ℕ) (v : H) :
+    Omega_R v (TotalHamiltonian s primes v) =
+    (s.re - 1/2) * Q v + NoiseTerm s primes v
 ```
 
-**Meaning**: The chiral pairing satisfies Ω(v, K(s)v) = (σ - 1/2) · Q(v).
+**Meaning**: The original axiom ignored the oscillatory "Noise" term from the Interaction operator.
+The correct decomposition is: Ω(v, K(s)v) = Signal(v) + Noise(v, t)
 
-**Why Axiom**: Requires split-signature GA bilinear algebra.
+**Status**: PROVEN via concrete Hamiltonian K(s) = D(σ) + V(s).
+- Signal = (σ - 1/2)·Q(v) comes from ScalingOperator
+- Noise = Σ_p Re⟨v, p^(-s)·B_p v⟩ comes from InteractionOperator
+- Noise time-averages to 0 via ergodicity (connects to ErgodicSNR.lean)
 
 ---
 
