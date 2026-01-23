@@ -15,9 +15,10 @@
   - File compiles with 3 sorries (down from 4)
 
 ### AI2 Note (2026-01-23):
-- LinearIndependenceSolved.lean proof attempt REVERTED - did not compile in Mathlib 4.27
-  - Issues: `.bex` doesn't exist, `linearIndependent_iff'` usage, `Finset.not_mem_singleton.mpr`
-  - Strategy was correct but needs Mathlib 4.27 adaptation
+- **LinearIndependenceSolved.lean**: NOW SORRY-FREE ✓ (all 3 theorems proven)
+- **Mathlib427Compat.lean**: NEW shim file available at `Riemann/Common/`
+  - Use `import Riemann.Common.Mathlib427Compat` + `open RiemannCompat`
+  - Provides: `finset_prod_ne_zero`, `exists_pair_of_card_gt_one`, `nat_to_real_eq`, etc.
 
 ### Recent Proofs (AI1):
 - `DiophantineGeometry.lean`: **fta_all_exponents_zero PROVEN** (was 2 sorries) - FILE NOW SORRY-FREE ✓
@@ -35,7 +36,7 @@
 
 ## WORK MODE: TWO-AI SYSTEMATIC (See CLAUDE.md for full details)
 
-**AI1 (Builder)**: Runs builds, debugs errors, updates `llm_input/BUILD_ERRORS.md`
+**AI1 (Builder)**: Runs builds, debugs errors, owns build lock
 **AI2 (Scanner)**: Scans files, applies Loogle/exact?, annotates failures
 
 ### ⚠️ AI2 CRITICAL REMINDER ⚠️
@@ -44,12 +45,46 @@
 - Read CLAUDE.md lines 18-20 for lock status
 - If locked, DO NOT BUILD - just edit files and annotate
 
-### AI2 Current Assignments (2026-01-22):
-| File | Task | Lines |
-|------|------|-------|
-| ExplicitFormulaAxioms.lean | von Mangoldt approximations | 18, 23, 35 |
-| LinearIndependenceSolved.lean | FTA applications (1 sorry) | ~140 |
-| ArithmeticAxioms.lean | FTA-related sorries | 49, 99 |
+---
+
+## FILE ASSIGNMENTS (2026-01-23) - AVOID CONFLICTS
+
+### AI1 Exclusive Files (Builder - compile/debug focus):
+| File | Sorries | Priority | Notes |
+|------|---------|----------|-------|
+| ExplicitFormula.lean | 3 | HIGH | Continuity + series bounds |
+| TraceAtFirstZero.lean | 2 | HIGH | Interval arithmetic |
+| CliffordZetaMasterKey.lean | 4 | MED | Complex Clifford algebra |
+| AnalyticBridgeEuler.lean | 1 | LOW | Euler product work |
+
+### AI2 Exclusive Files (Scanner - API search focus):
+| File | Sorries | Priority | Notes |
+|------|---------|----------|-------|
+| AnalyticAxioms.lean | 1 | HIGH | Schwarz reflection - search Mathlib |
+| ArithmeticAxioms.lean | 1 | HIGH | FTA bridge - use DiophantineGeometry |
+| AnalyticBridge.lean | 1 | MED | rayleigh_decomposition |
+| ChiralPath.lean | 2 | MED | Baker's theorem territory |
+| ConservationAxioms.lean | 1 | LOW | Conservation law |
+
+### Shared/Low Priority (either AI can work):
+| File | Sorries | Notes |
+|------|---------|-------|
+| GlobalBound/*.lean | 18 | Lower priority infrastructure |
+| ErgodicSNRAxioms.lean | 2 | Marked "fundamentally limited" |
+| NumericalAxioms.lean | 2 | Intentional axioms |
+| ExplicitFormulaAxioms.lean | 1 | von Mangoldt - needs infrastructure |
+| UnconditionalRH.lean | 2 | Depends on other sorries |
+
+### Already Sorry-Free ✓ (DO NOT MODIFY):
+- LinearIndependenceSolved.lean ✓
+- DiophantineGeometry.lean ✓
+- ProofEngine.lean ✓
+- EnergySymmetry.lean ✓
+- ClusterBound.lean ✓
+- SNRAxioms.lean ✓
+- MotorCore.lean ✓
+
+---
 
 ### AI2 Workflow:
 1. **CHECK ANNOTATIONS**: Read existing `-- TRIED:` comments before starting
