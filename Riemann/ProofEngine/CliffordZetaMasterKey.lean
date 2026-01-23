@@ -695,10 +695,26 @@ lemma coeff_sym_re_factorization (s : ℂ) (p : Primes) :
       exact h_re_zero
     -- The key fact: p^(-s) - p^(-(1-s)) is purely imaginary (Re = 0)
     -- When multiplied by real log(p) and divided by 2, the result is still purely imaginary
-    -- Technical calculation using Mathlib's complex division API
-    -- The full proof is: log p / p^s = log p * (p^s)⁻¹, and (p^s)⁻¹ = p^{-s} by cpow_neg
-    -- Then the difference log p * (p^{-s} - p^{-(1-s)}) has Re = log p * Re(p^{-s} - p^{-(1-s)}) = 0
-    sorry -- Technical: Mathlib 4.27 cpow division API manipulation
+    -- Rewrite log p / p^s = log p * p^{-s} using cpow_neg
+    have h1 : (Real.log p.val : ℂ) / (p.val : ℂ) ^ s = Real.log p.val * (p.val : ℂ) ^ (-s) := by
+      rw [div_eq_mul_inv, Complex.cpow_neg]
+    have h2 : (Real.log p.val : ℂ) / (p.val : ℂ) ^ (1 - s) = Real.log p.val * (p.val : ℂ) ^ (-(1-s)) := by
+      rw [div_eq_mul_inv, Complex.cpow_neg]
+    rw [h1, h2]
+    -- Factor out log p
+    have h3 : (Real.log p.val : ℂ) * (p.val : ℂ) ^ (-s) - (Real.log p.val : ℂ) * (p.val : ℂ) ^ (-(1 - s))
+            = (Real.log p.val : ℂ) * ((p.val : ℂ) ^ (-s) - (p.val : ℂ) ^ (-(1 - s))) := by ring
+    rw [h3]
+    -- Re(real * complex) = real * Re(complex) for real coerced to ℂ
+    have key : ((Real.log p.val : ℂ) * ((↑p.val : ℂ) ^ (-s) - (↑p.val : ℂ) ^ (-(1 - s)))).re
+             = Real.log p.val * ((↑p.val : ℂ) ^ (-s) - (↑p.val : ℂ) ^ (-(1 - s))).re := by
+      simp only [Complex.ofReal_re, Complex.ofReal_im, Complex.mul_re, zero_mul, sub_zero]
+    -- (z / 2).re = z.re / 2 for real 2
+    have h_two : (2 : ℂ) = ((2 : ℝ) : ℂ) := by norm_cast
+    have h_div2 : ((Real.log ↑p.val : ℂ) * ((↑p.val : ℂ) ^ (-s) - (↑p.val : ℂ) ^ (-(1 - s))) / 2).re
+                = ((Real.log ↑p.val : ℂ) * ((↑p.val : ℂ) ^ (-s) - (↑p.val : ℂ) ^ (-(1 - s)))).re / 2 := by
+      rw [h_two, Complex.div_ofReal_re]
+    rw [h_div2, key, h_diff_re, mul_zero, zero_div]
   · -- Case σ ≠ 1/2: define Ψ = Re(coeff_sym) / (σ - 1/2)
     use (coeff_sym s p).re / (s.re - 1/2)
     have hne : s.re - 1/2 ≠ 0 := sub_ne_zero.mpr h

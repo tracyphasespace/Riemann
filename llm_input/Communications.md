@@ -12,6 +12,19 @@
 **AI1 (Builder)**: Runs builds, debugs errors, updates `llm_input/BUILD_ERRORS.md`
 **AI2 (Scanner)**: Scans files, applies Loogle/exact?, annotates failures
 
+### ⚠️ AI2 CRITICAL REMINDER ⚠️
+**DO NOT run `lake` or `lake build` without checking CLAUDE.md lock table first!**
+- Check: `pgrep -x lake || echo "No lake process running"`
+- Read CLAUDE.md lines 18-20 for lock status
+- If locked, DO NOT BUILD - just edit files and annotate
+
+### AI2 Current Assignments (2026-01-22):
+| File | Task | Lines |
+|------|------|-------|
+| ExplicitFormulaAxioms.lean | von Mangoldt approximations | 18, 23, 35 |
+| LinearIndependenceSolved.lean | FTA applications | 46, 69, 86 |
+| ArithmeticAxioms.lean | FTA-related sorries | 49, 99 |
+
 ### AI2 Workflow:
 1. **CHECK ANNOTATIONS**: Read existing `-- TRIED:` comments before starting
 2. **SEARCH FIRST**: Loogle the goal type, try `exact?` / `apply?` / `aesop`

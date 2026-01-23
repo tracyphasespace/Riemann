@@ -29,7 +29,10 @@ pgrep -x lake || echo "No lake process running"
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| DiophantineGeometry.lean | AI2 | 2026-01-22 | fta_all_exponents_zero |
+| CliffordZetaMasterKey.lean | AI1 | 2026-01-22 | cpow API sorry (line 701) |
+| ExplicitFormulaAxioms.lean | AI2 | 2026-01-22 | von Mangoldt approximations |
+| LinearIndependenceSolved.lean | AI2 | 2026-01-22 | FTA applications |
+| ArithmeticAxioms.lean | AI2 | 2026-01-22 | FTA-related sorries |
 
 **Protocol:**
 1. Check file is not locked before editing
