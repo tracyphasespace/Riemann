@@ -309,6 +309,40 @@ theorem analytic_stiffness_pos_proven (ρ : ℂ) (h_zero : riemannZeta ρ = 0)
   rw [h_deriv_neg, Complex.neg_re]
   exact h_M
 
+/-- Helper: Continuity of foldl with additive accumulator and continuous init.
+    Requires all elements to be positive (so p^(-σ) is well-defined and continuous). -/
+private lemma continuous_foldl_add_general {t : ℝ} (l : List ℕ) (h_pos : ∀ p ∈ l, 0 < p)
+    (init : ℝ → ℝ) (h_init : Continuous init) :
+    Continuous (fun σ : ℝ => l.foldl (fun acc p =>
+      acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)) (init σ)) := by
+  induction l generalizing init with
+  | nil => exact h_init
+  | cons p ps ih =>
+    -- foldl f init (p :: ps) = foldl f (f init p) ps
+    -- Apply IH with new init = old_init + term_p
+    have h_p_pos : 0 < p := h_pos p List.mem_cons_self
+    have h_ps_pos : ∀ q ∈ ps, 0 < q := fun q hq => h_pos q (List.mem_cons_of_mem p hq)
+    apply ih h_ps_pos
+    -- Need: Continuous (fun σ => init σ + term p σ)
+    apply Continuous.add h_init
+    -- term p σ = log²(p) * p^(-σ) * cos(t * log p)
+    apply Continuous.mul
+    apply Continuous.mul
+    apply Continuous.mul
+    · exact continuous_const
+    · exact continuous_const
+    · -- p^(-σ) is continuous since p > 0
+      have hp_ne : (p : ℝ) ≠ 0 := ne_of_gt (Nat.cast_pos.mpr h_p_pos)
+      exact (Real.continuous_const_rpow hp_ne).comp continuous_neg
+    · exact continuous_const
+
+/-- Helper: Continuity of foldl with additive accumulator starting from 0.
+    For lists of positive naturals (like primes). -/
+private lemma continuous_foldl_add {t : ℝ} (l : List ℕ) (h_pos : ∀ p ∈ l, 0 < p) :
+    Continuous (fun σ : ℝ => l.foldl (fun acc p =>
+      acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)) 0) :=
+  continuous_foldl_add_general l h_pos (fun _ => 0) continuous_const
+
 /--
 **Theorem: Finite Sum is Locally Bounded**
 
@@ -322,7 +356,8 @@ The correct logic for Residues.lean is:
 - Finite sum is bounded (this theorem)
 - Therefore: Finite + Analytic < 0 near the pole ✓
 -/
-theorem finite_sum_is_bounded (ρ : ℂ) (primes : List ℕ) (δ : ℝ) (hδ : 0 < δ) :
+theorem finite_sum_is_bounded (ρ : ℂ) (primes : List ℕ) (h_pos : ∀ p ∈ primes, 0 < p)
+    (δ : ℝ) (hδ : 0 < δ) :
     ∃ B > 0, ∀ σ ∈ Set.Ioo (ρ.re - δ) (ρ.re + δ),
       |primes.foldl (fun acc p =>
         acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0| < B := by
@@ -336,9 +371,7 @@ theorem finite_sum_is_bounded (ρ : ℂ) (primes : List ℕ) (δ : ℝ) (hδ : 0
   -- f is continuous (finite sum of continuous functions)
   have h_cont : ContinuousOn f I := by
     apply Continuous.continuousOn
-    -- Continuity of foldl: each term is continuous, finite sum of continuous is continuous
-    -- Technical: foldl with addition accumulator preserves continuity
-    sorry -- A5: Continuity of foldl (standard but technical - see workplan)
+    exact continuous_foldl_add primes h_pos
 
   -- Compactness argument
   have h_compact : IsCompact I := isCompact_Icc
