@@ -4,6 +4,7 @@ import Mathlib.NumberTheory.Real.Irrational
 import Mathlib.NumberTheory.SumPrimeReciprocals
 import Mathlib.Topology.Algebra.InfiniteSum.Real
 import Mathlib.Tactic.Linarith
+import Mathlib.Data.List.GetD  -- For List.getD_eq_getElem
 import Riemann.ProofEngine.NumberTheoryFTA
 import Riemann.ProofEngine.DiophantineGeometry
 import Riemann.ProofEngine.LinearIndependenceSolved
@@ -68,8 +69,8 @@ lemma prod_prime_pow_unique {S : Finset ℕ} (h_primes : ∀ p ∈ S, Nat.Prime 
   exact ha.symm.trans hb
 
 /-- Helper: Convert list with proof to subtype finset -/
-private def listToSubtypeFinset (primes : List ℕ) (h_primes : ∀ p ∈ primes, Nat.Prime p)
-    (h_nodup : primes.Nodup) : Finset {x : ℕ // x.Prime} :=
+private def listToSubtypeFinset (primes : List ℕ) (_h_primes : ∀ p ∈ primes, Nat.Prime p)
+    (_h_nodup : primes.Nodup) : Finset {x : ℕ // x.Prime} :=
   (primes.toFinset).subtype (fun p => p.Prime)
 
 /-- Helper: Membership preservation -/
@@ -79,41 +80,40 @@ private lemma mem_listToSubtypeFinset {primes : List ℕ} {h_primes : ∀ p ∈ 
   simp only [listToSubtypeFinset, Finset.mem_subtype, List.mem_toFinset]
   exact hp
 
-/-- Helper: Get coefficient at prime's index in the list -/
+/-- Helper: Get coefficient at prime's index in the list.
+    Uses idxOf which returns length if not found. -/
 private def getCoeffAtPrime (primes : List ℕ) (coeffs : List ℚ) (p : {x : ℕ // x.Prime}) : ℚ :=
-  match primes.indexOf? p.val with
-  | some i => coeffs.getD i 0
-  | none => 0
+  coeffs.getD (primes.idxOf p.val) 0
 
-/-- Helper: zipWith sum equals Finset sum over subtype primes -/
+/-- Atomic 1: zipWith cons distributes over sum -/
+private lemma zipWith_sum_cons
+    (f : ℕ → ℚ → ℝ) (a : ℕ) (b : ℚ) (as : List ℕ) (bs : List ℚ) :
+    (List.zipWith f (a :: as) (b :: bs)).sum = f a b + (List.zipWith f as bs).sum := by
+  simp only [List.zipWith_cons_cons, List.sum_cons]
+
+/-- Atomic 2: zipWith of empty list has zero sum -/
+private lemma zipWith_sum_nil_left
+    (f : ℕ → ℚ → ℝ) (bs : List ℚ) :
+    (List.zipWith f [] bs).sum = 0 := by
+  simp only [List.zipWith_nil_left, List.sum_nil]
+
+/-- Atomic 3: Subtype finset elements come from list elements -/
+private lemma mem_list_of_mem_subtype {primes : List ℕ} {h_primes : ∀ p ∈ primes, Nat.Prime p}
+    {h_nodup : primes.Nodup} {p : {x : ℕ // x.Prime}}
+    (hp : p ∈ listToSubtypeFinset primes h_primes h_nodup) :
+    p.val ∈ primes := by
+  simp only [listToSubtypeFinset, Finset.mem_subtype, List.mem_toFinset] at hp
+  exact hp
+
+/-- Helper: zipWith sum equals Finset sum over subtype primes.
+    TODO: Complete the inductive proof. Currently blocked by coercion issues in Lean 4.27. -/
 private lemma zipWith_sum_eq_finset_sum (primes : List ℕ) (coeffs : List ℚ)
     (h_primes : ∀ p ∈ primes, Nat.Prime p) (h_nodup : primes.Nodup)
     (h_length : primes.length = coeffs.length) :
     (List.zipWith (fun p q => (q : ℝ) * log p) primes coeffs).sum =
     ∑ p ∈ listToSubtypeFinset primes h_primes h_nodup,
       (getCoeffAtPrime primes coeffs p : ℝ) * log (p : ℕ) := by
-  -- This is a technical lemma about converting between list and finset sums
-  -- The key insight: both sums range over the same primes with same coefficients
-  induction primes generalizing coeffs with
-  | nil =>
-    simp only [List.zipWith_nil_left, List.sum_nil, listToSubtypeFinset, List.toFinset_nil,
-               Finset.subtype_empty, Finset.sum_empty]
-  | cons p ps ih =>
-    cases coeffs with
-    | nil => simp at h_length
-    | cons c cs =>
-      simp only [List.zipWith_cons_cons, List.sum_cons]
-      -- For the tail, apply IH
-      have h_primes' : ∀ q ∈ ps, Nat.Prime q := fun q hq => h_primes q (List.mem_cons_of_mem p hq)
-      have h_nodup' : ps.Nodup := List.Nodup.of_cons h_nodup
-      have h_length' : ps.length = cs.length := by simp only [List.length_cons] at h_length; omega
-      -- TRIED: induction with Finset.sum_insert (2026-01-23)
-      -- BLOCKED: listToSubtypeFinset cons expansion is complex
-      --   Need: (p :: ps).toFinset.subtype = insert ⟨p, _⟩ (ps.toFinset.subtype)
-      --   Then: Finset.sum_insert + show p ∉ ps.toFinset (from h_nodup)
-      --   Then: getCoeffAtPrime returns c for head, apply IH for tail
-      -- NEXT: Try List.sum_map_eq_finset_sum or direct equality proof
-      sorry
+  sorry -- Inductive proof deferred due to coercion complexity
 
 /-- Atom 3: Linear independence of logs follows from FTA. -/
 theorem fta_implies_log_independence_proven (primes : List ℕ) (coeffs : List ℚ)
@@ -131,7 +131,7 @@ theorem fta_implies_log_independence_proven (primes : List ℕ) (coeffs : List �
   by_cases h_primes_empty : primes = []
   · rw [h_primes_empty] at h_length
     simp only [List.length_nil] at h_length
-    exact absurd (List.length_eq_zero.mp h_length.symm) h_empty
+    exact absurd (List.eq_nil_of_length_eq_zero h_length.symm) h_empty
 
   -- Main case: both lists nonempty
   intro q hq
@@ -155,8 +155,7 @@ theorem fta_implies_log_independence_proven (primes : List ℕ) (coeffs : List �
   -- Convert the zipWith sum to a Finset sum
   have h_finset_sum : ∑ p ∈ s, (g p : ℝ) * log (p : ℕ) = 0 := by
     rw [← zipWith_sum_eq_finset_sum primes coeffs h_primes h_nodup h_length]
-    convert h_sum using 2 with p c
-    ring
+    exact h_sum
 
   -- Need to convert to smul form for linear independence
   have h_smul_sum : ∑ p ∈ s, g p • log (p : ℕ) = 0 := by
@@ -174,25 +173,13 @@ theorem fta_implies_log_independence_proven (primes : List ℕ) (coeffs : List �
 
   have h_g_pi : g ⟨p_i, hp_i_prime⟩ = q := by
     simp only [g, getCoeffAtPrime]
-    -- indexOf? p_i in primes should give i (since primes is nodup)
-    have h_indexOf : primes.indexOf? p_i = some i := by
-      rw [List.indexOf?_eq_some_iff]
-      constructor
-      · exact hi_lt'
-      constructor
-      · rfl
-      · intro j hj hj_lt
-        -- If primes[j] = p_i and j < i, contradiction with nodup
-        have hj_eq : primes[j] = p_i := hj
-        have hi_eq' : primes[i] = p_i := rfl
-        -- By nodup, indices with same value must be equal
-        have := List.Nodup.getElem_inj_iff h_nodup |>.mp (hj_eq.trans hi_eq'.symm)
-        omega
-    rw [h_indexOf]
-    simp only [List.getD, hi_lt, hi_eq]
-    split
-    · rfl
-    · omega
+    -- idxOf p_i in primes should give i (since primes is nodup)
+    have h_idxOf : primes.idxOf p_i = i := by
+      apply List.Nodup.idxOf_getElem h_nodup
+    rw [h_idxOf]
+    -- coeffs.getD i 0 = coeffs[i] when i < coeffs.length
+    rw [@List.getD_eq_getElem ℚ coeffs (0:ℚ) i hi_lt]
+    exact hi_eq
 
   rw [← h_g_pi]
   exact h_g_zero ⟨p_i, hp_i_prime⟩ hp_i_in_s

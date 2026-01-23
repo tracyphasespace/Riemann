@@ -1,10 +1,26 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-23 (ExplicitFormula.lean power bound proven by AI1)
+**Last Updated**: 2026-01-23 (AI3 fixed BridgeObligations.lean build error)
 **Build Status**: PASSING
 **Total Sorries**: ~42 actual in .lean files
 **Note**: sandbox/ excluded from count (test files only)
 **Critical Path**: SORRY-FREE ✓
+
+### AI3 Work (2026-01-23):
+- **BridgeObligations.lean**: FIXED build errors
+  - Moved imports before docstring (Lean 4 requirement)
+  - Fixed doc comments on `variable` declarations (not allowed in Lean 4)
+  - Fixed `in` -> `∈` syntax for BigOperator sums
+  - Made all axioms have explicit type parameters (not relying on `variable`)
+  - Fixed simp arguments to properly reduce `σ + t * I` to `σ`
+  - File now builds successfully with 0 sorries (uses axioms instead)
+- **AristotleContributions.lean**: 1 sorry - `completedRiemannZeta₀_conj`
+  - BLOCKED: Needs `WeakFEPair.Λ₀_conj` infrastructure not in Mathlib
+  - Documented proof strategy via Mellin transform conjugate symmetry
+- **ExplicitFormulaAxioms.lean**: 1 sorry - `finite_sum_approx_analytic_proven`
+  - BLOCKED: Requires von Mangoldt Explicit Formula (contour integration)
+  - This is a major formalization project, kept as sorry
+- **DiophantineGeometry.lean**: Already sorry-free ✓
 
 ### Recent Proofs (AI1 - 2026-01-23):
 - `ExplicitFormula.lean`: **finite_sum_approx_analytic_proven - power bound PROVEN**

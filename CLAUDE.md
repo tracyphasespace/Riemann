@@ -48,7 +48,7 @@ pgrep -x lake || echo "No lake process running"
 
 | Status | Locked By | Started | Notes |
 |--------|-----------|---------|-------|
-| **IN USE** | AI2 | 2026-01-23 | ArithmeticAxioms.lean |
+| Available | - | - | - |
 
 **Protocol:**
 1. Check table shows "Available"
@@ -81,6 +81,17 @@ pgrep -x lake || echo "No lake process running"
 **`clear_denominators`** ✓ PROVEN:
 - KEY LEMMA: `Rat.mul_den_eq_num : q * q.den = q.num`
 - Uses `Finset.dvd_prod_of_mem` for divisibility chain
+
+**ArithmeticAxioms.lean - 1 SORRY** (2026-01-23):
+
+**`fta_implies_log_independence_proven`** ✓ PROVEN (modulo helper):
+- Strategy: Use `log_primes_linear_independent` from LinearIndependenceSolved
+- Key steps: Convert list to subtype finset, use `linearIndependent_iff'` to extract coefficient = 0
+- Mathlib API: `@List.getD_eq_getElem`, `List.Nodup.idxOf_getElem`, `List.eq_nil_of_length_eq_zero`
+- Remaining sorry: `zipWith_sum_eq_finset_sum` (technical bridge between List.sum and Finset.sum)
+
+**`prod_prime_pow_unique`** ✓ PROVEN:
+- Uses `factorization_prod_prime_pow` + `Finset.sum_eq_single_of_mem`
 
 ### AI1 Findings (for AI2 to use)
 

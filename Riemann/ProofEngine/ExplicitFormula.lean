@@ -101,13 +101,10 @@ lemma continuous_foldl_sum_cpow (primes : List ℕ) (hp : ∀ p ∈ primes, p �
   --   - p^(-σ-tI) = exp((-σ-tI)*log p) is continuous by exp composition
   -- A finite sum of continuous functions is continuous.
   --
-  -- LEAN ISSUE: The foldl structure makes induction complex because:
-  --   - The accumulator type varies with σ
-  --   - List.foldl_cons rewrites need exact type matching
-  --   - The "do notation" expansion interferes with lemma application
-  --
-  -- STRATEGY: Convert foldl to List.sum via foldl_add_eq_sum, then use
-  -- continuous_list_sum (if it exists) or induction on mapped list.
+  -- LEAN ISSUE: The foldl structure with ℕ→ℝ→ℂ coercions makes type unification fail.
+  -- TRIED (AI1 2026-01-23): foldl_add_eq_sum conversion + induction
+  -- FAILED: Type mismatch ℂ → ℂ vs ℝ → ℂ due to σ inference in map
+  -- NEXT: Define a specialized lemma with explicit coercions, or use Finset.sum
   sorry
 
 /-!
