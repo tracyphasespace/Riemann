@@ -138,8 +138,47 @@ theorem phase_space_is_torus (S : Finset {x : ℕ // x.Prime}) :
     -- Otherwise: we have at least 2 primes and (t₁ - t₂) ≠ 0
     -- This would imply a rational relation log(p)/log(q) = k_p/k_q
     -- contradicting linear independence.
-    -- For now, mark as needing linear algebra machinery
-    -- BLOCKED: Need to construct explicit ℚ-linear combination from h_rewrite
+    --
+    -- === AI2 PROOF STRATEGY (needs Mathlib 4.27 adaptation) ===
+    -- Step 1: Extract two distinct primes from |S| > 1
+    --   FIX NEEDED: Use `obtain ⟨p₁, hp₁⟩ := Finset.card_pos.mp ...` not `.bex`
+    --   ```
+    --   have h_nonempty : S.Nonempty := Finset.card_pos.mp (Nat.lt_trans Nat.zero_lt_one h_card)
+    --   obtain ⟨p₁, hp₁⟩ := h_nonempty
+    --   have h_erase_pos : 0 < (S.erase p₁).card := by omega
+    --   obtain ⟨p₂, hp₂⟩ := Finset.card_pos.mp h_erase_pos
+    --   ```
+    --
+    -- Step 2: Get integer witnesses k₁, k₂ from h_rewrite
+    --   ```
+    --   obtain ⟨k₁, hk₁⟩ := h_rewrite p₁ hp₁  -- (t₁ - t₂) * log(p₁) = 2π * k₁
+    --   obtain ⟨k₂, hk₂⟩ := h_rewrite p₂ hp₂  -- (t₁ - t₂) * log(p₂) = 2π * k₂
+    --   ```
+    --
+    -- Step 3: Derive ℚ-linear relation: k₂ * log(p₁) = k₁ * log(p₂)
+    --   FIX NEEDED: Use `calc` with `ring` instead of `linarith` for multiplication
+    --   ```
+    --   have h_diff : (t₁ - t₂) * (k₂ * log p₁ - k₁ * log p₂) = 0 := by
+    --     have eq1 : (t₁ - t₂) * log p₁ * k₂ = 2 * π * k₁ * k₂ := by
+    --       calc ... = ((t₁ - t₂) * log p₁) * k₂ := by ring
+    --            _ = (2 * π * k₁) * k₂ := by rw [hk₁]
+    --            _ = 2 * π * k₁ * k₂ := by ring
+    --     -- similar for eq2
+    --     linarith
+    --   ```
+    --
+    -- Step 4: Apply linear independence to get k₁ = k₂ = 0
+    --   FIX NEEDED: Use `linearIndependent_iff'.mp` not `rw at`
+    --   ```
+    --   have h_lin_indep := linearIndependent_iff'.mp log_primes_linear_independent
+    --   let s : Finset {x : ℕ // x.Prime} := {p₁, p₂}
+    --   let g := fun p => if p = p₁ then k₂ else if p = p₂ then -k₁ else 0
+    --   -- Show sum is 0, apply h_lin_indep to get g = 0, hence k₁ = k₂ = 0
+    --   ```
+    --   FIX NEEDED: `Finset.not_mem_singleton.mpr` → use `Finset.mem_singleton.not` or explicit proof
+    --
+    -- Step 5: Conclude t₁ = t₂ from k₁ = 0 and log(p) > 0
+    -- === END AI2 STRATEGY ===
     sorry
 
 end LinearIndependenceSolved

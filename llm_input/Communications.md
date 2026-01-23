@@ -1,10 +1,21 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-22 (fta_all_exponents_zero PROVEN!)
+**Last Updated**: 2026-01-23 (ExplicitFormula.lean fixed by AI1)
 **Build Status**: PASSING
-**Total Sorries**: ~35 actual in .lean files (verified 2026-01-22 build)
+**Total Sorries**: ~43 actual in .lean files
 **Note**: sandbox/ excluded from count (test files only)
 **Critical Path**: SORRY-FREE ✓
+
+### Recent Proofs (AI1 - 2026-01-23):
+- `ExplicitFormula.lean`: **finite_sum_approx_analytic_proven structure fixed**
+  - Fixed Lean 4.27 API issues: `Nat.two_le_iff` → `omega`, `inv_le_one_of_one_le₀`, explicit type annotations
+  - Fixed foldl type coercion issues with explicit `(acc : ℝ) (p : ℕ)` in lambdas
+  - File compiles with 3 sorries (down from build errors)
+
+### AI2 Note (2026-01-23):
+- LinearIndependenceSolved.lean proof attempt REVERTED - did not compile in Mathlib 4.27
+  - Issues: `.bex` doesn't exist, `linearIndependent_iff'` usage, `Finset.not_mem_singleton.mpr`
+  - Strategy was correct but needs Mathlib 4.27 adaptation
 
 ### Recent Proofs (AI1):
 - `DiophantineGeometry.lean`: **fta_all_exponents_zero PROVEN** (was 2 sorries) - FILE NOW SORRY-FREE ✓
@@ -35,7 +46,7 @@
 | File | Task | Lines |
 |------|------|-------|
 | ExplicitFormulaAxioms.lean | von Mangoldt approximations | 18, 23, 35 |
-| LinearIndependenceSolved.lean | FTA applications | 46, 69, 86 |
+| LinearIndependenceSolved.lean | FTA applications (1 sorry) | ~140 |
 | ArithmeticAxioms.lean | FTA-related sorries | 49, 99 |
 
 ### AI2 Workflow:
