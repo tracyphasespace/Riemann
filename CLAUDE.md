@@ -12,6 +12,7 @@ This project uses multiple Claude instances (AI1/AI2) working in parallel. Follo
 |----------|------|--------|-----|
 | Main | `/home/tracy/development/Riemann/Lean` | `main` | AI1 |
 | Secondary | `/home/tracy/development/Riemann/Lean-AI2` | `ai2-batch` | AI2 |
+| Tertiary | `/home/tracy/development/Riemann/Lean-AI3` | `ai3-batch` | AI3 |
 
 **Benefits:**
 - Each worktree has its own `.lake/build/` directory
@@ -32,6 +33,7 @@ git merge ai2-batch  # Auto-merges if file sets are disjoint
 **File Assignment (to avoid conflicts):**
 - AI1: ExplicitFormula, TraceAtFirstZero, CliffordZetaMasterKey, AnalyticBridgeEuler
 - AI2: AnalyticAxioms, ArithmeticAxioms, AnalyticBridge, ChiralPath, ConservationAxioms
+- AI3: DiophantineGeometry, BridgeObligations, AristotleContributions, ExplicitFormulaAxioms
 
 ### Build Coordination (LEGACY - use worktrees instead)
 
