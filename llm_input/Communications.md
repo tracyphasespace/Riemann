@@ -143,6 +143,18 @@ Mathematical gaps are documented as explicit axioms with:
 - **AristotleContributions.lean** ✓ (`completedRiemannZeta₀_conj_axiom`)
 - **UniversalStiffness.lean** ✓ (`universal_monotonicity_from_orthogonality_axiom`)
 
+### AI2 Work (2026-01-23 - Continued Session)
+- **Ergodicity.lean:418** - `noiseGrowth_eq_cross_sum_proven` - **PROOF WRITTEN** (needs build verification)
+  - Algebraic identity: `(∑ aₚ)² - ∑ aₚ² = 2·∑_{p<q} aₚ·aᵧ`
+  - Proof strategy:
+    1. `h_split`: Decompose S×S into diagonal (p=q), lower (p<q), upper (p>q)
+    2. `h_diag`: Diagonal sum = Σ(a_p)² via `Finset.sum_image` bijection
+    3. `h_lower_upper`: Upper = Lower via `Prod.swap` bijection
+    4. `h_signal_match`: Diagonal = SignalGrowth (cancels in NoiseGrowth)
+    5. Final calc chain: NoiseGrowth = 2 × lower triangular
+  - Key Mathlib: `Finset.sum_image`, `Finset.sum_union`, `Real.rpow_mul`, `Real.rpow_natCast`
+  - **NOTE**: AI1 has build lock - cannot verify compilation yet
+
 ### Previous Completions
 - **Ergodicity.lean** ✓ (AI2 - 4 sorries proven)
 - **CliffordZetaMasterKey.lean** ✓ (AI1 - deleted FALSE axioms/lemmas)
