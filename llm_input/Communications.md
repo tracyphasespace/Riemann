@@ -7,17 +7,27 @@
 
 ---
 
-## WORK MODE: DIRECT (NO AGENTS)
+## WORK MODE: TWO-AI SYSTEMATIC (See CLAUDE.md for full details)
 
-**AI2**: Work on sorries directly. Do NOT spawn agents.
+**AI1 (Builder)**: Runs builds, debugs errors, updates `llm_input/BUILD_ERRORS.md`
+**AI2 (Scanner)**: Scans files, applies Loogle/exact?, annotates failures
 
-### Workflow:
-1. Pick ONE sorry from the priority list below
-2. Read the file to understand context
-3. Search Mathlib for relevant lemmas (Grep/Glob)
-4. Edit the file with your proof attempt
-5. If blocked, document the blocker and move to next sorry
+### AI2 Workflow:
+1. **CHECK ANNOTATIONS**: Read existing `-- TRIED:` comments before starting
+2. **SEARCH FIRST**: Loogle the goal type, try `exact?` / `apply?` / `aesop`
+3. **WRITE IDIOMATICALLY**: Use Filters/Type Classes (Rosetta Stone)
+4. **DECOMPOSE IF STUCK**: Break into 1-3 line helper lemmas
+5. **ANNOTATE FAILURES**: Add `-- TRIED: ... FAILED: ...` comment, then `sorry`
 6. **DO NOT run `lake build`** - AI1 handles builds
+
+### Annotation Format (REQUIRED for failed attempts):
+```lean
+theorem foo : goal := by
+  -- TRIED: exact Nat.add_comm (2026-01-22)
+  -- FAILED: type mismatch, expected ℤ got ℕ
+  -- NEXT: Try Loogle for ℤ version
+  sorry
+```
 
 ---
 
@@ -30,27 +40,27 @@ The following files on the critical path have **0 sorries**:
 - `EnergySymmetry.lean` ✓
 - `ClusterBound.lean` ✓
 
-### 1. Convexity.lean:111 - second_deriv_normSq_eq
-**File**: `Riemann/ProofEngine/Convexity.lean`
-```lean
--- Prove: d²/dσ² ‖f(σ+it)‖² = specific formula
--- Strategy: normSq = re² + im², differentiate twice
--- Use: Differentiable.pow, chain rule
-```
+### 1. ~~Convexity.lean:111~~ ✅ PROVEN (2026-01-22)
+`second_deriv_normSq_eq` - proven via product rule + chain rule + reCLM composition
 
-### 2. CalculusAxioms.lean:27 - taylor_second_order
+### 2. ~~CalculusAxioms.lean:27~~ ✅ PROVEN (2026-01-22)
+`taylor_second_order` - proven via Mathlib Taylor + reflection for x < x₀ case
+Key lemmas: `taylor_mean_remainder_lagrange_iteratedDeriv`, `uniqueDiffOn_Icc`
+
+### 3. CalculusAxioms.lean - effective_convex_implies_min **1 SORRY REMAINING**
 **File**: `Riemann/ProofEngine/CalculusAxioms.lean`
 ```lean
--- Taylor expansion with second-order remainder
--- Blocker: API mismatches (deriv_comp_sub_const etc.)
-```
-
-### 3. CalculusAxioms.lean:109 - effective_convex_implies_min
-**File**: `Riemann/ProofEngine/CalculusAxioms.lean`
-```lean
--- Goal: If f''(c) ≥ δ and |f'(1/2)| ≤ ε with ε < δ|σ-1/2|/2
---       then f(σ) > f(1/2)
--- Blocker: Need ContDiff from HasDerivAt hypotheses
+-- Theorem structure COMPLETE with helper lemmas:
+--   quadratic_dominates_linear ✓
+--   second_deriv_lower_bound ✓ (FTC + MVT approach)
+--   linear_term_bound ✓
+--   convex_minimum_right ✓ (σ > 1/2 case)
+--   convex_minimum_left - uses second_deriv_lower_bound_rev
+--
+-- REMAINING SORRY: second_deriv_lower_bound_rev (line 317)
+--   Needs: Taylor expansion at right endpoint b instead of left a
+--   Math: f(a) - f(b) = f'(b)(a-b) + f''(c)(a-b)²/2 for some c
+--   Strategy: Same FTC/integral approach as second_deriv_lower_bound
 ```
 
 ### 4. AnalyticAxioms.lean:336 - completedRiemannZeta₀_conj_proven
@@ -149,6 +159,36 @@ The following files on the critical path have **0 sorries**:
 -- NumericalAxioms.lean: 26, 39
 -- These are intentionally axioms, not meant to be proven
 ```
+
+---
+
+## Best Practices for Sorry Elimination (2026)
+
+**See CLAUDE.md for full details.** Summary:
+
+### 1. Use Proof Search FIRST
+```lean
+example : goal := by exact?   -- Try this first
+example : goal := by apply?   -- Or this
+example : goal := by aesop    -- For logic/sets
+```
+
+### 2. Use Loogle for Lemma Discovery
+```bash
+# Instead of guessing, query Loogle:
+loogle "?a + ?b = ?b + ?a"    # → add_comm
+loogle "Tendsto ?f ?l atTop"  # → limit lemmas
+```
+
+### 3. Verify Sorry Removal
+```lean
+#print axioms MyTheorem  -- Must NOT show sorryAx
+```
+
+### 4. Break Complex Proofs into Helpers
+- Each helper: 1-3 lines, uses ONE main Mathlib lemma
+- Chain helpers together for final proof
+- Helps identify exactly which API is failing
 
 ---
 

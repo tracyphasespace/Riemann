@@ -39,10 +39,12 @@ pgrep -x lake || echo "No lake process running"
 ### Critical Rules
 
 1. **Always test before committing**: Run `lake build YourModule` before `git commit`
-2. **Revert broken proofs**: If a proof attempt fails, revert to clean sorry state rather than leaving broken code
+2. **Annotate failed proofs**: Don't just delete - add `-- TRIED: approach, FAILED: reason` comment, then `sorry`
 3. **Update Communications.md**: Log your progress so other AI knows what's happening
-4. **Don't guess APIs**: If unsure about a Mathlib API, search first with `grep -rn "pattern" .lake/packages/mathlib/`
+4. **Don't guess APIs**: If unsure about a Mathlib API, use Loogle or `grep -rn "pattern" .lake/packages/mathlib/`
 5. **Avoid `iteratedDeriv_two`**: It doesn't exist in Mathlib 4.27 - use `iteratedDeriv_succ, iteratedDeriv_one`
+6. **Verify sorry removal**: After removing a sorry, run `#print axioms TheoremName` to confirm `sorryAx` is gone
+7. **Use proof search first**: Try `exact?`, `apply?`, `aesop` before writing manual proofs
 
 ### Handoff Protocol
 
@@ -51,6 +53,121 @@ When finishing a task:
 2. Release all file locks
 3. Update Communications.md with what was done and what's next
 4. Update the STATUS section below with new sorry counts
+
+---
+
+## Two-AI Systematic Workflow (Reduces Churn)
+
+**Problem**: Single-AI workflow causes churn: TRY → FAIL → DELETE → TRY AGAIN (repeat for days)
+
+**Solution**: Two specialized AI roles working in parallel:
+
+### AI1: Builder/Debugger (Reactive)
+```
+Responsibilities:
+• Runs `lake build` (owns the build lock)
+• Captures and parses error messages
+• Identifies WHICH Mathlib API call failed
+• Updates error log with specific failure reasons
+• Tests fixes proposed by AI2
+
+Does NOT:
+• Guess at proofs
+• Delete failed attempts without annotation
+```
+
+### AI2: Scanner/Improver (Proactive)
+```
+Responsibilities:
+• Systematically scans ALL files with sorries
+• For each sorry:
+  1. Loogle the goal type
+  2. Try exact? / apply? / aesop
+  3. If stuck, decompose into helper lemmas
+  4. Document what was tried in comments
+• Builds proof attempts WITHOUT running lake build
+• Hands off to AI1 for testing
+
+Does NOT:
+• Run lake build (avoids OOM conflicts)
+• Start new proofs without checking annotations
+```
+
+### Shared Artifacts
+
+**1. Sorry Annotation Format** (in .lean files):
+```lean
+theorem my_theorem : goal := by
+  -- TRIED: exact Nat.add_comm (2026-01-22)
+  -- FAILED: type mismatch, expected ℤ got ℕ
+  -- TRIED: apply? (2026-01-22)
+  -- FAILED: no applicable lemmas found
+  -- NEXT: Try Loogle "?a + ?b = ?b + ?a" for ℤ
+  sorry
+```
+
+**2. Error Log** (in `llm_input/BUILD_ERRORS.md`):
+```markdown
+| File:Line | Error | Tried | Status |
+|-----------|-------|-------|--------|
+| Foo.lean:42 | unknown identifier 'bar' | exact bar | AI2 investigating |
+```
+
+### Workflow Cycle
+```
+AI2 scans files ──→ Writes proof attempts ──→ AI1 builds
+       ↑                                           │
+       └────── AI1 reports errors ←────────────────┘
+```
+
+This prevents:
+- Duplicate failed attempts (annotations show what was tried)
+- Build conflicts (only AI1 runs lake)
+- Hallucinated proofs (AI2 uses Loogle/exact? first)
+- Lost context (errors logged, not just deleted)
+
+---
+
+## Unified Proof Workflow (All Guidance Combined)
+
+When tackling a sorry, follow this sequence:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 1: SEARCH (New Best Practices)                         │
+│   • Check annotations: Was this tried before?               │
+│   • Loogle: Query the goal type                             │
+│   • exact? / apply? / aesop: Let Lean search                │
+└─────────────────────────────────────────────────────────────┘
+                          ↓ if no match found
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 2: WRITE IDIOMATICALLY (Rosetta Stone)                 │
+│   • Use Filters, not ε-δ (Tendsto, not ∀ε∃δ)               │
+│   • Use Type Classes (Differentiable.comp, not limits)      │
+│   • Chain known lemmas (Tendsto.comp)                       │
+└─────────────────────────────────────────────────────────────┘
+                          ↓ if proof is complex
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 3: DECOMPOSE (Helper Lemma Pattern)                    │
+│   • Break into 1-3 line helper lemmas                       │
+│   • Each helper uses ONE Mathlib lemma                      │
+│   • Identify exactly which API call fails                   │
+└─────────────────────────────────────────────────────────────┘
+                          ↓ after proof compiles
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 4: VERIFY (Sorry Verification Protocol)                │
+│   • #print axioms TheoremName                               │
+│   • Confirm sorryAx does NOT appear                         │
+│   • Check upstream helper lemmas too                        │
+└─────────────────────────────────────────────────────────────┘
+                          ↓ if proof fails at any step
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 5: ANNOTATE & HANDOFF                                  │
+│   • Add -- TRIED: ... FAILED: ... comment                   │
+│   • Revert to sorry (keeps build green)                     │
+│   • Log in Communications.md for other AI                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -80,6 +197,8 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 - `second_deriv_normSq_eq` in Convexity.lean - **PROVEN** (was 1 sorry)
 - `factorization_prod_prime_pow` in ArithmeticAxioms.lean - **PROVEN**
 - `sum_split_three` in DiophantineGeometry.lean - **PROVEN**
+- `taylor_second_order` in CalculusAxioms.lean - **PROVEN** (with helper lemmas)
+- `effective_convex_implies_min_proven` structure in place (1 remaining sorry in `second_deriv_lower_bound_rev`)
 
 **Sorry-free files in ProofEngine:**
 - AnalyticBasics.lean ✓
@@ -606,6 +725,184 @@ rw [Finset.sum_eq_single_of_mem p hp]
 
 ---
 
+## Taylor's Theorem & Calculus API (Discovered 2026-01-22)
+
+### Taylor's Theorem with Lagrange Remainder
+
+```lean
+-- USE THIS (weaker requirements):
+taylor_mean_remainder_lagrange {f : ℝ → ℝ} {x x₀ : ℝ} {n : ℕ}
+    (hx : x₀ < x)
+    (hf : ContDiffOn ℝ n f (Icc x₀ x))  -- NOTE: n, not n+1!
+    (hf' : DifferentiableOn ℝ (iteratedDerivWithin n f (Icc x₀ x)) (Ioo x₀ x)) :
+    ∃ x' ∈ Ioo x₀ x, f x - taylorWithinEval f n (Icc x₀ x) x₀ x =
+      iteratedDerivWithin (n + 1) f (Icc x₀ x) x' * (x - x₀) ^ (n + 1) / (n + 1)!
+
+-- NOT THIS (requires n+1 smoothness):
+taylor_mean_remainder_lagrange_iteratedDeriv  -- requires ContDiffOn ℝ (n+1) f
+```
+
+### Building ContDiff from Differentiable
+
+```lean
+-- ContDiff 1 ↔ Differentiable + Continuous derivative
+contDiff_one_iff_deriv : ContDiff 𝕜 1 f ↔ Differentiable 𝕜 f ∧ Continuous (deriv f)
+
+-- Usage: If hf : Differentiable ℝ f and hf' : Differentiable ℝ (deriv f), then:
+have h : ContDiff ℝ 1 f := contDiff_one_iff_deriv.mpr ⟨hf, hf'.continuous⟩
+```
+
+### derivWithin ↔ deriv Conversion
+
+```lean
+-- For globally differentiable f with unique diff:
+DifferentiableAt.derivWithin : DifferentiableAt 𝕜 f x → UniqueDiffWithinAt 𝕜 s x →
+    derivWithin f s x = deriv f x
+
+-- Unique diff on closed intervals:
+uniqueDiffOn_Icc {a b : ℝ} (hab : a < b) : UniqueDiffOn ℝ (Icc a b)
+
+-- Rewrite derivWithin when functions agree on set:
+derivWithin_congr : EqOn f₁ f₂ s → f₁ x = f₂ x → derivWithin f₁ s x = derivWithin f₂ s x
+```
+
+### Derivative Composition (from Deriv.Shift)
+
+```lean
+-- IMPORT: Mathlib.Analysis.Calculus.Deriv.Shift
+
+-- Derivative of f(a - x):
+deriv_comp_const_sub : deriv (fun x => f (a - x)) x = -deriv f (a - x)
+
+-- Derivative of negation:
+deriv.neg : deriv (-f) x = -deriv f x
+```
+
+### iteratedDerivWithin Patterns
+
+```lean
+-- WRONG: iteratedDeriv_two does not exist!
+-- RIGHT: Use simp with succ/zero:
+simp only [iteratedDeriv_succ, iteratedDeriv_zero]  -- gives deriv (deriv f)
+
+-- Expand iteratedDerivWithin 2:
+rw [show (2 : ℕ) = 1 + 1 from rfl, iteratedDerivWithin_succ, iteratedDerivWithin_one]
+
+-- Convert iteratedDerivWithin to deriv for globally diff f:
+have h : iteratedDerivWithin 1 f s x = deriv f x := by
+  rw [iteratedDerivWithin_one]
+  exact (hf x).derivWithin (uniqueDiffOn_Icc hlt x hx)
+```
+
+### Taylor Polynomial Simplification
+
+```lean
+-- After rw [taylor_within_apply], simplify the sum:
+simp only [Finset.sum_range_succ, Finset.range_one, Finset.sum_singleton,
+           Nat.factorial_zero, Nat.cast_one, inv_one, pow_zero, one_mul,
+           Nat.factorial_one, pow_one, smul_eq_mul, iteratedDerivWithin_zero,
+           show One.one = (1 : ℕ) from rfl]  -- Fix One.one display issue
+```
+
+### Loogle + Grep Workflow
+
+1. **Loogle** for discovery: `https://loogle.lean-lang.org/?q=pattern`
+2. **Local grep** for exact API: `grep -rn "pattern" .lake/packages/mathlib/`
+3. **Check signature** in source before using
+
+#### Loogle Query Patterns
+
+Instead of asking AI to "write a proof" (causes hallucinations), use Loogle to find existing Mathlib lemmas:
+
+```bash
+# Type-based search (find lemmas matching a goal shape)
+loogle "?a + ?b = ?b + ?a"           # → finds add_comm
+loogle "Tendsto ?f ?l atTop"         # → finds limit lemmas
+loogle "?a * ?b = ?b * ?a"           # → finds mul_comm
+
+# Function-specific search
+loogle "Real.sin ?x"                 # → sin lemmas
+loogle "Complex.exp"                 # → exp lemmas
+loogle "Finset.sum"                  # → sum lemmas
+
+# Pattern with constraints
+loogle "∀ x : ℝ, 0 < x → ?P"        # → positivity lemmas
+```
+
+**Workflow**: Goal state `⊢ A + B = B + A` → query `loogle "?a + ?b = ?b + ?a"` → get `add_comm` → use `rw [add_comm]`
+
+---
+
+## Sorry Verification Protocol (CRITICAL)
+
+After removing a sorry, you MUST verify the proof is complete:
+
+### Step 1: Check the theorem
+```lean
+#print axioms MyTheorem
+```
+- If `sorryAx` appears → proof is INCOMPLETE
+- If only `propext`, `Classical.choice`, `Quot.sound` → proof is COMPLETE
+
+### Step 2: Check upstream dependencies
+```lean
+-- If MyTheorem uses HelperLemma, also check:
+#print axioms HelperLemma
+```
+Sometimes a theorem appears "proven" but relies on a helper with `sorry`.
+
+### Step 3: Force evaluation (optional)
+```lean
+#eval! myComputableDef  -- Forces runtime check, catches sorry in computations
+#guard_msgs in #check myTheorem  -- Verify no warnings
+```
+
+### Recursive Axiom Audit Script
+```bash
+# Check all theorems in a file for sorryAx
+lake env lean --run <<EOF
+import Riemann.ProofEngine.MyModule
+#print axioms myTheorem1
+#print axioms myTheorem2
+EOF
+```
+
+---
+
+## Proof Search Tactics (Lean 4.27)
+
+Use these BEFORE writing manual proofs:
+
+### `exact?` - Find exact lemma match
+```lean
+example : 2 + 3 = 5 := by exact?  -- Finds: exact rfl
+example : a + b = b + a := by exact?  -- Finds: exact add_comm a b
+```
+
+### `apply?` - Find applicable lemmas
+```lean
+example (h : 0 < x) : 0 < x^2 := by apply?  -- Suggests: apply sq_pos_of_pos h
+```
+
+### `aesop` - Automated search (stronger than simp for logic)
+```lean
+example (h1 : P → Q) (h2 : Q → R) (h3 : P) : R := by aesop
+example : ∀ x : ℕ, x = x := by aesop
+```
+
+### `rw?` - Find rewrite lemmas
+```lean
+example : (a + b) + c = a + (b + c) := by rw?  -- Suggests: rw [add_assoc]
+```
+
+### Priority Order
+1. `exact?` / `apply?` - fastest, often instant solution
+2. `aesop` - good for logic, set theory, basic algebra
+3. `simp` with explicit lemmas - when you know the direction
+4. Manual proof - only after automation fails
+
+---
+
 ## ArithmeticAxioms Progress (2026-01-22)
 
 | Lemma | Status | Strategy |
@@ -619,4 +916,4 @@ rw [Finset.sum_eq_single_of_mem p hp]
 
 ---
 
-*Updated 2026-01-22 | BUILD PASSES | 2 AXIOMS | 5 Explicit Hypotheses | Core chain sorry-free*
+*Updated 2026-01-22 | BUILD PASSES | 2 AXIOMS | 5 Explicit Hypotheses | Core chain sorry-free | Two-AI workflow added*
