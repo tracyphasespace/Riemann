@@ -197,9 +197,10 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Explicit axioms | **2** (in ProofEngine/Axioms.lean) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
-| Remaining sorries | **~47** in ProofEngine |
+| Remaining sorries | **44** total |
 
 **Recent Progress (2026-01-22):**
+- `fta_all_exponents_zero` in DiophantineGeometry.lean - **PROVEN** (was 2 sorries - h_nat_prod in Cases 3&4)
 - `primeBivector_sq_proven` + `primeBivectors_commute_proven` in CliffordAxioms.lean - **PROVEN** (was 5 sorries)
 - `second_deriv_normSq_eq` in Convexity.lean - **PROVEN** (was 1 sorry)
 - `factorization_prod_prime_pow` in ArithmeticAxioms.lean - **PROVEN**
@@ -213,6 +214,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 - CliffordAxioms.lean ✓ (NEW 2026-01-22)
 - ClusteringDomination.lean ✓ (NEW 2026-01-22)
 - Convexity.lean ✓
+- DiophantineGeometry.lean ✓ (NEW 2026-01-22)
 - EnergySymmetry.lean ✓
 - GeometricBridge.lean ✓
 - PrimeSumApproximation.lean ✓
