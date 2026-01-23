@@ -733,6 +733,46 @@ rw [Nat.factorization_prod_apply h_ne_zero]
 rw [Finset.sum_eq_single_of_mem p hp]
 ```
 
+### Unique Factorization for Disjoint Prime Products (2026-01-22)
+
+Key lemma: If `∏_{S} p^{e(p)} = ∏_{T} q^{f(q)}` over disjoint primes S, T, then all exponents = 0.
+
+```lean
+-- Atomic 1: prime power nonzero
+lemma prime_pow_ne_zero' {p : ℕ} (hp : Nat.Prime p) (e : ℕ) : p ^ e ≠ 0 :=
+  pow_ne_zero e hp.ne_zero
+
+-- Atomic 2: factorization of product
+lemma factorization_prod_prime_pow' {S : Finset ℕ} (hS : ∀ p ∈ S, Nat.Prime p)
+    (e : ℕ → ℕ) (q : ℕ) :
+    (S.prod (fun p => p ^ e p)).factorization q = if q ∈ S then e q else 0 := by
+  have h_ne : ∀ p ∈ S, p ^ e p ≠ 0 := fun p hp => prime_pow_ne_zero' (hS p hp) (e p)
+  rw [Nat.factorization_prod h_ne]
+  simp only [Finsupp.coe_finset_sum, Finset.sum_apply]
+  by_cases hq : q ∈ S
+  · simp only [hq, ↓reduceIte]
+    rw [Finset.sum_eq_single q]
+    · exact Nat.factorization_pow_self (hS q hq)
+    · intro p hp hpq; rw [(hS p hp).factorization_pow, Finsupp.single_eq_of_ne (Ne.symm hpq)]
+    · intro hq'; exact absurd hq hq'
+  · simp only [hq, ↓reduceIte]; apply Finset.sum_eq_zero; intro p hp
+    by_cases heq : q = p
+    · exact absurd (heq ▸ hp) hq
+    · rw [(hS p hp).factorization_pow, Finsupp.single_eq_of_ne heq]
+
+-- Atomic 3: exponent zero from disjoint equality
+lemma disjoint_exp_zero {S T : Finset ℕ} (hS : ∀ p ∈ S, Nat.Prime p) (hT : ∀ p ∈ T, Nat.Prime p)
+    (h_disj : Disjoint S T) (e f : ℕ → ℕ)
+    (h_eq : S.prod (fun p => p ^ e p) = T.prod (fun p => p ^ f p))
+    (q : ℕ) (hq : q ∈ S) : e q = 0 := by
+  have h1 := factorization_prod_prime_pow' hS e q; rw [if_pos hq] at h1
+  have h2 := factorization_prod_prime_pow' hT f q; simp only [Finset.disjoint_left.mp h_disj hq, ↓reduceIte] at h2
+  rw [h_eq] at h1; linarith
+```
+
+**BLOCKING ISSUE**: Bridging from `Finset {x : ℕ // x.Prime}` to `Finset ℕ` for the factorization argument.
+Need: `toNatFinset` mapping + product preservation + disjointness transfer.
+
 ---
 
 ## Taylor's Theorem & Calculus API (Discovered 2026-01-22)
