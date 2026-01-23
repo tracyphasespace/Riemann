@@ -117,6 +117,111 @@ structure PairCorrelationBound (primes : List ℕ) where
                  (fun t => (IdealEnergy primes.toFinset t) ^ α)
 
 /-!
+## 2b. Helper Lemmas for Asymptotic Proofs
+
+These atomic lemmas support the main SNR and stability theorems.
+-/
+
+/-- Atomic A1: If f → ∞ and r > 0, then f^r → ∞.
+    Uses tendsto_atTop_atTop characterization directly. -/
+private lemma tendsto_rpow_comp_atTop {f : ℝ → ℝ} {r : ℝ} (hr : 0 < r)
+    (hf : Tendsto f atTop atTop) (hf_pos : ∀ᶠ t in atTop, 0 < f t) :
+    Tendsto (fun t => (f t) ^ r) atTop atTop := by
+  rw [tendsto_atTop_atTop] at hf ⊢
+  intro b
+  -- Need f(t)^r ≥ b, i.e., f(t) ≥ b^(1/r) (when b > 0)
+  -- Handle b ≤ 0 case: f^r > 0 eventually, so f^r ≥ b is trivial
+  by_cases hb : b ≤ 0
+  · obtain ⟨N, hN⟩ := hf_pos.exists_forall_of_atTop
+    use N
+    intro t ht
+    have h_pos : 0 < f t := hN t ht
+    have h_rpow_pos : 0 < (f t) ^ r := rpow_pos_of_pos h_pos r
+    linarith
+  · push_neg at hb
+    -- b > 0, so b^(1/r) makes sense
+    obtain ⟨M, hM⟩ := hf (b ^ (1/r))
+    obtain ⟨N, hN⟩ := hf_pos.exists_forall_of_atTop
+    use max M N
+    intro t ht
+    have h_pos : 0 < f t := hN t (le_of_max_le_right ht)
+    have h_ft : f t ≥ b ^ (1/r) := hM t (le_of_max_le_left ht)
+    calc (f t) ^ r ≥ (b ^ (1/r)) ^ r := by
+           apply rpow_le_rpow (le_of_lt (rpow_pos_of_pos hb _)) h_ft (le_of_lt hr)
+         _ = b := by rw [← rpow_mul (le_of_lt hb), one_div_mul_cancel (ne_of_gt hr), rpow_one]
+
+/-- Atomic A2: From IsBigO, extract the eventual bound with positive constant.
+    IsBigO f g means ∃ C, eventually ‖f‖ ≤ C * ‖g‖. -/
+private lemma isBigO_bound_eventually {f g : ℝ → ℝ} (h : IsBigO atTop f g) :
+    ∃ C : ℝ, 0 < C ∧ ∀ᶠ t in atTop, |f t| ≤ C * |g t| := by
+  obtain ⟨C, hC⟩ := h.bound
+  by_cases hC_pos : 0 < C
+  · exact ⟨C, hC_pos, hC.mono (fun t ht => by simp only [Real.norm_eq_abs] at ht ⊢; exact ht)⟩
+  · -- If C ≤ 0, use C' = 1 since eventually |f| ≤ C * |g| ≤ 0 means |f| ≤ 0, so f = 0
+    use 1, one_pos
+    apply hC.mono
+    intro t ht
+    simp only [Real.norm_eq_abs] at ht ⊢
+    have hC_nonpos : C ≤ 0 := not_lt.mp hC_pos
+    have h1 : C * |g t| ≤ 0 := mul_nonpos_of_nonpos_of_nonneg hC_nonpos (abs_nonneg _)
+    have h2 : |f t| ≤ 0 := le_trans ht h1
+    have h3 : |f t| = 0 := le_antisymm h2 (abs_nonneg _)
+    linarith [abs_nonneg (g t)]
+
+/-- Atomic A3: If Signal → ∞ and |Noise| ≤ C * Signal^α with α < 1, then
+    Signal - |Noise| → ∞. This is the key domination result. -/
+private lemma signal_minus_noise_tendsto {Signal Noise : ℝ → ℝ} {α C : ℝ}
+    (hα : 0 < α ∧ α < 1) (hC : 0 < C)
+    (h_signal : Tendsto Signal atTop atTop)
+    (h_signal_pos : ∀ᶠ t in atTop, 0 < Signal t)
+    (h_bound : ∀ᶠ t in atTop, |Noise t| ≤ C * (Signal t) ^ α) :
+    Tendsto (fun t => Signal t - |Noise t|) atTop atTop := by
+  -- Signal - |Noise| ≥ Signal - C * Signal^α = Signal^α * (Signal^(1-α) - C)
+  -- Since Signal^(1-α) → ∞ (as 1-α > 0), eventually Signal^(1-α) > 2C
+  -- So Signal - |Noise| ≥ Signal^α * C → ∞
+  have h_exp : 0 < 1 - α := by linarith [hα.2]
+  -- Step 1: Signal^(1-α) → ∞
+  have h_pow_tendsto : Tendsto (fun t => (Signal t) ^ (1 - α)) atTop atTop :=
+    tendsto_rpow_comp_atTop h_exp h_signal h_signal_pos
+  -- Step 2: Eventually Signal^(1-α) > 2*C
+  have h_large : ∀ᶠ t in atTop, (Signal t) ^ (1 - α) > 2 * C := by
+    have h := tendsto_atTop.mp h_pow_tendsto (2 * C + 1)
+    exact h.mono (fun t ht => by linarith)
+  -- Step 3: Combine to get lower bound
+  have h_lower : ∀ᶠ t in atTop, Signal t - |Noise t| ≥ C * (Signal t) ^ α := by
+    filter_upwards [h_signal_pos, h_bound, h_large] with t h_pos h_noise h_pow
+    have h1 : Signal t - |Noise t| ≥ Signal t - C * (Signal t) ^ α := by linarith
+    have h_signal_eq : Signal t = (Signal t) ^ α * (Signal t) ^ (1 - α) := by
+      rw [← rpow_add h_pos α (1 - α)]
+      simp only [add_sub_cancel, rpow_one]
+    have h_α_pos : 0 < (Signal t) ^ α := rpow_pos_of_pos h_pos α
+    have h4 : (Signal t) ^ (1 - α) - C > C := by linarith
+    -- Direct lower bound: Signal - C*Signal^α ≥ C * Signal^α when Signal^(1-α) > 2C
+    -- Proof: Signal = Signal^α * Signal^(1-α), so
+    --   Signal - C*Signal^α = Signal^α * Signal^(1-α) - C*Signal^α
+    --                       = Signal^α * (Signal^(1-α) - C)
+    --                       ≥ Signal^α * C  (since Signal^(1-α) - C > C)
+    --                       = C * Signal^α
+    have h_main : Signal t - C * (Signal t) ^ α ≥ C * (Signal t) ^ α := by
+      -- Use the factored form directly
+      -- Signal - C*Signal^α = Signal^α * (Signal^(1-α) - C) when Signal = Signal^α * Signal^(1-α)
+      have h_factored : Signal t - C * (Signal t) ^ α =
+                        (Signal t) ^ α * ((Signal t) ^ (1 - α) - C) := by
+        have := h_signal_eq  -- Signal t = (Signal t) ^ α * (Signal t) ^ (1 - α)
+        linarith [this, mul_comm ((Signal t) ^ α) ((Signal t) ^ (1 - α) - C),
+                  mul_sub ((Signal t) ^ α) ((Signal t) ^ (1 - α)) C]
+      rw [h_factored]
+      calc (Signal t) ^ α * ((Signal t) ^ (1 - α) - C)
+          ≥ (Signal t) ^ α * C := mul_le_mul_of_nonneg_left (le_of_lt h4) (le_of_lt h_α_pos)
+        _ = C * (Signal t) ^ α := by ring
+    linarith
+  -- Step 4: C * Signal^α → ∞, so Signal - |Noise| → ∞ by comparison
+  have h_C_pow : Tendsto (fun t => C * (Signal t) ^ α) atTop atTop := by
+    apply Tendsto.const_mul_atTop hC
+    exact tendsto_rpow_comp_atTop hα.1 h_signal h_signal_pos
+  exact tendsto_atTop_mono' atTop h_lower h_C_pow
+
+/-!
 ## 3. The SNR Divergence Theorem
 
 The key result: if noise grows sub-linearly, SNR → ∞.
@@ -151,13 +256,49 @@ Analytic Energy is strictly positive.
 -/
 theorem geometry_dominates_noise_asymptotic (primes : List ℕ)
     (h_corr : PairCorrelationBound primes)
-    (_h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
+    (h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
     ∀ᶠ t in atTop, AnalyticEnergy primes.toFinset t > 0 := by
-  -- Strategy: From SNR → ∞, eventually Signal > |Noise|
-  -- Then AnalyticEnergy = Signal + Noise > 0 by ProofEngine.sum_pos_of_dominance
-  obtain ⟨_α, hα_lt, _h_bound⟩ := h_corr
-  -- With α < 1, Signal dominates Noise, so their sum is eventually positive
-  sorry
+  -- Strategy: AnalyticEnergy = IdealEnergy + InteractionEnergy
+  -- We show IdealEnergy - |InteractionEnergy| → ∞, so eventually > 0
+  -- Then AnalyticEnergy ≥ IdealEnergy - |InteractionEnergy| > 0
+  obtain ⟨α, hα, h_bound⟩ := h_corr
+  -- Step 1: Extract bound from IsBigO
+  obtain ⟨C, hC_pos, h_noise_bound⟩ := isBigO_bound_eventually h_bound
+  -- Step 2: IdealEnergy is eventually positive (since it tends to infinity)
+  have h_signal_pos : ∀ᶠ t in atTop, 0 < IdealEnergy primes.toFinset t := by
+    exact (tendsto_atTop.mp h_signal_grows 1).mono (fun t ht => by linarith)
+  -- Step 3: Convert IsBigO bound to the form we need
+  have h_bound_form : ∀ᶠ t in atTop, |InteractionEnergy primes.toFinset t| ≤
+                      C * (IdealEnergy primes.toFinset t) ^ α := by
+    filter_upwards [h_noise_bound] with t ht
+    calc |InteractionEnergy primes.toFinset t|
+        ≤ C * |(IdealEnergy primes.toFinset t) ^ α| := ht
+      _ = C * (IdealEnergy primes.toFinset t) ^ α := by
+        rw [abs_of_nonneg]
+        apply rpow_nonneg
+        -- IdealEnergy is sum of squares, hence nonneg
+        apply Finset.sum_nonneg
+        intro p _
+        exact sq_nonneg _
+  -- Step 4: Use signal_minus_noise_tendsto
+  have h_diff_tendsto : Tendsto (fun t => IdealEnergy primes.toFinset t -
+                                         |InteractionEnergy primes.toFinset t|) atTop atTop :=
+    signal_minus_noise_tendsto hα hC_pos h_signal_grows h_signal_pos h_bound_form
+  -- Step 5: Eventually IdealEnergy - |InteractionEnergy| > 0
+  have h_diff_pos : ∀ᶠ t in atTop, IdealEnergy primes.toFinset t -
+                                   |InteractionEnergy primes.toFinset t| > 0 := by
+    have := (tendsto_atTop.mp h_diff_tendsto 1)
+    exact this.mono (fun t ht => by linarith)
+  -- Step 6: AnalyticEnergy = IdealEnergy + InteractionEnergy ≥ IdealEnergy - |InteractionEnergy|
+  filter_upwards [h_diff_pos] with t ht
+  have h_analytic_eq : AnalyticEnergy primes.toFinset t =
+                       IdealEnergy primes.toFinset t + InteractionEnergy primes.toFinset t := by
+    simp only [InteractionEnergy]
+    ring
+  rw [h_analytic_eq]
+  have h_abs_bound : InteractionEnergy primes.toFinset t ≥ -|InteractionEnergy primes.toFinset t| :=
+    neg_abs_le _
+  linarith
 
 /-!
 ## 5. Corollary: Stability with Prime Hypotheses
