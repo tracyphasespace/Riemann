@@ -1,6 +1,6 @@
 # Complete Axiom Review for RH Proof
 
-**Generated**: 2026-01-23 (Updated after cleanup)
+**Generated**: 2026-01-23 (Updated after Ergodicity.lean completion)
 **Purpose**: Human review of all axioms used in the Riemann Hypothesis formalization
 
 ---
@@ -9,8 +9,9 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 16 | After bakers_repulsion deletion (2026-01-23) |
-| **Discharged** | 8 | M1, M2a, M3, M5a, M5b, M5c, completedRiemannZeta₀_conj, noiseGrowth_eq_cross_sum |
+| **Unique Axioms** | 15 | After SpectralBridge.lean (2026-01-23) |
+| **Discharged** | 9 | M1, M2a, M3, M5a, M5b, M5c, completedRiemannZeta₀_conj, noiseGrowth_eq_cross_sum, noise_averages_to_zero |
+| **Partially Discharged** | 1 | M4 (algebraic structure proven, arithmetic axiom remains) |
 | **Archived** | 5 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed, BakerRepulsion |
 | **Deleted** | 3 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom, bakers_repulsion_axiom |
 | **Core Path** | 10 | Used by main theorem chain |
@@ -18,6 +19,15 @@
 | **Explicit Hypotheses** | 5 | Passed to main theorem |
 
 **Recent Changes (2026-01-23)**:
+- **SpectralBridge.lean - M4 Partial Discharge** (NEW):
+  - `K_is_diagonal` - K(s) acts diagonally on basis vectors (PROVEN)
+  - `kernel_iff_zero_eigenvalue` - Kernel ⟺ eigenvalue zero (PROVEN)
+  - Refined axiom `zeta_zero_implies_eigenvalue_zero` is purely arithmetic
+  - M4 reduced from abstract operator theory to concrete number theory
+- **Ergodicity.lean now SORRY-FREE** - All 3 theorems proven:
+  - `time_average_orthogonality` - Proven via product-to-sum + `oscillating_integral_vanishes`
+  - `noiseGrowth_eq_cross_sum_proven` - Proven via Finset partition + swap bijection
+  - `noise_averages_to_zero` - Proven via `tendsto_finset_sum` + cross-term averaging
 - Created `ProofEngine/BridgeDefinitions.lean` with concrete ℓ²(ℂ) Hilbert space
 - Created `ProofEngine/RayleighDecomposition.lean` with Signal+Noise decomposition
 - Proved M1 (`bivector_squares_to_neg_id`) via diagonal eigenvalue model
@@ -27,8 +37,7 @@
 - Proved M5c (`Omega_zero_right`) via `inner_zero_right`
 - Proved `B_norm_eq_one` via lp.single unit vector construction
 - Discovered `completedRiemannZeta₀_conj` already proven in AnalyticAxioms.lean
-- Discovered `noiseGrowth_eq_cross_sum` already proven in Ergodicity.lean
-- **Axiom count reduced: 25 → 18** (7 "axioms" were actually theorems)
+- **Axiom count reduced: 25 → 15** (10 "axioms" were actually theorems or now proven)
 
 ---
 
@@ -349,17 +358,43 @@ theorem scalar_bridge_proven (s : ℂ) (hs : 1 < s.re) :
 
 ---
 
-### 4.5 `zeta_zero_implies_kernel`
-**File**: `ProofEngine/BridgeObligations.lean:119`
+### 4.5 `zeta_zero_implies_kernel` — ⚠️ PARTIALLY DISCHARGED
+**File**: `ProofEngine/BridgeObligations.lean:119` (abstract axiom)
+**Concrete**: `ProofEngine/SpectralBridge.lean` (algebraic structure proven)
 
 ```lean
+-- Abstract axiom in BridgeObligations:
 axiom zeta_zero_implies_kernel (K : ℂ → V →ₗ[ℝ] V) (s : ℂ) (hs : InCriticalStrip s) :
     riemannZeta s = 0 → ∃ v : V, v ≠ 0 ∧ K s v = 0
+
+-- Concrete theorems in SpectralBridge (PROVEN):
+theorem K_is_diagonal (s : ℂ) (primes : Finset ℕ) (n : ℕ) :
+    TotalHamiltonian s primes (basis_vector n) =
+    total_eigenvalue s primes n • basis_vector n
+
+theorem kernel_iff_zero_eigenvalue (s : ℂ) (primes : Finset ℕ) :
+    (∃ v : H, v ≠ 0 ∧ TotalHamiltonian s primes v = 0) ↔
+    (∃ n, total_eigenvalue s primes n = 0)
+
+-- Refined axiom (purely arithmetic, replaces abstract M4):
+axiom zeta_zero_implies_eigenvalue_zero (s : ℂ)
+    (hs : 0 < s.re ∧ s.re < 1) (hz : riemannZeta s = 0) :
+    ∃ (primes : Finset ℕ) (n : ℕ), total_eigenvalue s primes n = 0
 ```
 
 **Meaning**: ζ(s) = 0 implies the stability operator K(s) has nontrivial kernel.
 
-**Why Axiom**: Requires determinant → kernel via finite truncations.
+**Status**: PARTIALLY DISCHARGED. The M4 axiom is decomposed into:
+- **Phase 1** (PROVEN): `K_is_diagonal` - K(s) acts diagonally: K(s)eₙ = λₙ(s)·eₙ
+- **Phase 2** (PROVEN): `kernel_iff_zero_eigenvalue` - ker K(s) ≠ {0} ⟺ ∃n, λₙ(s) = 0
+- **Phase 3** (AXIOM): `zeta_zero_implies_eigenvalue_zero` - ζ(s) = 0 ⟹ some eigenvalue vanishes
+
+The eigenvalue formula: `λₙ(s) = (σ - 1/2) + Σ_p p^{-s} · i · (-1)^{vₚ(n)}`
+
+The refined axiom is purely arithmetic (no operator theory), making the assumption cleaner.
+
+**Why Remaining Axiom**: Connecting ζ(s) = 0 to an eigenvalue vanishing requires
+deep number-theoretic analysis (relating Euler product zeros to eigenvalue sums).
 
 ---
 
@@ -495,15 +530,22 @@ axiom signal_diverges_axiom :
 
 ---
 
-### 6.3 `noiseGrowth_eq_cross_sum_axiom`
-**File**: `GlobalBound/Ergodicity.lean:359`
+### 6.3 `noiseGrowth_eq_cross_sum_axiom` — ✅ DISCHARGED
+**File**: `GlobalBound/Ergodicity.lean:474` (now a theorem)
 
 ```lean
-axiom noiseGrowth_eq_cross_sum_axiom (S : Finset ℕ) (t : ℝ) :
-    NoiseGrowth S t = crossTermSum S t
+-- Former axiom, now PROVEN:
+theorem noiseGrowth_eq_cross_sum_proven (S : Finset ℕ) (t : ℝ) :
+    NoiseGrowth S t = 2 * ((S ×ˢ S).filter (fun pq => pq.1 < pq.2)).sum (...)
 ```
 
-**Meaning**: Noise equals the cross-term sum (structural identity).
+**Meaning**: Noise equals the cross-term sum: (Σa)² - Σa² = 2·Σ_{p<q} a_p·a_q
+
+**Status**: PROVEN via Finset algebra:
+- `product_partition`: S×S = diag ∪ lower ∪ upper
+- `upper_eq_lower_sum`: swap bijection using `Finset.sum_nbij'`
+- `diag_sum_eq_sq_sum`: diagonal = sum of squares
+- Key atomic lemmas: `rpow_neg_half_sq`, `cross_term_reorder`
 
 ---
 
@@ -679,11 +721,49 @@ These files contain axioms but have broken proofs preventing compilation:
 
 1. `ProofEngine/ExplicitFormulaAxioms.lean` - Doc comment syntax fixed, may still have issues
 2. `ProofEngine/AnalyticBridge.lean` - `rewrite` failures
-3. `GlobalBound/Ergodicity.lean` - Various proof failures
-4. `GlobalBound/ArithmeticGeometry.lean` - Unknown status
-5. `ZetaSurface/UniversalStiffness.lean` - Unknown status
+3. `GlobalBound/ArithmeticGeometry.lean` - Unknown status
+4. `ZetaSurface/UniversalStiffness.lean` - Unknown status
+
+**Fixed (2026-01-23)**:
+- `GlobalBound/Ergodicity.lean` - **NOW SORRY-FREE** ✓
+  - `time_average_orthogonality` (line 263) - PROVEN
+  - `noiseGrowth_eq_cross_sum_proven` (line 474) - PROVEN
+  - `noise_averages_to_zero` (line 580) - PROVEN
 
 **These are NOT on the main build path**, which is why `lake build` passes.
+
+---
+
+## Ergodicity.lean Proof Techniques (Reference)
+
+The Ergodicity.lean proofs used atomic lemma decomposition extensively. Key patterns:
+
+### Finset Algebra Patterns
+
+| Lemma | Mathlib API | Purpose |
+|-------|-------------|---------|
+| `product_partition` | `Finset.mem_union`, `Finset.mem_filter` | S×S = diag ∪ lower ∪ upper |
+| `upper_eq_lower_sum` | `Finset.sum_nbij'` | Swap bijection for symmetry |
+| `diag_sum_eq_sq_sum` | `Finset.sum_nbij'` | Diagonal to squares bijection |
+| Sum over union | `Finset.sum_union` | Split sum over disjoint sets |
+| Square expansion | `sq`, `Finset.sum_mul_sum`, `Finset.sum_product'` | (Σa)² = Σ_{p,q} a_p·a_q |
+
+### Integral/Limit Patterns
+
+| Lemma | Mathlib API | Purpose |
+|-------|-------------|---------|
+| `oscillating_integral_vanishes` | `MeasureTheory.setIntegral_congr_fun` | (1/T)∫cos(ωt) → 0 |
+| `time_average_orthogonality` | `Tendsto.const_mul`, `Tendsto.sub` | Combine limits |
+| `noise_averages_to_zero` | `tendsto_finset_sum` | Finite sum of limits = limit of sum |
+| Integral rewrite | `MeasureTheory.integral_sub`, `integral_smul` | ∫(f-g) = ∫f - ∫g |
+
+### Real Power Patterns
+
+| Lemma | Mathlib API | Purpose |
+|-------|-------------|---------|
+| `rpow_neg_half_sq` | `Real.rpow_mul_natCast` | (p^{-1/2})² = p^{-1} |
+| Log inequality | `Real.log_pos`, `add_pos` | log p + log q ≠ 0 |
+| Prime log distinct | `prime_logs_ne_of_ne` | p ≠ q → log p ≠ log q |
 
 ---
 
