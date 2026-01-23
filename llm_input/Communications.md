@@ -1,10 +1,46 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-23 (AI1 deleted impossible theorem, 37 sorries)
+**Last Updated**: 2026-01-23 (snr_diverges_to_infinity PROVEN)
 **Build Status**: PASSING
-**Total Sorries**: ~37 actual in .lean files
+**Total Sorries**: 31 actual in .lean files
 **Note**: sandbox/ excluded from count (test files only)
 **Critical Path**: SORRY-FREE ✓
+
+---
+
+## 📋 SORRY ASSIGNMENTS (2026-01-23)
+
+### AI1 Assigned (16 sorries) - Complex/Technical
+
+| File | Lines | Count | Domain |
+|------|-------|-------|--------|
+| CliffordZetaMasterKey.lean | 366, 732, 868, 1042 | 4 | Clifford algebra |
+| TraceAtFirstZero.lean | 263, 295, 311 | 3 | Interval arithmetic |
+| ChiralPath.lean | 279, 376 | 2 | Baker's theorem |
+| Ergodicity.lean | 54, 304, 316, 343 | 4 | Ergodic theory |
+| AnalyticBridgeEuler.lean | 143 | 1 | Euler product |
+| UnconditionalRH.lean | 217, 219 | 2 | Transfer bounds |
+
+### AI2 Assigned (15 sorries) - Systematic/Straightforward
+
+| File | Lines | Count | Domain |
+|------|-------|-------|--------|
+| ErgodicSNR.lean | 71, 80, 94, 109 | 4 | SNR/tendsto lemmas |
+| ArithmeticGeometry.lean | 89, 124 | 2 | Signal/prime bounds |
+| ErgodicSNRAxioms.lean | 65, 78 | 2 | Edge cases |
+| AnalyticBridge.lean | 340 | 1 | Rayleigh decomp |
+| AristotleContributions.lean | 132 | 1 | Zeta conjugate |
+| ConservationAxioms.lean | 109 | 1 | Conservation |
+| ExplicitFormulaAxioms.lean | 74 | 1 | von Mangoldt |
+| NumericalAxioms.lean | 26, 39 | 2 | Intentional axioms |
+| UniversalStiffness.lean | 393 | 1 | Stiffness bound |
+
+### Priority Order for AI2
+
+1. **ErgodicSNR.lean** (4 sorries) - Uses similar patterns to snr_diverges_to_infinity
+2. **ArithmeticGeometry.lean** (2 sorries) - Signal divergence proofs
+3. **AnalyticBridge.lean** (1 sorry) - Rayleigh decomposition
+4. **Others** - Lower priority or intentional axioms
 
 ---
 

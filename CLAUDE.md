@@ -440,30 +440,43 @@ because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Resi
 
 ---
 
-## Current Sorry Count: ~40 actual
+## Current Sorry Count: 31 actual (2026-01-23)
 
 **Critical Path**: SORRY-FREE ✓ (ProofEngine.lean, EnergySymmetry.lean, ClusterBound.lean)
 
-**Priority for AI2** (see `llm_input/Communications.md`):
+### AI1 Assigned (16 sorries) - Complex/Technical
 
-| Priority | File | Line | Description |
-|----------|------|------|-------------|
-| **HIGH** | Convexity.lean | 111 | second_deriv_normSq_eq |
-| **HIGH** | CalculusAxioms.lean | 27, 109 | Taylor expansion + convexity |
-| **HIGH** | AnalyticAxioms.lean | 336 | Schwarz reflection |
-| **HIGH** | TraceAtFirstZero.lean | 99, 162, 175 | Interval arithmetic |
-| **HIGH** | ArithmeticAxioms.lean | 49, 99 | FTA-related |
-| **MED** | LinearIndependenceSolved.lean | 46, 69, 86 | FTA applications |
-| **MED** | DiophantineGeometry.lean | 47, 64, 82 | API issues |
-| **MED** | CliffordAxioms.lean | 39, 45 | Clifford algebra |
-| **LOW** | Various axiom files | - | Intentionally axioms |
+| File | Lines | Count | Domain |
+|------|-------|-------|--------|
+| CliffordZetaMasterKey.lean | 366, 732, 868, 1042 | 4 | Clifford algebra |
+| TraceAtFirstZero.lean | 263, 295, 311 | 3 | Interval arithmetic |
+| ChiralPath.lean | 279, 376 | 2 | Baker's theorem |
+| Ergodicity.lean | 54, 304, 316, 343 | 4 | Ergodic theory |
+| AnalyticBridgeEuler.lean | 143 | 1 | Euler product |
+| UnconditionalRH.lean | 217, 219 | 2 | Transfer bounds |
+
+### AI2 Assigned (15 sorries) - Systematic/Straightforward
+
+| File | Lines | Count | Domain |
+|------|-------|-------|--------|
+| ErgodicSNR.lean | 71, 80, 94, 109 | 4 | SNR/tendsto lemmas |
+| ArithmeticGeometry.lean | 89, 124 | 2 | Signal/prime bounds |
+| ErgodicSNRAxioms.lean | 65, 78 | 2 | Edge cases |
+| AnalyticBridge.lean | 340 | 1 | Rayleigh decomp |
+| AristotleContributions.lean | 132 | 1 | Zeta conjugate |
+| ConservationAxioms.lean | 109 | 1 | Conservation |
+| ExplicitFormulaAxioms.lean | 74 | 1 | von Mangoldt |
+| NumericalAxioms.lean | 26, 39 | 2 | Intentional axioms |
+| UniversalStiffness.lean | 393 | 1 | Stiffness bound |
 
 **Completed (no sorries):**
-- MotorCore.lean ✓ (NEW)
+- InteractionTerm.lean ✓ (NEW - snr_diverges_to_infinity proven)
+- MotorCore.lean ✓
 - AnalyticBasics.lean ✓
 - Residues.lean ✓
 - GeometricSieve.lean ✓
 - PrimeSumApproximation.lean ✓
+- SNR_Bounds.lean ✓
 
 ---
 
