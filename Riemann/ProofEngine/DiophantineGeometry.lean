@@ -134,6 +134,26 @@ private lemma int_cast_eq_nat_cast_toNat {z : ℤ} (hz : 0 < z) :
 /-- Atomic 7: Prime subtype gives prime -/
 private lemma subtype_prime (p : {x : ℕ // x.Prime}) : Nat.Prime (p : ℕ) := p.2
 
+/-- Atomic 8: Cast of ℕ product equals ℝ product with rpow -/
+private lemma cast_prod_pow_eq (s : Finset ℕ) (e : ℕ → ℕ) :
+    (↑(∏ n ∈ s, n ^ e n) : ℝ) = ∏ n ∈ s, (↑n : ℝ) ^ (↑(e n) : ℝ) := by
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s' h_not_mem ih =>
+    rw [Finset.prod_insert h_not_mem, Finset.prod_insert h_not_mem]
+    push_cast
+    have h_prod : (∏ x ∈ s', (↑x : ℝ) ^ e x) = ↑(∏ n ∈ s', n ^ e n) := by
+      simp only [Nat.cast_prod, Nat.cast_pow]
+    rw [h_prod, ih, ← Real.rpow_natCast]
+
+/-- Atomic 9: ℕ products equal if ℝ products equal -/
+private lemma prod_eq_of_real_prod_eq (s t : Finset ℕ) (e f : ℕ → ℕ)
+    (h : ∏ n ∈ s, ((n : ℝ) ^ (e n : ℝ)) = ∏ n ∈ t, ((n : ℝ) ^ (f n : ℝ))) :
+    s.prod (fun n => n ^ e n) = t.prod (fun n => n ^ f n) := by
+  apply Nat.cast_injective (R := ℝ)
+  rw [cast_prod_pow_eq, cast_prod_pow_eq]
+  exact h
+
 -- ==============================================================================
 -- END ATOMIC HELPERS
 -- ==============================================================================
@@ -333,8 +353,49 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
       -- D. The key product equality (Real → ℕ casting step)
       have h_nat_prod : (toNatFinset s_pos).prod (fun n => n ^ e_pos n) =
                         (toNatFinset s_neg).prod (fun n => n ^ e_neg n) := by
-        -- From h_pos_eq_neg via exp: ∏ p^z = ∏ p^{-z}, then cast to ℕ
-        sorry -- Pure casting boilerplate
+        -- Step 1: Real product equality from sum equality via exp
+        have h_real_prod : ∏ p ∈ s_pos, ((p : ℕ) : ℝ) ^ (z p : ℝ) =
+                           ∏ p ∈ s_neg, ((p : ℕ) : ℝ) ^ (-(z p) : ℝ) := by
+          rw [← exp_sum_mul_log' _ _ _ (fun p _ => Nat.cast_pos.mpr p.2.pos),
+              ← exp_sum_mul_log' _ _ _ (fun p _ => Nat.cast_pos.mpr p.2.pos),
+              h_pos_eq_neg]
+        -- Step 2: Use Atomic 9 (products over toNatFinset are Finset ℕ)
+        apply prod_eq_of_real_prod_eq
+        -- Step 3: Transform to mapped products and align with h_real_prod
+        simp only [toNatFinset, Finset.prod_map, Function.Embedding.coeFn_mk]
+        -- Step 4: Helper: e_pos matches z for elements in s_pos
+        have h_pos_match : ∀ x ∈ s_pos, (e_pos (x : ℕ) : ℝ) = (z x : ℝ) := by
+          intro x hx
+          -- s_pos is defined as {p ∈ s | 0 < z p}
+          have hx_pos : 0 < z x := by
+            simp only [s_pos, Finset.mem_filter] at hx
+            exact hx.2
+          have hmem : (x : ℕ) ∈ toNatFinset s_pos := by
+            simp only [toNatFinset, Finset.mem_map, Function.Embedding.coeFn_mk]
+            exact ⟨x, hx, rfl⟩
+          simp only [e_pos, hmem, ↓reduceDIte]
+          norm_cast
+          exact Int.toNat_of_nonneg (le_of_lt hx_pos)
+        -- Step 5: Helper: e_neg matches -z for elements in s_neg
+        have h_neg_match : ∀ x ∈ s_neg, (e_neg (x : ℕ) : ℝ) = (-(z x) : ℝ) := by
+          intro x hx
+          have hx_neg : z x < 0 := by
+            simp only [s_neg, Finset.mem_filter] at hx
+            exact hx.2
+          have h_neg_pos : 0 < -z x := by linarith
+          have hmem : (x : ℕ) ∈ toNatFinset s_neg := by
+            simp only [toNatFinset, Finset.mem_map, Function.Embedding.coeFn_mk]
+            exact ⟨x, hx, rfl⟩
+          simp only [e_neg, hmem, ↓reduceDIte]
+          norm_cast
+          exact Int.toNat_of_nonneg (le_of_lt h_neg_pos)
+        -- Step 6: Apply the helpers via prod_congr
+        calc ∏ x ∈ s_pos, ((x : ℕ) : ℝ) ^ (e_pos (x : ℕ) : ℝ)
+            = ∏ x ∈ s_pos, ((x : ℕ) : ℝ) ^ (z x : ℝ) := by
+              apply Finset.prod_congr rfl; intro x hx; congr 1; exact h_pos_match x hx
+          _ = ∏ x ∈ s_neg, ((x : ℕ) : ℝ) ^ (-(z x) : ℝ) := h_real_prod
+          _ = ∏ x ∈ s_neg, ((x : ℕ) : ℝ) ^ (e_neg (x : ℕ) : ℝ) := by
+              apply Finset.prod_congr rfl; intro x hx; congr 1; exact (h_neg_match x hx).symm
 
       -- E. Apply atomic factorization lemma
       have h_all_zero : ∀ n ∈ toNatFinset s_pos, e_pos n = 0 := by
