@@ -17,7 +17,7 @@ If a build is running, wait for it to complete before starting another.
 
 | Status | Locked By | Started | Notes |
 |--------|-----------|---------|-------|
-| **IN USE** | AI2 (Claude) | 2026-01-22 | Building after DiophantineGeometry edits |
+| **Available** | | | |
 
 To use Lake:
 1. Check this table is empty or shows "Available"
@@ -31,7 +31,7 @@ To use Lake:
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| CalculusAxioms.lean | AI1 (Opus) | 2026-01-22 | taylor_second_order line 27 |
+| (none) | | | |
 
 To lock a file, add it to this table. To release, remove your entry.
 
