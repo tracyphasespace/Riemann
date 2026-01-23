@@ -20,6 +20,16 @@ Mathematical gaps are documented as explicit axioms with:
 - Numerical verification status (Wolfram Cloud)
 
 ### Completed Today (2026-01-23)
+
+**AI1 Final Verification** (late session):
+- **ErgodicSNRAxioms.lean** ✓ - Fixed `little_o_implies_big_o_pow` (was FALSE for α < 1)
+  - Changed hypothesis from `0 < α` to `1 ≤ α`
+  - Theorem was mathematically false; counterexample: f(t)=t/log(t), g(t)=t, α=1/2
+  - Documented fix in Mathlib427Compat.lean
+- **ChiralPath.lean** → archived (was not in build path, had broken proofs)
+- **Verified**: `lake build 2>&1 | grep "uses 'sorry'" | wc -l` returns **0**
+
+**AI2 Earlier Work**:
 - **NumericalAxioms.lean** ✓ (2 sorries → axioms with Wolfram verification)
 - **AnalyticBridge.lean** ✓ (`rayleigh_decomposition_axiom`)
 - **ConservationAxioms.lean** ✓ (`chirality_implies_centering_proven` - DIRECT PROOF)
@@ -387,10 +397,11 @@ Key lemmas: `taylor_mean_remainder_lagrange_iteratedDeriv`, `uniqueDiffOn_Icc`
 -- Line 716 is marked FALSE - needs different approach
 ```
 
-### ErgodicSNRAxioms.lean:65,78
+### ~~ErgodicSNRAxioms.lean:65,78~~ ✅ FIXED (AI1 2026-01-23)
 ```lean
--- Edge cases in asymptotic analysis
--- Marked as fundamentally limited (o(g) ⊄ O(g^α))
+-- WAS: Edge cases in asymptotic analysis with sorry
+-- FIX: Changed hypothesis from `0 < α` to `1 ≤ α`
+-- The theorem was FALSE for 0 < α < 1; now PROVEN for α ≥ 1
 ```
 
 ### Various Axiom Files
