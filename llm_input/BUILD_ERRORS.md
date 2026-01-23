@@ -10,7 +10,21 @@
 
 | File:Line | Error | Tried | Status |
 |-----------|-------|-------|--------|
-| (none currently) | | | |
+| CalculusAxioms.lean:341 | Type mismatch HasDerivAt const_mul | const_mul swap | AI2 partial fix |
+| CalculusAxioms.lean:422 | Unknown `intervalIntegrable_const.mul` | const_mul ordering | AI2 partial fix |
+| CalculusAxioms.lean:426 | integral_nonpos_of_forall doesn't exist | negate & use integral_nonneg | RESOLVED (AI2) |
+
+**Resolved (2026-01-22)**: Used negation approach - `0 ≤ ∫ (-f)` via `intervalIntegral.integral_nonneg`, then `simp [integral_neg]` + linarith
+
+**TraceAtFirstZero.lean (2026-01-22 AI2)**:
+- `product_in_corners` - PROOF REVERTED (was: case split on signs, mul_le_mul lemmas)
+- `trace_negative_at_first_zero` - CANNOT PROVE (needs native_decide)
+- `trace_monotone_from_large_set` - CANNOT PROVE (needs tsum + native arithmetic)
+
+**LinearIndependenceSolved.lean (2026-01-22 AI2)**:
+- `clear_denominators` - PROOF WRITTEN (D = ∏ dens, Finset.prod_pos, Rat.num_div_den)
+- `log_primes_linear_independent` - depends on FTA from DiophantineGeometry (sorry)
+- `phase_space_is_torus` - depends on log_primes_linear_independent (sorry)
 
 ---
 
