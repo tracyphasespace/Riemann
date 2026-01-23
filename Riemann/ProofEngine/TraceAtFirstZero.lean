@@ -92,10 +92,28 @@ private lemma product_in_corners {a b c d x y : ℝ}
     (hx : a ≤ x ∧ x ≤ b) (hy : c ≤ y ∧ y ≤ d) :
     min (a*c) (min (a*d) (min (b*c) (b*d))) ≤ x * y ∧
     x * y ≤ max (a*c) (max (a*d) (max (b*c) (b*d))) := by
-  -- The extrema of bilinear x*y on [a,b]×[c,d] occur at corners.
-  -- AI2 ATTEMPTED: nlinarith with sq_nonneg hints
-  -- FAILED: simp made no progress on le_min_iff, linarith failed
-  -- NEEDS: Different proof structure or polyrith
+  -- STRATEGY (AI2 2026-01-22):
+  -- For bilinear f(x,y) = xy on rectangle [a,b]×[c,d]:
+  -- 1. For fixed y, f(·,y) = y·x is linear → extreme at x=a or x=b
+  -- 2. For fixed x, f(x,·) = x·y is linear → extreme at y=c or y=d
+  -- 3. Therefore global extrema occur at corners (a,c), (a,d), (b,c), (b,d)
+  --
+  -- ATTEMPTED PROOF (FAILED - nlinarith can't handle sign cases):
+  --   constructor
+  --   · simp only [le_min_iff, min_le_iff]
+  --     by_cases hy0 : 0 ≤ y
+  --     · by_cases hx0 : 0 ≤ x
+  --       · left; left; left
+  --         calc a * c ≤ x * c := by nlinarith  -- FAILS: needs 0 ≤ c, not 0 ≤ y
+  --           _ ≤ x * y := by nlinarith
+  --       · right; right
+  --         calc b * c ≤ x * c := by nlinarith
+  --           _ ≤ x * y := by nlinarith
+  --     ...
+  --
+  -- BLOCKER: Case split on sign of x,y doesn't give info about a,b,c,d signs
+  -- NEEDS: Either polyrith, or explicit bounds on all 4 corners, or
+  --        use convexity argument (xy is bilinear → extreme at vertices)
   constructor <;> sorry
 
 theorem mem_mul {I J : Interval} {x y : ℝ} (hx : I.contains x) (hy : J.contains y) :

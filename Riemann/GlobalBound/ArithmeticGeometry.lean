@@ -56,6 +56,7 @@ import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.NumberTheory.SmoothNumbers
+import Mathlib.NumberTheory.SumPrimeReciprocals
 import Riemann.GlobalBound.PrimeRotor
 import Riemann.GlobalBound.SNR_Bounds
 import Riemann.GlobalBound.Ergodicity
@@ -104,7 +105,22 @@ The signal grows without bound as more primes are included.
 -/
 theorem signal_diverges :
     Tendsto (fun N => totalSignal (Nat.primesBelow N).toList (1 / 2)) atTop atTop := by
-  -- totalSignal at σ=1/2 is Σ p^{-1}, which diverges (prime counting)
+  -- STRATEGY (AI2 2026-01-22):
+  -- totalSignal at σ=1/2 is Σ p^{-1} over primes below N
+  -- At σ = 1/2: p^(-2*σ) = p^(-1) = 1/p
+  --
+  -- KEY MATHLIB:
+  -- - Nat.Primes.not_summable_one_div : ¬ Summable (fun p : Nat.Primes => 1/p)
+  -- - not_summable_iff_tendsto_nat_atTop_of_nonneg : ¬Summable f ↔ partial sums → +∞
+  --
+  -- APPROACH:
+  -- 1. Show totalSignal (primesBelow N).toList (1/2) = (primesBelow N).sum (1/·)
+  -- 2. Connect partial sums over primesBelow to the full prime sum
+  -- 3. Use monotonicity: primesBelow N ⊆ primesBelow M for N ≤ M
+  -- 4. Use not_summable_one_div to get divergence
+  --
+  -- TECHNICAL ISSUE: Need to match foldl with Finset.sum, and Nat.Primes subtype
+  -- with primesBelow finite set. This is a type-coercion-heavy proof.
   sorry
 
 /-!
