@@ -41,10 +41,34 @@ lemma sum_split_three (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ // x.Prime
     (∑ p ∈ s.filter (fun p => 0 < z p), (z p : ℝ) * Real.log p) +
     (∑ p ∈ s.filter (fun p => z p < 0), (z p : ℝ) * Real.log p) +
     (∑ p ∈ s.filter (fun p => z p = 0), (z p : ℝ) * Real.log p) := by
-  -- AI2 ATTEMPTED: Partition into s_pos ∪ s_neg ∪ s_zero
-  -- FAILED: Finset.sum_union pattern mismatch (associativity issue)
-  -- NEEDS: Use Finset.sum_filter_add_sum_filter_not or explicit associativity handling
-  sorry
+  -- Step 1: Split s = {z > 0} ∪ {z ≤ 0}
+  have h1 := Finset.sum_filter_add_sum_filter_not s (fun p => 0 < z p)
+    (fun p => (z p : ℝ) * Real.log p)
+  -- h1 : (∑ in filter (0 < z ·), ...) + (∑ in filter (¬(0 < z ·)), ...) = ∑ in s, ...
+  rw [← h1]
+  -- Now we need to split {¬(0 < z p)} = {z < 0} ∪ {z = 0}
+  -- Note: ¬(0 < z p) ↔ z p ≤ 0 ↔ z p < 0 ∨ z p = 0
+  have h2 : s.filter (fun p => ¬(0 < z p)) =
+      s.filter (fun p => z p < 0) ∪ s.filter (fun p => z p = 0) := by
+    ext p
+    simp only [Finset.mem_filter, Finset.mem_union, not_lt]
+    constructor
+    · intro ⟨hp, hz⟩
+      -- hz : z p ≤ 0, want (p ∈ s ∧ z p < 0) ∨ (p ∈ s ∧ z p = 0)
+      rcases hz.lt_or_eq with h | h
+      · left; exact ⟨hp, h⟩
+      · right; exact ⟨hp, h⟩  -- h : z p = 0
+    · intro h
+      rcases h with ⟨hp, hz⟩ | ⟨hp, hz⟩
+      · exact ⟨hp, le_of_lt hz⟩
+      · exact ⟨hp, le_of_eq hz⟩
+  -- The two filters are disjoint
+  have h_disj : Disjoint (s.filter (fun p => z p < 0)) (s.filter (fun p => z p = 0)) := by
+    rw [Finset.disjoint_filter]
+    intro p _ hz_neg hz_eq
+    linarith
+  rw [h2, Finset.sum_union h_disj]
+  ring
 
 /--
 **FTA Theorem**: Integer linear combinations of log(primes) are zero iff coefficients are zero.

@@ -11,13 +11,27 @@ pgrep -f "lake build" || echo "No build running"
 
 If a build is running, wait for it to complete before starting another.
 
+## Lake Build Lock
+
+**IMPORTANT**: Before running `lake build`, add your entry here. Remove when done.
+
+| Status | Locked By | Started | Notes |
+|--------|-----------|---------|-------|
+| **IN USE** | AI2 (Claude) | 2026-01-22 | Building after DiophantineGeometry edits |
+
+To use Lake:
+1. Check this table is empty or shows "Available"
+2. Add your entry with status **IN USE**
+3. Run your build
+4. Update status to **Available** or remove your row when done
+
 ## File Locks (Active Work)
 
 **IMPORTANT**: Check this section before editing a file. If a file is listed here, another Claude instance may be working on it.
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| DiophantineGeometry.lean | AI2 (Claude) | 2026-01-22 | sum_split_three line 47 |
+| CalculusAxioms.lean | AI1 (Opus) | 2026-01-22 | taylor_second_order line 27 |
 
 To lock a file, add it to this table. To release, remove your entry.
 
@@ -522,6 +536,44 @@ When a complex proof fails, break it into atomic helper lemmas:
 2. Each helper should use ONE main Mathlib lemma
 3. Chain helpers together for the final proof
 4. Helps identify exactly which API call is failing
+
+### Sum Splitting (Three-Way Partition)
+
+```lean
+-- Split sum into positive, negative, zero parts using filter
+-- Step 1: Binary split using sum_filter_add_sum_filter_not
+have h1 := Finset.sum_filter_add_sum_filter_not s (fun p => 0 < z p) f
+-- Step 2: Further split the ¬(0 < z) part into (z < 0) ∪ (z = 0)
+have h2 : s.filter (¬(0 < z ·)) = s.filter (z · < 0) ∪ s.filter (z · = 0) := by
+  ext p; simp [not_lt]; constructor <;> (intro; cases' ‹_›.lt_or_eq with h h <;> simp [*])
+have h_disj : Disjoint (s.filter (z · < 0)) (s.filter (z · = 0)) := by
+  rw [Finset.disjoint_filter]; intro p _ hz_neg hz_eq; linarith
+rw [h2, Finset.sum_union h_disj]
+```
+
+### Complex Derivative Patterns
+
+```lean
+-- Derivative of star/conj composition
+-- deriv (star ∘ f) = star ∘ deriv f
+theorem deriv_star_comp {f : ℝ → ℂ} (x : ℝ) (hf : DifferentiableAt ℝ f x) :
+    deriv (star ∘ f) x = star (deriv f x) := hf.hasDerivAt.star.deriv
+
+-- For norm squared derivatives, use HasDerivAt.norm_sq from InnerProductSpace.Calculus
+-- d/dx ‖f(x)‖² = 2 * Re(f'(x) * conj(f(x)))
+have h := hf.hasDerivAt.norm_sq
+rw [h.deriv, inner_eq_re_mul_conj]
+```
+
+### Factorization Product Application
+
+```lean
+-- For products of prime powers, use Nat.factorization_prod_apply
+-- (S.prod g).factorization p = S.sum (fun x => (g x).factorization p)
+rw [Nat.factorization_prod_apply h_ne_zero]
+-- Then extract single term with Finset.sum_eq_single_of_mem
+rw [Finset.sum_eq_single_of_mem p hp]
+```
 
 ---
 
