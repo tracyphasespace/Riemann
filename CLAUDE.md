@@ -440,11 +440,11 @@ because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Resi
 
 ---
 
-## Current Sorry Count: 31 actual (2026-01-23)
+## Current Sorry Count: 25 actual (2026-01-23)
 
 **Critical Path**: SORRY-FREE ✓ (ProofEngine.lean, EnergySymmetry.lean, ClusterBound.lean)
 
-### AI1 Assigned (16 sorries) - Complex/Technical
+### AI1 Assigned (14 sorries) - Complex/Technical
 
 | File | Lines | Count | Domain |
 |------|-------|-------|--------|
@@ -453,13 +453,11 @@ because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Resi
 | ChiralPath.lean | 279, 376 | 2 | Baker's theorem |
 | Ergodicity.lean | 54, 304, 316, 343 | 4 | Ergodic theory |
 | AnalyticBridgeEuler.lean | 143 | 1 | Euler product |
-| UnconditionalRH.lean | 217, 219 | 2 | Transfer bounds |
 
-### AI2 Assigned (15 sorries) - Systematic/Straightforward
+### AI2 Assigned (11 sorries) - Systematic/Straightforward
 
 | File | Lines | Count | Domain |
 |------|-------|-------|--------|
-| ErgodicSNR.lean | 71, 80, 94, 109 | 4 | SNR/tendsto lemmas |
 | ArithmeticGeometry.lean | 89, 124 | 2 | Signal/prime bounds |
 | ErgodicSNRAxioms.lean | 65, 78 | 2 | Edge cases |
 | AnalyticBridge.lean | 340 | 1 | Rayleigh decomp |
@@ -470,7 +468,9 @@ because Re[1/(s-ρ)] = 0 on the vertical line. The "horizontal approach" in Resi
 | UniversalStiffness.lean | 393 | 1 | Stiffness bound |
 
 **Completed (no sorries):**
-- InteractionTerm.lean ✓ (NEW - snr_diverges_to_infinity proven)
+- UnconditionalRH.lean ✓ (NEW - explicit transfer hypotheses)
+- ErgodicSNR.lean ✓ (NEW - signal_eventually_positive etc.)
+- InteractionTerm.lean ✓ (snr_diverges_to_infinity proven)
 - MotorCore.lean ✓
 - AnalyticBasics.lean ✓
 - Residues.lean ✓

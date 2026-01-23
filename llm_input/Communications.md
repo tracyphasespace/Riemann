@@ -1,8 +1,8 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-23 (ArithmeticAxioms.lean SORRY-FREE)
+**Last Updated**: 2026-01-23 (UnconditionalRH + ErgodicSNR PROVEN)
 **Build Status**: PASSING
-**Total Sorries**: 33 actual in .lean files
+**Total Sorries**: 25 actual in .lean files
 **Note**: sandbox/ excluded from count (test files only)
 **Critical Path**: SORRY-FREE ✓
 
@@ -10,7 +10,7 @@
 
 ## 📋 SORRY ASSIGNMENTS (2026-01-23)
 
-### AI1 Assigned (16 sorries) - Complex/Technical
+### AI1 Assigned (14 sorries) - Complex/Technical
 
 | File | Lines | Count | Domain |
 |------|-------|-------|--------|
@@ -19,13 +19,11 @@
 | ChiralPath.lean | 279, 376 | 2 | Baker's theorem |
 | Ergodicity.lean | 54, 304, 316, 343 | 4 | Ergodic theory |
 | AnalyticBridgeEuler.lean | 143 | 1 | Euler product |
-| UnconditionalRH.lean | 217, 219 | 2 | Transfer bounds |
 
-### AI2 Assigned (15 sorries) - Systematic/Straightforward
+### AI2 Assigned (11 sorries) - Systematic/Straightforward
 
 | File | Lines | Count | Domain |
 |------|-------|-------|--------|
-| ErgodicSNR.lean | 71, 80, 94, 109 | 4 | SNR/tendsto lemmas |
 | ArithmeticGeometry.lean | 89, 124 | 2 | Signal/prime bounds |
 | ErgodicSNRAxioms.lean | 65, 78 | 2 | Edge cases |
 | AnalyticBridge.lean | 340 | 1 | Rayleigh decomp |
@@ -35,12 +33,17 @@
 | NumericalAxioms.lean | 26, 39 | 2 | Intentional axioms |
 | UniversalStiffness.lean | 393 | 1 | Stiffness bound |
 
+### Completed This Session ✓
+
+- **UnconditionalRH.lean** (2→0) - Added explicit transfer hypotheses
+- **ErgodicSNR.lean** (4→0) - signal_eventually_positive, ergodic_noise_is_little_o etc.
+- **InteractionTerm.lean** (1→0) - snr_diverges_to_infinity
+
 ### Priority Order for AI2
 
-1. **ErgodicSNR.lean** (4 sorries) - Uses similar patterns to snr_diverges_to_infinity
-2. **ArithmeticGeometry.lean** (2 sorries) - Signal divergence proofs
-3. **AnalyticBridge.lean** (1 sorry) - Rayleigh decomposition
-4. **Others** - Lower priority or intentional axioms
+1. **ArithmeticGeometry.lean** (2 sorries) - Signal divergence proofs
+2. **AnalyticBridge.lean** (1 sorry) - Rayleigh decomposition
+3. **Others** - Lower priority or intentional axioms
 
 ---
 
