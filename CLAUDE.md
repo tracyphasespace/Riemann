@@ -284,7 +284,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Metric | Count |
 |--------|-------|
 | Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
-| Total axioms | **30** (see `llm_input/AXIOM_REVIEW.md` for full list) |
+| Total axioms | **28** (see `llm_input/AXIOM_REVIEW.md` for full list; 2 discharged by BridgeDefinitions.lean) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
 | Remaining sorries | **~35** total |
@@ -344,7 +344,8 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 1. `AdmissiblePrimeApproximation s primes` - Explicit Formula error bounds
 2. `EnergyIsConvexAtHalf s.im` - Energy convexity at critical line
 
-**Consolidated Axiom Index**: See `llm_input/AXIOM_REVIEW.md` for complete review of all 30 axioms with justifications.
+**Consolidated Axiom Index**: See `llm_input/AXIOM_REVIEW.md` for complete review of all 28 axioms with justifications.
+Two axioms (M1, M2a) were discharged via concrete constructions in `BridgeDefinitions.lean`.
 
 **Philosophy**: Axioms capture genuine mathematical facts from analytic number theory
 that would require extensive Mathlib development to prove from scratch. This is

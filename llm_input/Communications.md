@@ -1,6 +1,56 @@
 # AI2 Priority List - Sorry Reduction
 
 **Last Updated**: 2026-01-23 (ALL SORRIES ELIMINATED)
+
+---
+
+## ✅ AI1 COMPLETED: BridgeDefinitions.lean (08 file)
+
+**File**: `Riemann/ProofEngine/BridgeDefinitions.lean` — COMPILES ✓
+
+**Definitions exported**:
+```lean
+-- Hilbert Space
+abbrev H := lp (fun _ : ℕ => ℂ) 2
+
+-- Eigenvalue and alias
+def eigenvalue (p n : ℕ) : ℂ := Complex.I * ((-1 : ℂ) ^ (padicValNat p n))
+abbrev bivector_eigenvalue := eigenvalue
+
+-- Prime Bivector Operator
+def B (p : ℕ) : H →L[ℂ] H  -- diagonal multiplication by eigenvalue
+
+-- Hamiltonian Components
+def ScalingOperator (σ : ℝ) : H →L[ℂ] H :=
+  ((σ - 1/2 : ℝ) : ℂ) • ContinuousLinearMap.id ℂ H
+
+def InteractionOperator (s : ℂ) (primes : Finset ℕ) : H →L[ℂ] H :=
+  primes.sum (fun p => (p : ℂ)^(-s) • (B p))
+  -- Note: (p : ℂ)^(-s) = exp(-s * log p) by cpow definition
+
+def TotalHamiltonian (s : ℂ) (primes : Finset ℕ) : H →L[ℂ] H :=
+  ScalingOperator s.re + InteractionOperator s primes
+
+-- Observables
+def Q (v : H) : ℝ := ‖v‖ ^ 2
+def Omega_R (u v : H) : ℝ := (@inner ℂ H _ u v).re
+
+-- Decomposition helper
+def InteractionContribution (s : ℂ) (primes : Finset ℕ) (v : H) : ℝ :=
+  Omega_R v (InteractionOperator s primes v)
+```
+
+**Lemmas available** (for AI2's use in 09):
+- `eigenvalue_norm_eq_one` — ‖λ_{p,n}‖ = 1
+- `B_apply` — (B p f) n = eigenvalue p n * f n
+- `ScalingOperator_apply` — ScalingOperator σ v = (σ - 1/2) • v
+- `InteractionOperator_apply` — evaluation formula
+- `TotalHamiltonian_apply` — K(s)v = D(σ)v + V(s)v
+
+**AI2 Action**: Import `Riemann.ProofEngine.BridgeDefinitions` in RayleighProof.lean (09).
+Remove any duplicate local definitions.
+
+---
 **Build Status**: PASSING (3296 jobs)
 **Total Sorries**: 0 ✅
 **Note**: sandbox/ excluded from count (test files only)
