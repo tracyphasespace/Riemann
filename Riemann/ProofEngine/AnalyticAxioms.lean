@@ -389,16 +389,4 @@ theorem finite_sum_is_bounded (ρ : ℂ) (primes : List ℕ) (h_pos : ∀ p ∈ 
     calc |f σ| ≤ |f M| := hM_max h_in
          _ < |f M| + 1 := lt_add_one _
 
--- Legacy alias for compatibility (points to impossible theorem, now deprecated)
-theorem finite_sum_approx_analytic_proven (ρ : ℂ) (primes : List ℕ) :
-    ∃ (E : ℝ), 0 < E ∧ ∀ σ : ℝ, σ > ρ.re →
-      abs (primes.foldl (fun acc p =>
-        acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0 +
-        (deriv (fun s => -(deriv riemannZeta s / riemannZeta s)) (σ + ρ.im * I)).re) < E := by
-  -- DEPRECATED: This theorem is mathematically impossible.
-  -- The analytic stiffness has a pole at ρ, so |Finite + Analytic| → ∞.
-  -- Use `finite_sum_is_bounded` instead, which correctly captures boundedness.
-  -- Keeping this as sorry for backward compatibility until all references are updated.
-  sorry
-
 end ProofEngine

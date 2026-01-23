@@ -379,7 +379,7 @@ theorem error_term_behavior (ρ : ℂ) (N : ℕ) :
 
 /--
 **Theorem: Finite Sum Approximates Analytic Behavior**
-This replaces `ax_finite_sum_approx_analytic`.
+This replaces the impossible `ax_finite_sum_approx_analytic` (now `ax_finite_sum_is_bounded`).
 
 We prove that:
 |GeometricSieve + AnalyticStiffness| < E

@@ -23,7 +23,7 @@ lemma prime_sum_approx_vonMangoldt (s : ℂ) (X : ℝ) :
     ∃ E : ℝ, 0 < E := ⟨1, one_pos⟩
 
 /--
-Replacement for `ax_finite_sum_approx_analytic`.
+Replacement for the impossible `ax_finite_sum_approx_analytic` (now `ax_finite_sum_is_bounded`).
 Verified from the Explicit Formula (von Mangoldt, 1895).
 
 **STATUS (AI3 2026-01-23)**: Requires deep analytic number theory infrastructure.

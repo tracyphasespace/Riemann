@@ -242,7 +242,7 @@ Geometric Tension:     T(σ) = Σ_p (p^{-σ} - p^{-(1-σ)})
 First Derivative:      T'(σ) = Σ_p -log(p)·(p^{-σ} + p^{-(1-σ)})  ← log(p) appears
 Second Derivative:     T''(σ) = Σ_p log²(p)·(p^{-σ} + p^{-(1-σ)}) ← log²(p) appears
 
-The log²(p) weighting in `ax_finite_sum_approx_analytic` is thus
+The log²(p) weighting in `ax_finite_sum_is_bounded` is thus
 derived from the geometry of surface tension, not assumed.
 -/
 theorem geometric_stiffness_explains_log_squared (p : ℕ) (hp : Nat.Prime p) :

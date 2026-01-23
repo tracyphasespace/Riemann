@@ -44,16 +44,20 @@ theorem ax_analytic_stiffness_pos (ρ : ℂ) (h_zero : riemannZeta ρ = 0)
       (deriv (fun s => -(deriv riemannZeta s / riemannZeta s)) (σ + ρ.im * I)).re > M :=
   ProofEngine.analytic_stiffness_pos_proven ρ h_zero h_simple M
 
-/-- 
-Theorem: Finite prime sum approximates the NEGATIVE of the analytic stiffness.
-Proven in `ProofEngine.AnalyticAxioms`.
+/--
+Theorem: Finite prime sum is bounded.
+Proven in `ProofEngine.AnalyticAxioms` via compactness.
+
+NOTE: The original `ax_finite_sum_approx_analytic` tried to prove |Finite + Analytic| < E,
+which is mathematically impossible (the analytic term has a pole at ρ).
+This replacement correctly states that just the finite sum is bounded.
 -/
-theorem ax_finite_sum_approx_analytic (ρ : ℂ) (primes : List ℕ) :
-    ∃ (E : ℝ), 0 < E ∧ ∀ σ : ℝ, σ > ρ.re →
-      abs (primes.foldl (fun acc p =>
-        acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0 +
-        (deriv (fun s => -(deriv riemannZeta s / riemannZeta s)) (σ + ρ.im * I)).re) < E :=
-  ProofEngine.finite_sum_approx_analytic_proven ρ primes
+theorem ax_finite_sum_is_bounded (ρ : ℂ) (primes : List ℕ) (h_pos : ∀ p ∈ primes, 0 < p)
+    (δ : ℝ) (hδ : 0 < δ) :
+    ∃ B > 0, ∀ σ ∈ Set.Ioo (ρ.re - δ) (ρ.re + δ),
+      |primes.foldl (fun acc p =>
+        acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0| < B :=
+  ProofEngine.finite_sum_is_bounded ρ primes h_pos δ hδ
 
 /-- 
 Theorem: Effective convexity at the critical line forces a strict trace minimum.
