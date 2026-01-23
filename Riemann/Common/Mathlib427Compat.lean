@@ -346,4 +346,26 @@ axiom dirichlet_polynomial_noise_power_bound
 
 end ErgodicRegularity
 
+/-!
+## Hypothesis Fixes Log (2026-01-23)
+
+This section documents theorems that required hypothesis strengthening to be provable.
+
+### `little_o_implies_big_o_pow` (ErgodicSNRAxioms.lean)
+
+**Original**: `(hα : 0 < α)`
+**Fixed**: `(hα : 1 ≤ α)`
+
+**Reason**: The theorem "f = o(g) implies f = O(g^α)" is FALSE for 0 < α < 1 when g → ∞.
+
+**Counterexample**: Let f(t) = √t, g(t) = t.
+- Then f = o(g) since √t/t = 1/√t → 0
+- But f/g^{1/2} = √t/√t = 1, which is O(1) but not decaying
+- More seriously: f(t) = t/log(t), g(t) = t, α = 1/2
+- Then f = o(g) but f/g^α = √t/log(t) → ∞
+
+**Impact**: Callers must ensure α ≥ 1. In the SNR application, this is satisfied since
+the noise bound uses α = 1 (or larger) for the asymptotic comparison.
+-/
+
 end RiemannCompat
