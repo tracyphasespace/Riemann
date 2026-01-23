@@ -277,17 +277,17 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 
 ---
 
-## STATUS (2026-01-22): BUILD PASSES - KEY THEOREMS PROVEN
+## STATUS (2026-01-23): BUILD PASSES - KEY THEOREMS PROVEN
 
 **CURRENT**: Key theorems proven using Mathlib's dslope machinery + Aristotle's domination proofs.
 
 | Metric | Count |
 |--------|-------|
 | Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
-| Explicit axioms | **2** (in ProofEngine/Axioms.lean) |
+| Total axioms | **30** (see `llm_input/AXIOM_REVIEW.md` for full list) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
-| Remaining sorries | **~35** total (verified 2026-01-22) |
+| Remaining sorries | **~35** total |
 
 **Recent Progress (2026-01-22):**
 - `fta_all_exponents_zero` in DiophantineGeometry.lean - **PROVEN** (was 2 sorries - h_nat_prod in Cases 3&4)
@@ -301,16 +301,16 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 **Sorry-free files in ProofEngine:**
 - AnalyticBasics.lean ✓
 - Axioms.lean ✓
-- CliffordAxioms.lean ✓ (NEW 2026-01-22)
-- ClusteringDomination.lean ✓ (NEW 2026-01-22)
+- CliffordAxioms.lean ✓
 - Convexity.lean ✓
-- DiophantineGeometry.lean ✓ (NEW 2026-01-22)
+- DiophantineGeometry.lean ✓
 - EnergySymmetry.lean ✓
 - GeometricBridge.lean ✓
-- LinearIndependenceSolved.lean ✓ (NEW 2026-01-23)
+- LinearIndependenceSolved.lean ✓
+- NumericalAxioms.lean ✓
 - PrimeSumApproximation.lean ✓
 - Residues.lean ✓
-- SieveAxioms.lean ✓ (NEW 2026-01-22)
+- SieveAxioms.lean ✓
 
 **MotorCore.lean** (ZetaSurface/MotorCore.lean):
 - Block-diagonal motor proof infrastructure - ALL lemmas proven, no sorries
@@ -344,7 +344,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 1. `AdmissiblePrimeApproximation s primes` - Explicit Formula error bounds
 2. `EnergyIsConvexAtHalf s.im` - Energy convexity at critical line
 
-**Consolidated Axiom Index**: See `ProofEngine/AllAxioms.lean` for a complete table of all 21 axioms and 5 hypotheses with their locations and purposes.
+**Consolidated Axiom Index**: See `llm_input/AXIOM_REVIEW.md` for complete review of all 30 axioms with justifications.
 
 **Philosophy**: Axioms capture genuine mathematical facts from analytic number theory
 that would require extensive Mathlib development to prove from scratch. This is
