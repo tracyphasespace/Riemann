@@ -1,10 +1,60 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-23 (AI2 completed SNR_Bounds.lean)
+**Last Updated**: 2026-01-23 (AI1 deleted impossible theorem, 37 sorries)
 **Build Status**: PASSING
-**Total Sorries**: ~41 actual in .lean files (SNR_Bounds.lean now 0)
+**Total Sorries**: ~37 actual in .lean files
 **Note**: sandbox/ excluded from count (test files only)
 **Critical Path**: SORRY-FREE ✓
+
+---
+
+## 🎯 MANDATORY: Plan Before Lean (Lessons Learned 2026-01-23)
+
+**The Golden Rule**: Create a written plan with atomic lemmas BEFORE touching any .lean file.
+
+### Before Starting ANY Proof:
+1. **State the goal** in plain English
+2. **Ask: Is this theorem mathematically TRUE?** (We wasted time on `|Finite + Analytic| < E` which is impossible)
+3. **Break into atomic helpers** (1-3 lines each, uses ONE Mathlib lemma)
+4. **Search for Mathlib APIs** using Loogle, `grep`, or `#check`
+5. **Create a table**: `| Lemma | Mathlib API | Status |`
+
+### Tools (Use BEFORE Writing Proofs):
+- **Loogle**: `https://loogle.lean-lang.org/` - query by type signature
+- **exact?/apply?/aesop**: Let Lean search for you
+- **Compatibility Shim**: `import Riemann.Common.Mathlib427Compat` for missing APIs
+- **Grep**: `grep -rn "lemma_name" .lake/packages/mathlib/`
+
+### What Causes Churn (AVOID):
+- Guessing API names that don't exist (`Finset.prod_ne_zero` → use `Finset.prod_pos`)
+- Skipping planning → jumping into proofs without decomposition
+- Ignoring type coercions → foldl on `List ℕ` but uses `(p : ℝ)` inside
+- Proving impossible theorems → check math correctness FIRST
+
+### What Works:
+- Atomic decomposition: `continuous_foldl_add_general` with `init` param → clean IH
+- Search first: Loogle found `Real.continuous_const_rpow`
+- Compatibility shim: Added `finset_prod_ne_zero`, `isBigO_ratio_divergence`
+
+---
+
+### AI1 Progress (2026-01-23) - Productivity Improvements:
+
+**AnalyticAxioms.lean - 2 theorems PROVEN**:
+- `continuous_foldl_add_general`: Continuity of foldl with additive accumulator
+  - Key insight: Generalize with `init : ℝ → ℝ` parameter for clean list induction
+  - Uses `Real.continuous_const_rpow` for p^(-σ) term
+  - Requires `h_pos : ∀ p ∈ l, 0 < p` (primes are positive)
+- `finite_sum_is_bounded`: NOW PROVEN (was sorry)
+  - Uses compactness: continuous function on compact interval is bounded
+
+**Deleted Impossible Theorem**:
+- Removed `finite_sum_approx_analytic_proven` from AnalyticAxioms.lean
+  - This tried to prove `|Finite + Analytic| < E` which is IMPOSSIBLE (Analytic → -∞)
+- Replaced `ax_finite_sum_approx_analytic` with `ax_finite_sum_is_bounded` in Axioms.lean
+- Updated all comment references in GeometricBridge, ExplicitFormula, ExplicitFormulaAxioms
+
+**Sorry reduction**: 44 → 37 (7 fewer)
 
 ### AI3 Work (2026-01-23):
 - **BridgeObligations.lean**: FIXED build errors

@@ -177,11 +177,40 @@ This prevents:
 
 ---
 
+## Lessons Learned (2026-01-23)
+
+### What Causes Churn
+- **Guessing APIs**: Trying `Finset.prod_ne_zero` when it doesn't exist in Mathlib 4.27
+- **Skipping planning**: Jumping into proofs without decomposing into atomic steps
+- **Ignoring type coercions**: The foldl operates on `List ℕ` but uses `(p : ℝ)` inside
+- **Proving impossible theorems**: `|Finite + Analytic| < E` when Analytic → -∞
+
+### What Works
+- **Atomic lemma decomposition**: Break complex proofs into 1-3 line helpers
+- **Loogle/exact? first**: Search before writing manual proofs
+- **Compatibility shim**: Use `Riemann/Common/Mathlib427Compat.lean` for missing APIs
+- **Generalize for induction**: `continuous_foldl_add_general` with `init` parameter enabled clean IH
+- **Check mathematical correctness**: Is the theorem even TRUE before proving it?
+
+### The Golden Rule
+**PLAN BEFORE LEAN**: Create a written plan with atomic lemmas BEFORE touching any .lean file.
+
+---
+
 ## Unified Proof Workflow (All Guidance Combined)
 
 When tackling a sorry, follow this sequence:
 
 ```
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 0: PLAN (Required Before Any Lean Work)                │
+│   • State the goal in plain English                         │
+│   • Ask: Is this theorem mathematically TRUE?               │
+│   • Break into atomic helper lemmas (1-3 lines each)        │
+│   • Identify Mathlib lemmas needed for each helper          │
+│   • Create a table: Lemma | Mathlib API | Status            │
+└─────────────────────────────────────────────────────────────┘
+                          ↓ only after plan is complete
 ┌─────────────────────────────────────────────────────────────┐
 │ STEP 1: SEARCH (New Best Practices)                         │
 │   • Check annotations: Was this tried before?               │
