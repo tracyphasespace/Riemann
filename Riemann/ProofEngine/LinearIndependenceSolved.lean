@@ -48,19 +48,7 @@ lemma clear_denominators (s : Finset {x : ℕ // x.Prime}) (g : {x : ℕ // x.Pr
     have h_dvd : (g p).den ∣ s.prod (fun q => (g q).den) := Finset.dvd_prod_of_mem _ hp
     obtain ⟨k, hk⟩ := h_dvd
     use (g p).num * k
-    rw [hk]
-    push_cast
-    rw [← mul_assoc]
-    -- Mathlib 4 API: Rat.mul_den_eq_num might be named differently or handled by simp
-    -- We construct the equality manually via field_simp if needed
-    have h_rat : (g p) * (g p).den = (g p).num := Rat.mul_den_eq_num (g p)
-    rw [← Int.cast_natCast k, ← Int.cast_mul]
-    congr 1
-    rw [mul_comm, ← mul_assoc, mul_comm _ k]
-    norm_cast at h_rat ⊢
-    rw [← hk]
-    field_simp
-    ring
+    rw [hk]; push_cast; rw [← mul_assoc, Rat.mul_den_eq_num]
 
 /--
 **Main Theorem**: Logs of distinct primes are linearly independent over ℚ.
@@ -178,8 +166,8 @@ theorem phase_space_is_torus (S : Finset {x : ℕ // x.Prime}) :
       | inl h => contradiction
       | inr h =>
         rw [sub_eq_add_neg] at h
-        simp only [Int.cast_neg]
-        exact h
+        convert h using 2
+        ring
 
     -- Apply Linear Independence to {p1, p2}
     let s_pair : Finset {x : ℕ // x.Prime} := {p1, p2}
@@ -188,20 +176,32 @@ theorem phase_space_is_torus (S : Finset {x : ℕ // x.Prime}) :
       else if p = p2 then (-k1 : ℚ)
       else 0
 
+    -- First show what g evaluates to at p1 and p2
+    have hg_p1 : g p1 = (k2 : ℚ) := by simp only [g, if_pos rfl]
+    have hg_p2 : g p2 = (-k1 : ℚ) := by
+      simp only [g, if_neg (Ne.symm p1_ne_p2), ite_true]
+
     have h_pair_sum : ∑ p ∈ s_pair, g p * Real.log p = 0 := by
-      simp only [s_pair, Finset.sum_pair p1_ne_p2, g]
-      simp only [if_pos rfl, if_neg p1_ne_p2, if_pos rfl]
-      -- Cast ℚ to ℝ for the calculation
-      norm_cast
+      simp only [s_pair, Finset.sum_pair p1_ne_p2]
+      rw [hg_p1, hg_p2]
+      -- Now have: k2 * log p1 + (-k1) * log p2 = 0
+      push_cast
+      linarith [h_log_comb]
 
     -- Apply the main theorem
     have h_indep := linearIndependent_iff'.mp log_primes_linear_independent s_pair g h_pair_sum
 
     -- Deduce coefficients are zero
-    have hk2_zero : (k2 : ℚ) = 0 := h_indep p1 (Finset.mem_insert_self p1 {p2})
+    -- h_indep gives g p = 0, need to unfold g definition
+    have hk2_zero : (k2 : ℚ) = 0 := by
+      have h := h_indep p1 (Finset.mem_insert_self p1 {p2})
+      simp only [g, if_pos rfl] at h
+      exact h
     have hk1_zero : (-k1 : ℚ) = 0 := by
-      have : p2 ∈ s_pair := Finset.mem_insert_of_mem (Finset.mem_singleton_self p2)
-      exact h_indep p2 this
+      have hp2_in : p2 ∈ s_pair := Finset.mem_insert_of_mem (Finset.mem_singleton_self p2)
+      have h := h_indep p2 hp2_in
+      simp only [g, if_neg (Ne.symm p1_ne_p2), ite_true] at h
+      exact h
 
     -- Propagate back to k1 = 0
     have k1_is_zero : k1 = 0 := by
@@ -223,6 +223,9 @@ theorem phase_space_is_torus (S : Finset {x : ℕ // x.Prime}) :
         linarith
 
     have h_final : t₁ - t₂ = 0 := mul_eq_zero.mp eq1 |>.resolve_right h_log_ne
-    exact ⟨0, Or.inl h_final⟩
+    use 0
+    left
+    simp only [Int.cast_zero, mul_zero]
+    exact h_final
 
 end LinearIndependenceSolved
