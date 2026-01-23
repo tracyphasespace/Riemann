@@ -41,16 +41,29 @@ lemma clear_denominators (s : Finset {x : ℕ // x.Prime}) (g : {x : ℕ // x.Pr
   -- Strategy: D = ∏ denominators, then g p * D = g p * (den * k) = num * k
   use s.prod (fun p => (g p).den)
   constructor
-  · exact Finset.prod_pos (fun p _ => (g p).den_pos)
+  · apply Finset.prod_pos
+    intro p _
+    exact (g p).den_pos
   · intro p hp
     have h_dvd : (g p).den ∣ s.prod (fun q => (g q).den) := Finset.dvd_prod_of_mem _ hp
     obtain ⟨k, hk⟩ := h_dvd
     use (g p).num * k
-    rw [hk]; push_cast; rw [← mul_assoc, Rat.mul_den_eq_num]
+    rw [hk]
+    push_cast
+    rw [← mul_assoc]
+    -- Mathlib 4 API: Rat.mul_den_eq_num might be named differently or handled by simp
+    -- We construct the equality manually via field_simp if needed
+    have h_rat : (g p) * (g p).den = (g p).num := Rat.mul_den_eq_num (g p)
+    rw [← Int.cast_natCast k, ← Int.cast_mul]
+    congr 1
+    rw [mul_comm, ← mul_assoc, mul_comm _ k]
+    norm_cast at h_rat ⊢
+    rw [← hk]
+    field_simp
+    ring
 
 /--
 **Main Theorem**: Logs of distinct primes are linearly independent over ℚ.
-
 This follows from the FTA: If ∑ (a_i/b_i) * log(p_i) = 0, then clearing
 denominators gives ∑ z_i * log(p_i) = 0 for integers z_i, which by FTA
 implies all z_i = 0.
@@ -125,60 +138,91 @@ theorem phase_space_is_torus (S : Finset {x : ℕ // x.Prime}) :
     exact ⟨0, Or.inr h_card⟩
   · -- Hard case: |S| > 1, need to show (t₁ - t₂) is 2π-multiple
     push_neg at h_card
-    -- From h_phases: ∀ p, (t₁ - t₂) * log(p) = 2π * k_p
-    -- Rewrite as: (t₁ - t₂) * log(p) = 2π * k_p
-    have h_rewrite : ∀ p ∈ S, ∃ k : ℤ, (t₁ - t₂) * Real.log p = 2 * π * k := by
-      intro p hp
-      obtain ⟨k, hk⟩ := h_phases p hp
-      use k
-      linarith [hk]
-    -- If t₁ = t₂, we're done with k = 0
+    -- We assume t₁ ≠ t₂ and derive contradiction or result
     by_cases h_eq : t₁ = t₂
-    · exact ⟨0, Or.inl (by simp [h_eq])⟩
-    -- Otherwise: we have at least 2 primes and (t₁ - t₂) ≠ 0
-    -- This would imply a rational relation log(p)/log(q) = k_p/k_q
-    -- contradicting linear independence.
-    --
-    -- === AI2 PROOF STRATEGY (needs Mathlib 4.27 adaptation) ===
-    -- Step 1: Extract two distinct primes from |S| > 1
-    --   FIX NEEDED: Use `obtain ⟨p₁, hp₁⟩ := Finset.card_pos.mp ...` not `.bex`
-    --   ```
-    --   have h_nonempty : S.Nonempty := Finset.card_pos.mp (Nat.lt_trans Nat.zero_lt_one h_card)
-    --   obtain ⟨p₁, hp₁⟩ := h_nonempty
-    --   have h_erase_pos : 0 < (S.erase p₁).card := by omega
-    --   obtain ⟨p₂, hp₂⟩ := Finset.card_pos.mp h_erase_pos
-    --   ```
-    --
-    -- Step 2: Get integer witnesses k₁, k₂ from h_rewrite
-    --   ```
-    --   obtain ⟨k₁, hk₁⟩ := h_rewrite p₁ hp₁  -- (t₁ - t₂) * log(p₁) = 2π * k₁
-    --   obtain ⟨k₂, hk₂⟩ := h_rewrite p₂ hp₂  -- (t₁ - t₂) * log(p₂) = 2π * k₂
-    --   ```
-    --
-    -- Step 3: Derive ℚ-linear relation: k₂ * log(p₁) = k₁ * log(p₂)
-    --   FIX NEEDED: Use `calc` with `ring` instead of `linarith` for multiplication
-    --   ```
-    --   have h_diff : (t₁ - t₂) * (k₂ * log p₁ - k₁ * log p₂) = 0 := by
-    --     have eq1 : (t₁ - t₂) * log p₁ * k₂ = 2 * π * k₁ * k₂ := by
-    --       calc ... = ((t₁ - t₂) * log p₁) * k₂ := by ring
-    --            _ = (2 * π * k₁) * k₂ := by rw [hk₁]
-    --            _ = 2 * π * k₁ * k₂ := by ring
-    --     -- similar for eq2
-    --     linarith
-    --   ```
-    --
-    -- Step 4: Apply linear independence to get k₁ = k₂ = 0
-    --   FIX NEEDED: Use `linearIndependent_iff'.mp` not `rw at`
-    --   ```
-    --   have h_lin_indep := linearIndependent_iff'.mp log_primes_linear_independent
-    --   let s : Finset {x : ℕ // x.Prime} := {p₁, p₂}
-    --   let g := fun p => if p = p₁ then k₂ else if p = p₂ then -k₁ else 0
-    --   -- Show sum is 0, apply h_lin_indep to get g = 0, hence k₁ = k₂ = 0
-    --   ```
-    --   FIX NEEDED: `Finset.not_mem_singleton.mpr` → use `Finset.mem_singleton.not` or explicit proof
-    --
-    -- Step 5: Conclude t₁ = t₂ from k₁ = 0 and log(p) > 0
-    -- === END AI2 STRATEGY ===
-    sorry
+    · use 0; left; simp [h_eq]
+
+    -- Extract two distinct primes p1, p2 from S
+    have h_card_pos : 0 < S.card := by linarith
+    obtain ⟨p1, hp1⟩ := Finset.card_pos.mp h_card_pos
+    let S' := S.erase p1
+    have h_card_S' : 0 < S'.card := by
+      rw [Finset.card_erase_of_mem hp1]
+      omega
+    obtain ⟨p2, hp2_mem_S'⟩ := Finset.card_pos.mp h_card_S'
+    have hp2 : p2 ∈ S := Finset.mem_of_mem_erase hp2_mem_S'
+    have p1_ne_p2 : p1 ≠ p2 := (Finset.mem_erase.mp hp2_mem_S').1.symm
+
+    -- Get integer witnesses for p1 and p2
+    obtain ⟨k1, hk1⟩ := h_phases p1 hp1
+    obtain ⟨k2, hk2⟩ := h_phases p2 hp2
+    -- Rewrite equations: (t1 - t2) * log p = 2π * k
+    have eq1 : (t₁ - t₂) * Real.log p1 = 2 * π * k1 := by linear_combination hk1
+    have eq2 : (t₁ - t₂) * Real.log p2 = 2 * π * k2 := by linear_combination hk2
+
+    -- Cross-multiply to eliminate (t1 - t2) and 2π
+    -- k2 * eq1: k2 * (t1 - t2) * log p1 = k2 * 2π * k1
+    -- k1 * eq2: k1 * (t1 - t2) * log p2 = k1 * 2π * k2
+    -- RHS are equal: 2π * k1 * k2
+    have h_cross : (t₁ - t₂) * (k2 * Real.log p1 - k1 * Real.log p2) = 0 := by
+      calc (t₁ - t₂) * (k2 * Real.log p1 - k1 * Real.log p2)
+          = k2 * ((t₁ - t₂) * Real.log p1) - k1 * ((t₁ - t₂) * Real.log p2) := by ring
+        _ = k2 * (2 * π * k1) - k1 * (2 * π * k2) := by rw [eq1, eq2]
+        _ = 0 := by ring
+
+    -- Since t1 ≠ t2, the log combination must be zero
+    have h_log_comb : (k2 : ℝ) * Real.log p1 + (-k1 : ℝ) * Real.log p2 = 0 := by
+      have h_diff_ne_zero : t₁ - t₂ ≠ 0 := sub_ne_zero.mpr h_eq
+      have h_zero := mul_eq_zero.mp h_cross
+      cases h_zero with
+      | inl h => contradiction
+      | inr h =>
+        rw [sub_eq_add_neg] at h
+        simp only [Int.cast_neg]
+        exact h
+
+    -- Apply Linear Independence to {p1, p2}
+    let s_pair : Finset {x : ℕ // x.Prime} := {p1, p2}
+    let g : {x : ℕ // x.Prime} → ℚ := fun p =>
+      if p = p1 then (k2 : ℚ)
+      else if p = p2 then (-k1 : ℚ)
+      else 0
+
+    have h_pair_sum : ∑ p ∈ s_pair, g p * Real.log p = 0 := by
+      simp only [s_pair, Finset.sum_pair p1_ne_p2, g]
+      simp only [if_pos rfl, if_neg p1_ne_p2, if_pos rfl]
+      -- Cast ℚ to ℝ for the calculation
+      norm_cast
+
+    -- Apply the main theorem
+    have h_indep := linearIndependent_iff'.mp log_primes_linear_independent s_pair g h_pair_sum
+
+    -- Deduce coefficients are zero
+    have hk2_zero : (k2 : ℚ) = 0 := h_indep p1 (Finset.mem_insert_self p1 {p2})
+    have hk1_zero : (-k1 : ℚ) = 0 := by
+      have : p2 ∈ s_pair := Finset.mem_insert_of_mem (Finset.mem_singleton_self p2)
+      exact h_indep p2 this
+
+    -- Propagate back to k1 = 0
+    have k1_is_zero : k1 = 0 := by
+      rw [neg_eq_zero] at hk1_zero
+      exact Int.cast_eq_zero.mp hk1_zero
+
+    -- Substitute k1=0 into eq1: (t1 - t2) * log p1 = 0
+    rw [k1_is_zero, Int.cast_zero, mul_zero] at eq1
+
+    -- Since p1 is prime, log p1 ≠ 0
+    have h_log_ne : Real.log p1 ≠ 0 := by
+      apply Real.log_ne_zero_of_pos_of_ne_one
+      -- p1 is prime -> p1 >= 2 -> p1 > 0
+      · have : 1 < p1.val := Nat.Prime.one_lt p1.prop
+        positivity
+      -- p1 is prime -> p1 >= 2 -> p1 ≠ 1
+      · have : 1 < p1.val := Nat.Prime.one_lt p1.prop
+        norm_cast
+        linarith
+
+    have h_final : t₁ - t₂ = 0 := mul_eq_zero.mp eq1 |>.resolve_right h_log_ne
+    exact ⟨0, Or.inl h_final⟩
 
 end LinearIndependenceSolved
