@@ -700,20 +700,6 @@ lemma coeff_sym_re_factorization (s : ℂ) (p : Primes) :
     rw [mul_comm, div_mul_cancel₀ _ hne]
 
 /--
-**DEPRECATED AXIOM**: Original (INCORRECT) factorization - kept for reference.
-
-WARNING: This statement is FALSE when s.re = 1/2 and s.im ≠ 0.
-Use `coeff_sym_re_factorization` instead for the actual proof.
-This axiom is NOT on the critical path - the proof uses the _re version.
--/
-axiom coeff_sym_factorization_axiom (s : ℂ) (p : Primes) :
-    ∃ (Φ : ℂ), coeff_sym s p = (s.re - 1/2) * Φ
-
-lemma coeff_sym_factorization (s : ℂ) (p : Primes) :
-    ∃ (Φ : ℂ), coeff_sym s p = (s.re - 1/2) * Φ :=
-  coeff_sym_factorization_axiom s p
-
-/--
 **The Corrected Rayleigh Identity** (SYMMETRIZED VERSION)
 
 Using the symmetrized operator, the chiral energy correctly factors as
@@ -1062,10 +1048,10 @@ The coefficient difference p^{-s} - p^{-(1-s)} naturally factors as (σ - 1/2) �
 
 | Theorem | Status | Notes |
 |---------|--------|-------|
-| `coeff_sym_factorization` (σ=1/2 case) | sorry | FALSE when s.im ≠ 0 |
 | `zero_iff_kernel` (backward) | sorry | Not needed for RH |
 
 **DELETED** (were FALSE or dependent on false statements):
+- `coeff_sym_factorization_axiom` - FALSE when s.re = 1/2 and s.im ≠ 0
 - `rayleigh_identity`, `rayleigh_identity_axiom` - counterexample exists
 - `chiralEnergy_zero_at_half`, `chiralEnergy_nonzero_off_half` - used false axiom
 - `B_skew_hermitian`, `B_skew_hermitian_axiom` - FALSE for current B_op

@@ -1,6 +1,6 @@
 # Complete Axiom Review for RH Proof
 
-**Generated**: 2026-01-23
+**Generated**: 2026-01-23 (Updated after cleanup)
 **Purpose**: Human review of all axioms used in the Riemann Hypothesis formalization
 
 ---
@@ -9,10 +9,11 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 27 | After deduplication |
-| **Duplicates** | ~15 | Same axiom in multiple files |
+| **Unique Axioms** | 31 | After cleanup |
+| **Archived** | 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
+| **Deleted** | 1 | coeff_sym_factorization_axiom (FALSE) |
 | **Core Path** | 12 | Used by main theorem chain |
-| **Auxiliary** | 15 | Supporting infrastructure |
+| **Auxiliary** | 19 | Supporting infrastructure |
 
 ---
 
@@ -436,18 +437,21 @@ axiom scalarPart (n : ℕ) : ClElement n → ℝ
 
 ---
 
-## Category 8: Deprecated / Duplicate (skip review)
+## Category 8: Cleaned Up (2026-01-23)
 
-These are either marked deprecated or duplicated in other files:
+**Archived** (moved to `ZetaSurface/archive/`):
+- `RemainingProofs.lean` → `RemainingProofs.leantxt` (documentation only)
+- `ClusteringDomination.lean` → `ClusteringDomination.leantxt` (duplicate axioms)
+- `AnalyticBridgeEuler.lean` → `AnalyticBridgeEuler.leantxt` (duplicate)
+- `sandbox/Axioms.proposed.lean` → `Axioms.proposed.leantxt` (proposals only)
 
-- `coeff_sym_factorization_axiom` - DEPRECATED (marked FALSE in file)
-- `rayleigh_Phi_pos` - Superseded by Q_pos
+**Deleted**:
+- `coeff_sym_factorization_axiom` - FALSE when s.re = 1/2 and s.im ≠ 0
+
+**Remaining potential duplicates** (kept for now):
+- `rayleigh_Phi_pos` - Similar to Q_pos but different signature
 - `zero_implies_symmetric_kernel` - Variant of zeta_zero_implies_kernel
-- `kernel_implies_zero_axiom` - Converse direction
-- `explicit_formula_approximation` (ClusteringDomination) - Duplicate
-- `clustering_from_domination` - Duplicate
-- All axioms in `RemainingProofs.lean` - Duplicates
-- All axioms in `sandbox/Axioms.proposed.lean` - Proposals only
+- `kernel_implies_zero_axiom` - Converse direction (may be useful)
 
 ---
 
@@ -474,8 +478,9 @@ The full `Clifford_RH_Derived` additionally uses:
 | Priority | Action | Axioms |
 |----------|--------|--------|
 | **Keep** | Core math facts | Baker's, Explicit Formula, Bridge M1-M5 |
-| **Reduce** | Prove from FTA | prime_logs_linear_independent (already done in different signature) |
-| **Archive** | Duplicates | RemainingProofs.lean, sandbox/Axioms.proposed.lean |
+| **Reduce** | Prove from FTA | prime_logs_linear_independent (done in LinearIndependenceSolved) |
+| **Done** | Archived 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
+| **Done** | Deleted 1 false axiom | coeff_sym_factorization_axiom |
 | **Fix** | Signature mismatch | Unify prime_logs variants |
 
 ---
