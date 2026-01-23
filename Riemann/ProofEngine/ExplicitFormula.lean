@@ -351,10 +351,50 @@ This is the trivial proof!
 theorem finite_sum_is_bounded (primes : List ℕ) (ρ : ℂ) (δ : ℝ) :
     ∃ B > 0, ∀ σ ∈ Set.Ioo (ρ.re - δ) (ρ.re + δ),
       ‖GeometricSieveSum (σ + ρ.im * I) primes‖ < B := by
-  -- A finite sum of continuous functions on a bounded interval is bounded.
-  -- GeometricSieveSum is continuous.
-  -- The interval is compact (closure).
-  sorry -- (Standard boundedness of continuous functions)
+  -- Strategy: The function σ ↦ ‖GeometricSieveSum (σ + ρ.im * I) primes‖ is continuous.
+  -- A continuous function on a bounded interval is bounded on its closure.
+  -- Since Ioo ⊆ Icc, a bound on Icc works for Ioo.
+  --
+  -- Key insight: We just need EXISTENCE of a bound, not a sharp one.
+  -- Use the compact interval Icc and continuity.
+  by_cases hδ : δ ≤ 0
+  · -- If δ ≤ 0, Ioo is empty, so any B > 0 works vacuously
+    exact ⟨1, one_pos, fun σ hσ => by simp only [Set.mem_Ioo] at hσ; linarith⟩
+  push_neg at hδ
+  -- δ > 0, so we have a proper interval
+  -- Define the continuous function
+  let f : ℝ → ℝ := fun σ => ‖GeometricSieveSum (σ + ρ.im * I) primes‖
+  -- f is continuous (norm of sum of continuous functions)
+  have hf_cont : Continuous f := Continuous.norm <| Continuous.neg <| by
+    -- GeometricSieveSum is continuous in σ
+    -- It's a finite sum, each term is continuous
+    unfold GeometricSieveSum
+    -- Helper: each term σ ↦ (log p)² * p^{-(σ + t*I)} is continuous in σ
+    have h_term : ∀ (p : ℕ), Continuous fun σ =>
+        (↑(Real.log ↑p) : ℂ) ^ 2 * (↑p : ℂ) ^ (-(↑σ : ℂ) - ↑ρ.im * I) := by
+      intro p
+      apply Continuous.mul continuous_const
+      apply Continuous.cpow continuous_const
+      · exact (continuous_ofReal.comp continuous_id).neg.sub continuous_const
+      · intro σ; left; exact_mod_cast (Nat.pos_of_ne_zero (fun h => by simp [h])).ne'
+    -- Now prove foldl is continuous by induction
+    induction primes with
+    | nil => simp; exact continuous_const
+    | cons p ps ih =>
+      simp only [List.foldl_cons]
+      exact ih.add (h_term p)
+  -- The compact set Icc (ρ.re - δ) (ρ.re + δ)
+  have h_compact : IsCompact (Set.Icc (ρ.re - δ) (ρ.re + δ)) := isCompact_Icc
+  have h_nonempty : (Set.Icc (ρ.re - δ) (ρ.re + δ)).Nonempty := ⟨ρ.re, by simp; constructor <;> linarith⟩
+  -- f attains maximum on compact set
+  obtain ⟨M, hM_mem, hM_max⟩ := h_compact.exists_isMaxOn h_nonempty hf_cont.continuousOn
+  -- Use M + 1 as bound (for strict inequality)
+  use f M + 1
+  constructor
+  · linarith [norm_nonneg (GeometricSieveSum (M + ρ.im * I) primes)]
+  · intro σ hσ
+    have h_in_Icc : σ ∈ Set.Icc (ρ.re - δ) (ρ.re + δ) := Set.Ioo_subset_Icc_self hσ
+    linarith [hM_max h_in_Icc]
 
 /--
 **The Corrected Theorem for Residues.lean**

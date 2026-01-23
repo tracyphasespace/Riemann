@@ -29,7 +29,15 @@ pgrep -x lake || echo "No lake process running"
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| (available) | | | |
+| ExplicitFormula.lean | AI2 | 2026-01-23 | finite_sum_is_bounded |
+
+### AI2 Progress (2026-01-23)
+
+**LinearIndependenceSolved.lean:68 `log_primes_linear_independent`** ✓ PROVEN:
+- Strategy: `linearIndependent_iff'` + `clear_denominators` + `fta_all_exponents_zero`
+- Key insight: Convert ℚ coefficients to ℤ by multiplying by common denominator D
+- Uses `Classical.choose` to extract integer values from existential
+- Final step: `mul_eq_zero.mp` + `resolve_right` with D ≠ 0
 
 ### AI1 Findings (for AI2 to use)
 
