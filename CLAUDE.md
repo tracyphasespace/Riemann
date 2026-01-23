@@ -4,38 +4,7 @@
 
 This project uses multiple Claude instances (AI1/AI2) working in parallel. Follow these rules strictly.
 
-### Parallel Worktree Setup (NEW 2026-01-23)
-
-**AI1 and AI2 can now build simultaneously** using Git worktrees:
-
-| Worktree | Path | Branch | AI |
-|----------|------|--------|-----|
-| Main | `/home/tracy/development/Riemann/Lean` | `main` | AI1 |
-| Secondary | `/home/tracy/development/Riemann/Lean-AI2` | `ai2-batch` | AI2 |
-| Tertiary | `/home/tracy/development/Riemann/Lean-AI3` | `ai3-batch` | AI3 |
-
-**Benefits:**
-- Each worktree has its own `.lake/build/` directory
-- No build lock conflicts - both AIs can run `lake build` simultaneously
-- Shared git history (minimal disk overhead)
-
-**Workflow:**
-1. **AI1**: Works in `Lean/` on `main` branch
-2. **AI2**: Works in `Lean-AI2/` on `ai2-batch` branch
-3. **Merge**: When AI2 finishes, merge `ai2-batch` into `main`
-
-**Merge Commands (run from main worktree):**
-```bash
-git fetch origin
-git merge ai2-batch  # Auto-merges if file sets are disjoint
-```
-
-**File Assignment (to avoid conflicts):**
-- AI1: ExplicitFormula, TraceAtFirstZero, CliffordZetaMasterKey, AnalyticBridgeEuler
-- AI2: AnalyticAxioms, ArithmeticAxioms, AnalyticBridge, ChiralPath, ConservationAxioms
-- AI3: DiophantineGeometry, BridgeObligations, AristotleContributions, ExplicitFormulaAxioms
-
-### Build Coordination (LEGACY - use worktrees instead)
+### Build Coordination
 
 **Check for running builds** (use `-x` flag to avoid false positives):
 ```bash
@@ -44,7 +13,7 @@ pgrep -x lake || echo "No lake process running"
 
 **NEVER** start a build if one is running - it causes OOM errors.
 
-### Lake Build Lock Table (LEGACY - only needed if sharing same worktree)
+### Lake Build Lock Table
 
 | Status | Locked By | Started | Notes |
 |--------|-----------|---------|-------|
