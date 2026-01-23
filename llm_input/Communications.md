@@ -115,11 +115,23 @@ Key lemmas: `taylor_mean_remainder_lagrange_iteratedDeriv`, `uniqueDiffOn_Icc`
 -- Strategy: Use UniqueFactorizationMonoid from Mathlib
 ```
 
-### 8. DiophantineGeometry.lean:47,64,82 - API issues
+### 8. DiophantineGeometry.lean:361,404 - FTA unique factorization 🔄 IN PROGRESS
 **File**: `Riemann/ProofEngine/DiophantineGeometry.lean`
 ```lean
--- Multiple API failures - Real.exp_log_natCast, eq_neg_of_add_eq_zero, HPow ℂ ℝ
--- See AI2_API_Failures.md for details
+-- PROGRESS (AI2 2026-01-22):
+-- Added atomic helper lemmas:
+--   prime_pow_factorization_self' ✓
+--   prime_pow_factorization_other' ✓
+--   disjoint_prime_prods_eq_one ✓ (key FTA lemma - proven!)
+--   prod_prime_pow_gt_one_of_pos ✓
+--   log_prod_eq_sum_log ✓
+--
+-- 2 SORRIES REMAINING (both identical "Case 3: both nonempty"):
+--   Line 361 and 404 in fta_all_exponents_zero
+--   BLOCKED: Need exp_sum_log_eq_prod helper to convert
+--            ∑ z(p) * log p = ∑ (-z(p)) * log p (real equality)
+--         to ∏ p^{z(p)} = ∏ p^{-z(p)} (natural number equality)
+--   The atomic lemmas are in place; just need the conversion bridge.
 ```
 
 ### 9. CliffordAxioms.lean - Clifford algebra 🔄 MAJOR REFACTOR (AI2 2026-01-22)
@@ -444,3 +456,26 @@ Applied Mathlib 4.27 API guide to fix three helper lemmas:
 - **AnalyticBridge.lean**:
   - Added `innerProd_sum_single` helper (sorry) for Finsupp sum distribution
   - Documented strategy for `rayleigh_decomposition`
+
+**AI2 Session 6 (2026-01-22)**:
+- **DiophantineGeometry.lean - FTA HELPER LEMMAS ADDED**
+  - Added 7 atomic helper lemmas:
+    - `prod_prime_pow_pos_real` ✓ - product of prime powers > 0
+    - `prod_prime_pow_gt_one_of_pos` ✓ - product > 1 if any exponent > 0
+    - `log_prod_eq_sum_log` ✓ - log(∏) = ∑log
+    - `prime_pow_factorization_self'` ✓ - (p^e).factorization p = e
+    - `prime_pow_factorization_other'` ✓ - (q^e).factorization p = 0 for p≠q
+    - `disjoint_prime_prods_eq_one` ✓ - KEY FTA LEMMA PROVEN
+      - If ∏_{S} p^a = ∏_{T} q^b over disjoint prime sets with positive exponents,
+        then S = ∅ ∧ T = ∅
+      - Uses Nat.factorization_prod + comparison argument
+  - 2 SORRIES REMAINING in `fta_all_exponents_zero` (lines 361, 404):
+    - Both "Case 3: both nonempty" - identical structure
+    - Have: h_pos_eq_neg (sum equality as ℝ), h_disj (disjoint sets), hS_pos/hT_pos (exponents positive)
+    - BLOCKED: Need exp_sum_log_eq_prod bridge:
+      exp(∑ z log p) = ∏ p^z → equal sums → equal products as ℕ
+    - Intermediate steps (eS, eT, h_disj, hS_pos, hT_pos) already proven
+- **LinearIndependenceSolved.lean**: 2 sorries, both BLOCKED on DiophantineGeometry
+- **ExplicitFormulaAxioms.lean**: 1 sorry, marked as CANNOT PROVE (needs von Mangoldt infrastructure)
+- **ArithmeticAxioms.lean**: 1 sorry, BLOCKED on FTA
+- **File lock released**: DiophantineGeometry.lean now available

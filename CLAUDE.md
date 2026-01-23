@@ -29,7 +29,7 @@ pgrep -x lake || echo "No lake process running"
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| DiophantineGeometry.lean | AI2 | 2026-01-22 | FTA sorries 188,219 - breaking into lemmas |
+| (available) | | | |
 
 ### AI1 Findings (for AI2 to use)
 
@@ -894,11 +894,40 @@ example : a + b = b + a := by exact?  -- Finds: exact add_comm a b
 example (h : 0 < x) : 0 < x^2 := by apply?  -- Suggests: apply sq_pos_of_pos h
 ```
 
-### `aesop` - Automated search (stronger than simp for logic)
+### `aesop` - Automated Extensible Search for Obvious Proofs
+
+**What it does**: White-box, best-first proof search using registered rules.
+
 ```lean
+-- Logic and basic algebra
 example (h1 : P → Q) (h2 : Q → R) (h3 : P) : R := by aesop
 example : ∀ x : ℕ, x = x := by aesop
+
+-- Set theory and membership
+example (h : x ∈ A ∩ B) : x ∈ A := by aesop
+
+-- Automatic with local hypotheses
+example (h : a ≤ b) (h2 : b ≤ c) : a ≤ c := by aesop
 ```
+
+**Key Features**:
+- `aesop?` generates proof script (use after `aesop` succeeds for faster compilation)
+- **Safe rules**: Applied eagerly, no backtracking (e.g., splitting ∧-goals)
+- **Unsafe rules**: May backtrack, allows speculative tactics
+- **Normalization**: Auto-applies `simp_all` and `@[simp]` lemmas
+- **Forward rules**: Adds hypotheses based on existing ones
+
+**Extensibility**: Add domain-specific rules with `@[aesop]` attribute:
+```lean
+@[aesop safe apply]
+theorem my_safe_lemma : P → Q := ...
+
+@[aesop unsafe 50% apply]  -- 50% success estimate
+theorem my_unsafe_lemma : P → Q := ...
+```
+
+**When to use**: Logic proofs, set membership, basic algebraic goals, "obvious" steps.
+**When it fails**: Deep algebraic manipulation, complex Mathlib API chains - use `simp` or manual proof.
 
 ### `rw?` - Find rewrite lemmas
 ```lean
