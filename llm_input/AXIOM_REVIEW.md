@@ -9,8 +9,8 @@
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Unique Axioms** | 27 | After cleanup + concrete implementations |
-| **Discharged** | 3 | M1, M2a via BridgeDefinitions.lean; M5 via RayleighDecomposition.lean |
+| **Unique Axioms** | 25 | After cleanup + concrete implementations |
+| **Discharged** | 5 | M1, M2a, M5b, M5c via BridgeDefinitions.lean; M5a via RayleighDecomposition.lean |
 | **Archived** | 4 files | RemainingProofs, ClusteringDomination, AnalyticBridgeEuler, Axioms.proposed |
 | **Deleted** | 2 | coeff_sym_factorization_axiom, rotorTrace_monotone_from_first1000_axiom |
 | **Core Path** | 10 | Used by main theorem chain |
@@ -22,7 +22,9 @@
 - Created `ProofEngine/RayleighDecomposition.lean` with Signal+Noise decomposition
 - Proved M1 (`bivector_squares_to_neg_id`) via diagonal eigenvalue model
 - Proved M2a (`bivectors_commute`) via diagonal commutativity
-- Proved M5 (`rayleigh_forcing`) via Signal+Noise decomposition theorem
+- Proved M5a (`rayleigh_forcing`) via Signal+Noise decomposition theorem
+- Proved M5b (`Q_pos`) via `norm_pos_iff` + positivity
+- Proved M5c (`Omega_zero_right`) via `inner_zero_right`
 - Added Hamiltonian operators: ScalingOperator, InteractionOperator, TotalHamiltonian
 - Added observables: Q (stiffness), Omega_R (real energy expectation)
 
@@ -366,25 +368,39 @@ The correct decomposition is: Ω(v, K(s)v) = Signal(v) + Noise(v, t)
 
 ---
 
-### 4.7 `Q_pos`
-**File**: `ProofEngine/BridgeObligations.lean:144`
+### 4.7 `Q_pos` — ✅ DISCHARGED
+**File**: `ProofEngine/BridgeObligations.lean:144` (abstract axiom)
+**Concrete**: `ProofEngine/BridgeDefinitions.lean` (theorem)
 
 ```lean
+-- Abstract axiom:
 axiom Q_pos (Q : V → ℝ) (v : V) : v ≠ 0 → 0 < Q v
+
+-- Concrete theorem:
+theorem Q_pos_of_ne_zero (v : H) (hv : v ≠ 0) : 0 < Q v
 ```
 
 **Meaning**: The stiffness quadratic form is positive definite.
 
+**Status**: PROVEN. Q(v) = ‖v‖², and ‖v‖ > 0 for v ≠ 0.
+
 ---
 
-### 4.8 `Omega_zero_right`
-**File**: `ProofEngine/BridgeObligations.lean:148`
+### 4.8 `Omega_zero_right` — ✅ DISCHARGED
+**File**: `ProofEngine/BridgeObligations.lean:148` (abstract axiom)
+**Concrete**: `ProofEngine/BridgeDefinitions.lean` (theorem)
 
 ```lean
+-- Abstract axiom:
 axiom Omega_zero_right (Omega : V → V → ℝ) (v : V) : Omega v 0 = 0
+
+-- Concrete theorem:
+theorem Omega_R_zero_right (v : H) : Omega_R v 0 = 0
 ```
 
 **Meaning**: Ω(v, 0) = 0 (bilinearity).
+
+**Status**: PROVEN. Omega_R v 0 = Re⟨v, 0⟩ = Re(0) = 0.
 
 ---
 

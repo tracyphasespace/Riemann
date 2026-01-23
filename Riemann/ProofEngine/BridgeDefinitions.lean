@@ -210,6 +210,28 @@ def Q (v : H) : ℝ := ‖v‖ ^ 2
 def Omega_R (u v : H) : ℝ := (@inner ℂ H _ u v).re
 
 -- ==============================================================================
+-- Section 8a: OBSERVABLE PROPERTIES (Discharges M5b, M5c)
+-- ==============================================================================
+
+/-- **M5b Discharged**: Q(v) > 0 for v ≠ 0.
+    The stiffness quadratic form is positive definite. -/
+theorem Q_pos_of_ne_zero (v : H) (hv : v ≠ 0) : 0 < Q v := by
+  unfold Q
+  have h : 0 < ‖v‖ := norm_pos_iff.mpr hv
+  positivity
+
+/-- **M5c Discharged**: Ω(v, 0) = 0.
+    Bilinearity: inner product with zero is zero. -/
+theorem Omega_R_zero_right (v : H) : Omega_R v 0 = 0 := by
+  unfold Omega_R
+  simp only [inner_zero_right, Complex.zero_re]
+
+/-- Ω is also linear in the first argument. -/
+theorem Omega_R_zero_left (v : H) : Omega_R 0 v = 0 := by
+  unfold Omega_R
+  simp only [inner_zero_left, Complex.zero_re]
+
+-- ==============================================================================
 -- Section 9: INTERACTION CONTRIBUTION (for Decomposition Theorem)
 -- ==============================================================================
 
