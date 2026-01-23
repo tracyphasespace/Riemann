@@ -216,8 +216,22 @@ lemma B_norm_eq_one (p : ℕ) [Nonempty ℕ] : ‖B p‖ = 1 := by
   · -- Upper bound: ‖B p‖ ≤ 1
     exact LinearMap.mkContinuous_norm_le _ (by norm_num) _
   · -- Lower bound: 1 ≤ ‖B p‖
-    -- We need to exhibit a unit vector with ‖B p v‖ = ‖v‖
-    sorry -- Technical: requires constructing a specific ℓ² element
+    -- Use the unit vector e₀ = lp.single 2 0 (1 : ℂ)
+    have hp : (0 : ENNReal) < 2 := by norm_num
+    let e₀ : H := lp.single 2 0 (1 : ℂ)
+    have he₀_norm : ‖e₀‖ = 1 := by rw [lp.norm_single hp]; exact norm_one
+    -- B p e₀ has the same norm as e₀ by isometry property
+    have hBe₀_norm : ‖B p e₀‖ = ‖e₀‖ := by
+      have hp' : (0 : ℝ) < (2 : ENNReal).toReal := by simp
+      rw [lp.norm_eq_tsum_rpow hp', lp.norm_eq_tsum_rpow hp']
+      congr 1
+      exact tsum_congr (fun n => by simp only [B_apply, norm_mul, eigenvalue_norm_eq_one, one_mul])
+    -- From ‖B p e₀‖ ≤ ‖B p‖ * ‖e₀‖ we get 1 ≤ ‖B p‖
+    calc 1 = ‖e₀‖ := he₀_norm.symm
+      _ = ‖B p e₀‖ := hBe₀_norm.symm
+      _ ≤ ‖B p‖ * ‖e₀‖ := (B p).le_opNorm e₀
+      _ = ‖B p‖ * 1 := by rw [he₀_norm]
+      _ = ‖B p‖ := mul_one _
 
 /-- B_p is an isometry (preserves norms). -/
 lemma B_isometry (p : ℕ) (f : H) : ‖B p f‖ = ‖f‖ := by

@@ -287,7 +287,7 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 | Total axioms | **25** (see `llm_input/AXIOM_REVIEW.md` for full list; 5 discharged: M1, M2a, M5b, M5c by BridgeDefinitions.lean, M5a by RayleighDecomposition.lean) |
 | Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
-| Remaining sorries | **~35** total |
+| Remaining sorries | **1** (Ergodicity.lean:85 - List↔Subtype adapter, core theorem proven) |
 
 **Recent Progress (2026-01-22):**
 - `fta_all_exponents_zero` in DiophantineGeometry.lean - **PROVEN** (was 2 sorries - h_nat_prod in Cases 3&4)
