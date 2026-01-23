@@ -103,9 +103,19 @@ forces it to the critical line σ = 1/2.
 theorem chirality_implies_centering_proven (σ : ℝ) (hσ : 0 < σ ∧ σ < 1)
     (h_chiral : IsChiral (fun t => (SieveCurve σ hσ t).point)) :
     σ = 1 / 2 ∨ ∃ t, (SieveCurve σ hσ t).point.magSq > 0 := by
-  -- In QFD, chirality (screw motion) off the critical line generates
-  -- an exponential expansion/contraction that violates unitary flux.
-  -- Thus, a stable chiral state must be at σ = 1/2.
-  sorry
+  -- The RHS follows from chirality: eventually magSq ≠ 0, which means > 0 for a norm squared
+  right
+  -- IsChiral means: ∀ᶠ t in atTop, magSq ≠ 0
+  -- Extract a specific t where this holds
+  rw [Filter.Eventually, Filter.mem_atTop_sets] at h_chiral
+  obtain ⟨N, hN⟩ := h_chiral
+  use N
+  -- magSq is a sum of squares, so magSq ≠ 0 implies magSq > 0
+  have h_ne := hN N (le_refl N)
+  -- magSq is defined as sum of squares of real components, so ≥ 0
+  -- and ≠ 0 implies > 0
+  cases' (lt_or_eq_of_le (Clifford33.magSq_nonneg (SieveCurve σ hσ N).point)) with h h
+  · exact h
+  · exfalso; exact h_ne h.symm
 
 end ProofEngine
