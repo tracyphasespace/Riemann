@@ -310,29 +310,62 @@ theorem analytic_stiffness_pos_proven (ρ : ℂ) (h_zero : riemannZeta ρ = 0)
   exact h_M
 
 /--
-**Theorem**: Finite prime sum approximates the NEGATIVE of the analytic stiffness.
+**Theorem: Finite Sum is Locally Bounded**
 
-The error between the finite sum Σ log²(p)·p^{-σ}·cos(t·log p)
-and the analytic stiffness (deriv of -ζ'/ζ) is bounded.
+The Geometric Sieve sum Σ log²(p)·p^{-σ}·cos(t·log p) is bounded on any interval.
 
-This is the Explicit Formula with error bounds.
+This replaces the impossible `finite_sum_approx_analytic` which tried to prove
+|Finite + Analytic| < E. That's impossible because Analytic → -∞ at the pole.
+
+The correct logic for Residues.lean is:
+- Analytic stiffness → -∞ as σ → ρ.re⁺ (proven in analytic_stiffness_pos_proven)
+- Finite sum is bounded (this theorem)
+- Therefore: Finite + Analytic < 0 near the pole ✓
 -/
+theorem finite_sum_is_bounded (ρ : ℂ) (primes : List ℕ) (δ : ℝ) (hδ : 0 < δ) :
+    ∃ B > 0, ∀ σ ∈ Set.Ioo (ρ.re - δ) (ρ.re + δ),
+      |primes.foldl (fun acc p =>
+        acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0| < B := by
+  -- Strategy: A continuous function on a compact interval is bounded.
+  let f := fun σ : ℝ => primes.foldl (fun acc p =>
+        acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0
+
+  -- The closed interval containing our open interval
+  let I := Set.Icc (ρ.re - δ) (ρ.re + δ)
+
+  -- f is continuous (finite sum of continuous functions)
+  have h_cont : ContinuousOn f I := by
+    apply Continuous.continuousOn
+    -- Continuity of foldl: each term is continuous, finite sum of continuous is continuous
+    -- Technical: foldl with addition accumulator preserves continuity
+    sorry -- A5: Continuity of foldl (standard but technical - see workplan)
+
+  -- Compactness argument
+  have h_compact : IsCompact I := isCompact_Icc
+  have h_nonempty : I.Nonempty := ⟨ρ.re, Set.mem_Icc.mpr ⟨by linarith, by linarith⟩⟩
+
+  -- Continuous function on compact set attains maximum
+  obtain ⟨M, hM_mem, hM_max⟩ := h_compact.exists_isMaxOn h_nonempty h_cont.norm
+
+  -- Use |f(M)| + 1 as the bound (strict inequality)
+  use |f M| + 1
+  constructor
+  · linarith [abs_nonneg (f M)]
+  · intro σ hσ
+    have h_in : σ ∈ I := Set.Ioo_subset_Icc_self hσ
+    calc |f σ| ≤ |f M| := hM_max h_in
+         _ < |f M| + 1 := lt_add_one _
+
+-- Legacy alias for compatibility (points to impossible theorem, now deprecated)
 theorem finite_sum_approx_analytic_proven (ρ : ℂ) (primes : List ℕ) :
     ∃ (E : ℝ), 0 < E ∧ ∀ σ : ℝ, σ > ρ.re →
       abs (primes.foldl (fun acc p =>
         acc + Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (ρ.im * Real.log p)) 0 +
         (deriv (fun s => -(deriv riemannZeta s / riemannZeta s)) (σ + ρ.im * I)).re) < E := by
-  -- Strategy: The Explicit Formula from analytic number theory relates the finite sum
-  -- to the analytic derivative of -ζ'/ζ. This requires deep Mathlib infrastructure
-  -- (von Mangoldt's Explicit Formula, contour integration, etc.) that is not yet available.
-  --
-  -- The mathematical content:
-  -- -ζ'/ζ(s) = Σ_ρ 1/(s-ρ) + Σ_p log(p)·p^{-s} + (regular terms)
-  -- Differentiating: d/ds(-ζ'/ζ) = -Σ_ρ 1/(s-ρ)² + Σ_p log²(p)·p^{-s} + ...
-  -- The finite sum approximates the prime contribution with bounded error.
-  --
-  -- This theorem provides the error bound E required by AdmissibleStiffnessApproximation
-  -- in Residues.lean, enabling the proof that zeta zeros force negative clustering.
+  -- DEPRECATED: This theorem is mathematically impossible.
+  -- The analytic stiffness has a pole at ρ, so |Finite + Analytic| → ∞.
+  -- Use `finite_sum_is_bounded` instead, which correctly captures boundedness.
+  -- Keeping this as sorry for backward compatibility until all references are updated.
   sorry
 
 end ProofEngine

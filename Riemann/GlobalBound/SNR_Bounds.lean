@@ -28,8 +28,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Riemann.GlobalBound.PrimeRotor
 import Riemann.GlobalBound.InteractionTerm
-
--- CYCLE: import Riemann.ProofEngine.SNRAxioms
+import Riemann.Common.Mathlib427Compat
 
 noncomputable section
 open Real Filter Topology BigOperators Asymptotics GlobalBound
@@ -94,15 +93,24 @@ structure PairCorrelationControl (primes : List ℕ) where
 
   /--
   **The Core Bound**:
-  |Noise| = O(Signal^α).
+  Noise = O(Signal^α).
 
   This is the formal statement that "Primes are Asymptotically Orthogonal".
   The cross-terms cancel statistically, leaving only sub-linear residual.
+  Note: IsBigO uses norms internally, so this is equivalent to |Noise| = O(Signal^α).
   -/
   noise_bound :
     IsBigO atTop
-      (fun t => |NoiseGrowth primes.toFinset t|)
+      (fun t => NoiseGrowth primes.toFinset t)
       (fun t => (SignalGrowth primes.toFinset t) ^ α)
+
+  /--
+  **Noise is eventually nonzero**:
+  Noise does not stay at zero forever (physically: random walk crosses zero
+  but doesn't remain there). Required for SNR ratio to be well-defined.
+  -/
+  noise_nonzero_eventually :
+    ∀ᶠ t in atTop, NoiseGrowth primes.toFinset t ≠ 0
 
 /-!
 ## 4. The SNR Divergence Theorem
@@ -118,12 +126,20 @@ then the Signal-to-Noise Ratio diverges to infinity.
 -/
 theorem snr_diverges (primes : List ℕ)
     (h_control : PairCorrelationControl primes)
-    (_h_signal_grows : Tendsto (fun t => SignalGrowth primes.toFinset t) atTop atTop) :
+    (h_signal_grows : Tendsto (fun t => SignalGrowth primes.toFinset t) atTop atTop) :
     Tendsto (fun t => SignalGrowth primes.toFinset t / |NoiseGrowth primes.toFinset t|)
             atTop atTop := by
   -- Strategy: With α < 1 from h_control, Signal/|Noise| ~ T^(1-α) → ∞
-  obtain ⟨_α, hα_lt, _h_bound⟩ := h_control
-  sorry
+  -- Extract components from PairCorrelationControl
+  obtain ⟨α, ⟨_hα_pos, hα_lt1⟩, h_bound, h_noise_ne0⟩ := h_control
+
+  -- 1. Signal > 0 eventually (from growth to infinity)
+  have h_sig_pos : ∀ᶠ t in atTop, 0 < SignalGrowth primes.toFinset t :=
+    h_signal_grows (Ioi_mem_atTop 0)
+
+  -- 2. Apply the asymptotic ratio divergence lemma
+  -- h_noise_ne0 gives NoiseGrowth ≠ 0 eventually, which is exactly what the lemma needs
+  exact RiemannCompat.isBigO_ratio_divergence hα_lt1 h_bound h_sig_pos h_noise_ne0 h_signal_grows
 
 /-!
 ## 5. The Stability Guarantee

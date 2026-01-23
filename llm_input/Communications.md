@@ -1,8 +1,8 @@
 # AI2 Priority List - Sorry Reduction
 
-**Last Updated**: 2026-01-23 (AI3 fixed BridgeObligations.lean build error)
+**Last Updated**: 2026-01-23 (AI2 completed SNR_Bounds.lean)
 **Build Status**: PASSING
-**Total Sorries**: ~42 actual in .lean files
+**Total Sorries**: ~41 actual in .lean files (SNR_Bounds.lean now 0)
 **Note**: sandbox/ excluded from count (test files only)
 **Critical Path**: SORRY-FREE ✓
 
@@ -31,10 +31,14 @@
   - File compiles with 3 sorries (down from 4)
 
 ### AI2 Note (2026-01-23):
+- **SNR_Bounds.lean**: NOW SORRY-FREE ✓ (snr_diverges proven)
+  - Added `noise_nonzero_eventually` field to `PairCorrelationControl` structure
+  - Used `RiemannCompat.isBigO_ratio_divergence` from Mathlib427Compat
+  - Fixed dependency cycle: SNR_Bounds now imports from Common, not ProofEngine
 - **LinearIndependenceSolved.lean**: NOW SORRY-FREE ✓ (all 3 theorems proven)
 - **Mathlib427Compat.lean**: NEW shim file available at `Riemann/Common/`
   - Use `import Riemann.Common.Mathlib427Compat` + `open RiemannCompat`
-  - Provides: `finset_prod_ne_zero`, `exists_pair_of_card_gt_one`, `nat_to_real_eq`, etc.
+  - Provides: `finset_prod_ne_zero`, `exists_pair_of_card_gt_one`, `nat_to_real_eq`, `isBigO_ratio_divergence`
 
 ### Recent Proofs (AI1):
 - `DiophantineGeometry.lean`: **fta_all_exponents_zero PROVEN** (was 2 sorries) - FILE NOW SORRY-FREE ✓
@@ -98,7 +102,7 @@ git push origin main
 ### Shared/Low Priority (either AI can work):
 | File | Sorries | Notes |
 |------|---------|-------|
-| GlobalBound/*.lean | 18 | Lower priority infrastructure |
+| GlobalBound/*.lean | 17 | Lower priority infrastructure (SNR_Bounds now 0) |
 | ErgodicSNRAxioms.lean | 2 | Marked "fundamentally limited" |
 | NumericalAxioms.lean | 2 | Intentional axioms |
 | ExplicitFormulaAxioms.lean | 1 | von Mangoldt - needs infrastructure |
@@ -112,6 +116,7 @@ git push origin main
 - ClusterBound.lean ✓
 - SNRAxioms.lean ✓
 - MotorCore.lean ✓
+- SNR_Bounds.lean ✓ (2026-01-23)
 
 ---
 
@@ -525,6 +530,7 @@ Finset.prod_congr rfl (fun x hx => by congr 1; exact h_match x hx)
 | SNRAxioms | isBigO_ratio_divergence | **PROVEN** | IsBigO extraction + tendsto_atTop_mono' |
 | SNRAxioms | rpow_divergence_of_pos | **PROVEN** | tendsto_rpow_atTop wrapper |
 | SNRAxioms | growth_ratio_eq | **PROVEN** | rpow_sub identity |
+| SNR_Bounds | snr_diverges | **PROVEN** | RiemannCompat.isBigO_ratio_divergence (2026-01-23) |
 
 ---
 

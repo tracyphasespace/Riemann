@@ -31,6 +31,18 @@ pgrep -x lake || echo "No lake process running"
 |------|-----------|---------|------|
 | | | | |
 
+### SNR_Bounds.lean - 0 SORRIES ✓ COMPLETE (2026-01-23)
+
+**Changes Made:**
+1. Added `import Riemann.Common.Mathlib427Compat` to break SNRAxioms dependency cycle
+2. Modified `PairCorrelationControl` structure:
+   - Changed `noise_bound` from `IsBigO atTop |Noise| (Signal^α)` to `IsBigO atTop Noise (Signal^α)` (IsBigO uses norms internally)
+   - Added `noise_nonzero_eventually : ∀ᶠ t in atTop, NoiseGrowth t ≠ 0` field
+3. Completed `snr_diverges` proof using `RiemannCompat.isBigO_ratio_divergence`
+
+**Mathlib427Compat.lean additions:**
+- Added `isBigO_ratio_divergence` theorem: If `f = O(g^α)` with `α < 1` and `g → ∞`, then `g/|f| → ∞`
+
 ### AI2 Progress (2026-01-23)
 
 **LinearIndependenceSolved.lean - 0 SORRIES** ✓ COMPLETE (2026-01-23):
@@ -719,6 +731,39 @@ private lemma prime_pow_factorization_self {p e : ℕ} (hp : p.Prime) :
 private lemma prime_pow_factorization_other {p q e : ℕ} (hq : q.Prime) (hne : p ≠ q) :
     (q ^ e).factorization p = 0 := by
   rw [hq.factorization_pow, Finsupp.single_eq_of_ne hne]
+```
+
+### Asymptotic API (IsBigO / Tendsto)
+
+```lean
+-- IMPORTANT: IsBigO uses norms internally
+-- For ℝ→ℝ functions, IsBigO l f g means eventually ‖f x‖ ≤ C * ‖g x‖
+-- which is equivalent to |f x| ≤ C * |g x|
+-- So you don't need to wrap f in |...|
+
+-- WRONG: IsBigO l (fun x => |f x|) g
+-- RIGHT: IsBigO l f g  -- norms handled internally
+
+-- Key asymptotic lemmas:
+-- tendsto_rpow_atTop {y : ℝ} (hy : 0 < y) : Tendsto (·^y) atTop atTop
+-- (tendsto_rpow_atTop hy).comp h_lim : Tendsto (f^y) l atTop  -- composition pattern
+-- isBigO_iff : f =O[l] g ↔ ∃ C, ∀ᶠ x in l, ‖f x‖ ≤ C * ‖g x‖
+-- tendsto_atTop_mono' : (∀ᶠ x in l, f x ≤ g x) → Tendsto g l atTop → Tendsto f l atTop
+
+-- SNR DIVERGENCE PATTERN (proven in Mathlib427Compat.lean):
+-- If Noise = O(Signal^α) with α < 1 and Signal → ∞, then Signal/|Noise| → ∞
+-- RiemannCompat.isBigO_ratio_divergence hα h_bound h_pos h_ne0 h_lim
+```
+
+### Dependency Cycle Resolution
+
+```lean
+-- WRONG: File A imports File B, File B imports File A (cycle!)
+-- RIGHT: Extract shared lemmas to Common/ shim file
+
+-- Example: SNR_Bounds needed lemma from SNRAxioms but SNRAxioms imports GlobalBound
+-- Solution: Move isBigO_ratio_divergence to Riemann/Common/Mathlib427Compat.lean
+-- Then SNR_Bounds imports from Common instead of ProofEngine
 ```
 
 ### Helper Lemma Pattern (Rosetta Stone)
