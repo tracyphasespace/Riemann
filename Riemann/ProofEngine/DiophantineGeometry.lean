@@ -77,14 +77,48 @@ Proof uses `Real.exp` to convert to `∏ p^k = 1`, then unique factorization.
 theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ // x.Prime} → ℤ)
     (h_sum : ∑ p ∈ s, (z p : ℝ) * Real.log (p : ℕ) = 0) :
     ∀ p ∈ s, z p = 0 := by
-  -- AI2 ATTEMPTED: Partition s into s_pos, s_neg, s_zero; exponentiate; use FTA contradiction
-  -- FAILED: Multiple API issues:
-  --   - Real.exp_log_natCast doesn't exist
-  --   - Finset.not_mem_empty doesn't exist (use absurd ... (Finset.not_mem_empty _))
-  --   - eq_neg_of_add_eq_zero doesn't exist (use neg_eq_of_add_eq_zero_left)
-  --   - Finset.sum_neg_distrib pattern mismatch
-  --   - introN tactic failure in disjointness proof
-  -- NEEDS: Correct Mathlib 4.27 API for these lemmas
+  -- Strategy: Contrapositive - if some z p ≠ 0, derive contradiction via unique factorization
+  by_contra h_exists_nonzero
+  push_neg at h_exists_nonzero
+  obtain ⟨p₀, hp₀_mem, hp₀_ne⟩ := h_exists_nonzero
+
+  -- Partition s into positive, negative, zero coefficient parts
+  let s_pos := s.filter (fun p => 0 < z p)
+  let s_neg := s.filter (fun p => z p < 0)
+  let s_zero := s.filter (fun p => z p = 0)
+
+  -- The sum splits: ∑_{pos} z_p log p + ∑_{neg} z_p log p + ∑_{zero} 0 = 0
+  have h_partition : s = s_pos ∪ s_neg ∪ s_zero := by
+    ext p
+    simp only [Finset.mem_union, Finset.mem_filter, s_pos, s_neg, s_zero]
+    constructor
+    · intro hp
+      rcases lt_trichotomy (z p) 0 with h | h | h
+      · right; left; exact ⟨hp, h⟩
+      · right; right; exact ⟨hp, h⟩
+      · left; exact ⟨hp, h⟩
+    · intro h
+      rcases h with ⟨hp, _⟩ | ⟨hp, _⟩ | ⟨hp, _⟩ <;> exact hp
+
+  -- Rearranging: ∑_{pos} z_p log p = -∑_{neg} z_p log p = ∑_{neg} |z_p| log p
+  have h_pos_eq_neg : ∑ p ∈ s_pos, (z p : ℝ) * Real.log (p : ℕ) =
+                      ∑ p ∈ s_neg, (-(z p) : ℝ) * Real.log (p : ℕ) := by
+    have h_zero_sum : ∑ p ∈ s_zero, (z p : ℝ) * Real.log (p : ℕ) = 0 := by
+      apply Finset.sum_eq_zero
+      intro p hp
+      simp only [Finset.mem_filter, s_zero] at hp
+      simp [hp.2]
+    -- TODO: Complete the partition arithmetic
+    sorry
+
+  -- Exponentiate: ∏_{pos} p^{z_p} = ∏_{neg} p^{-z_p} as positive reals
+  -- Then by unique factorization of integers, both sides must equal 1
+  -- This is a contradiction if either s_pos or s_neg is nonempty
+
+  -- For now, we note this requires significant Mathlib infrastructure:
+  -- - Real.exp_sum, Real.rpow_intCast
+  -- - Connection between real exponentiation and Nat.factorization
+  -- - Nat.eq_one_of_factorization_eq (or similar)
   sorry
 
 -- ==============================================================================

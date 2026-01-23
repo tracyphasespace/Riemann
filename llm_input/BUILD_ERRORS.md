@@ -17,7 +17,7 @@
 **Resolved (2026-01-22)**: Used negation approach - `0 ≤ ∫ (-f)` via `intervalIntegral.integral_nonneg`, then `simp [integral_neg]` + linarith
 
 **TraceAtFirstZero.lean (2026-01-22 AI2)**:
-- `product_in_corners` - PROOF REVERTED (was: case split on signs, mul_le_mul lemmas)
+- `product_in_corners` - PROOF RE-APPLIED (case split on signs, mul_le_mul lemmas)
 - `trace_negative_at_first_zero` - CANNOT PROVE (needs native_decide)
 - `trace_monotone_from_large_set` - CANNOT PROVE (needs tsum + native arithmetic)
 
@@ -25,6 +25,14 @@
 - `clear_denominators` - PROOF WRITTEN (D = ∏ dens, Finset.prod_pos, Rat.num_div_den)
 - `log_primes_linear_independent` - depends on FTA from DiophantineGeometry (sorry)
 - `phase_space_is_torus` - depends on log_primes_linear_independent (sorry)
+
+**ClusteringDomination.lean (2026-01-22 AI2)**:
+- `weightedCosSum_replicate` - PROOF WRITTEN via `foldl_add_replicate` helper
+- File is now **SORRY-FREE**
+
+**SieveAxioms.lean (2026-01-22 AI2)**:
+- `cos_sum_bounded` - PROOF WRITTEN via `foldl_abs_le_foldl` helper + `abs_cos_le_one`
+- File is now **SORRY-FREE**
 
 ---
 

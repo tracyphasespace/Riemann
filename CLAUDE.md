@@ -29,7 +29,7 @@ pgrep -x lake || echo "No lake process running"
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
-| (none) | | | |
+| DiophantineGeometry.lean | AI2 | 2026-01-22 | fta_all_exponents_zero |
 
 **Protocol:**
 1. Check file is not locked before editing
@@ -203,11 +203,13 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 **Sorry-free files in ProofEngine:**
 - AnalyticBasics.lean ✓
 - Axioms.lean ✓
-- Convexity.lean ✓ (NEW)
+- ClusteringDomination.lean ✓ (NEW 2026-01-22)
+- Convexity.lean ✓
 - EnergySymmetry.lean ✓
 - GeometricBridge.lean ✓
 - PrimeSumApproximation.lean ✓
 - Residues.lean ✓
+- SieveAxioms.lean ✓ (NEW 2026-01-22)
 
 **MotorCore.lean** (ZetaSurface/MotorCore.lean):
 - Block-diagonal motor proof infrastructure - ALL lemmas proven, no sorries

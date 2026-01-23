@@ -81,19 +81,40 @@ For List.replicate 1001 2 at s = 1/2:
 Therefore `explicit_formula_approximation` with constant bound 3 is FALSE.
 -/
 
+/-- Helper: foldl of addition with same term n times equals n * term -/
+private lemma foldl_add_replicate {α : Type*} [AddCommMonoid α] (f : ℕ → α) (n : ℕ) (p : ℕ) :
+    List.foldl (fun acc x => acc + f x) 0 (List.replicate n p) = n • f p := by
+  induction n with
+  | zero => simp
+  | succ n' ih =>
+    rw [List.replicate_succ, List.foldl_cons]
+    -- foldl f (0 + f p) (replicate n' p) = foldl f (f p) (replicate n' p)
+    -- We need a generalized version: foldl f init (replicate n p) = init + n • f p
+    simp only [zero_add]
+    -- Use generalized lemma
+    have h_gen : ∀ (init : α) (m : ℕ), List.foldl (fun acc x => acc + f x) init (List.replicate m p) = init + m • f p := by
+      intro init m
+      induction m generalizing init with
+      | zero => simp
+      | succ m' ihm =>
+        rw [List.replicate_succ, List.foldl_cons]
+        rw [ihm (init + f p)]
+        rw [add_nsmul, one_nsmul]
+        ring
+    rw [h_gen (f p) n']
+    rw [add_nsmul, one_nsmul]
+    ring
+
 /-- Helper: The weighted cosine sum of n copies of p. -/
 theorem weightedCosSum_replicate (n : ℕ) (p : ℕ) (σ t : ℝ) :
     weightedCosSum (List.replicate n p) σ t =
     n * (Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)) := by
   unfold weightedCosSum
-  induction n with
-  | zero => simp [List.replicate, natListSum]
-  | succ n' ih =>
-      rw [List.replicate_succ, List.foldl_cons]
-      -- Since addition is associative and we start at 0, 
-      -- foldl (f) 0 (p :: ps) = f 0 p + foldl (f) 0 ps
-      -- But foldl over replicate needs a small lemma
-      sorry
+  let term := Real.log p * Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)
+  -- The foldl just adds term n times
+  have h := foldl_add_replicate (fun (q : ℕ) => Real.log q * Real.log q * (q : ℝ) ^ (-σ) * Real.cos (t * Real.log q)) n p
+  convert h using 1
+  simp only [nsmul_eq_mul]
 
 /--
 **TASK**: The Explicit Formula approximation.
