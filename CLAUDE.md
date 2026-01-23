@@ -1,39 +1,56 @@
 # Claude Code Instructions for Riemann/Lean Project
 
-## Build Coordination
+## Multi-AI Coordination Protocol
 
-**IMPORTANT**: Before running `lake build`, always check if another build is in progress:
+This project uses multiple Claude instances (AI1/AI2) working in parallel. Follow these rules strictly.
 
+### Build Coordination
+
+**Check for running builds** (use `-x` flag to avoid false positives):
 ```bash
-# Check for running lake processes
-pgrep -f "lake build" || echo "No build running"
+pgrep -x lake || echo "No lake process running"
 ```
 
-If a build is running, wait for it to complete before starting another.
+**NEVER** start a build if one is running - it causes OOM errors.
 
-## Lake Build Lock
-
-**IMPORTANT**: Before running `lake build`, add your entry here. Remove when done.
+### Lake Build Lock Table
 
 | Status | Locked By | Started | Notes |
 |--------|-----------|---------|-------|
 | **Available** | | | |
 
-To use Lake:
-1. Check this table is empty or shows "Available"
-2. Add your entry with status **IN USE**
-3. Run your build
-4. Update status to **Available** or remove your row when done
+**Protocol:**
+1. Check table shows "Available"
+2. Update to `**IN USE** | AI1/AI2 | timestamp | module`
+3. Run your build: `lake build Riemann.ProofEngine.ModuleName`
+4. Update back to "Available" when done
 
-## File Locks (Active Work)
-
-**IMPORTANT**: Check this section before editing a file. If a file is listed here, another Claude instance may be working on it.
+### File Locks (Active Work)
 
 | File | Locked By | Started | Task |
 |------|-----------|---------|------|
 | (none) | | | |
 
-To lock a file, add it to this table. To release, remove your entry.
+**Protocol:**
+1. Check file is not locked before editing
+2. Add your lock entry before starting work
+3. Remove lock when done (even if proof fails)
+
+### Critical Rules
+
+1. **Always test before committing**: Run `lake build YourModule` before `git commit`
+2. **Revert broken proofs**: If a proof attempt fails, revert to clean sorry state rather than leaving broken code
+3. **Update Communications.md**: Log your progress so other AI knows what's happening
+4. **Don't guess APIs**: If unsure about a Mathlib API, search first with `grep -rn "pattern" .lake/packages/mathlib/`
+5. **Avoid `iteratedDeriv_two`**: It doesn't exist in Mathlib 4.27 - use `iteratedDeriv_succ, iteratedDeriv_one`
+
+### Handoff Protocol
+
+When finishing a task:
+1. Commit and push your changes
+2. Release all file locks
+3. Update Communications.md with what was done and what's next
+4. Update the STATUS section below with new sorry counts
 
 ---
 
@@ -55,13 +72,25 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 |--------|-------|
 | Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
 | Explicit axioms | **2** (in ProofEngine/Axioms.lean) |
-| Proven theorems | **12** (AnalyticBasics + Residues + GeometricSieve + MotorCore) |
+| Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
-| Remaining sorries | **~40** actual (71 grep hits include comments/docs) |
-| Critical path sorries | **0** ✓ |
-| Build jobs | ~3053 |
+| Remaining sorries | **~56** in ProofEngine |
 
-**NEW: MotorCore.lean** (ZetaSurface/MotorCore.lean):
+**Recent Progress (2026-01-22):**
+- `second_deriv_normSq_eq` in Convexity.lean - **PROVEN** (was 1 sorry)
+- `factorization_prod_prime_pow` in ArithmeticAxioms.lean - **PROVEN**
+- `sum_split_three` in DiophantineGeometry.lean - **PROVEN**
+
+**Sorry-free files in ProofEngine:**
+- AnalyticBasics.lean ✓
+- Axioms.lean ✓
+- Convexity.lean ✓ (NEW)
+- EnergySymmetry.lean ✓
+- GeometricBridge.lean ✓
+- PrimeSumApproximation.lean ✓
+- Residues.lean ✓
+
+**MotorCore.lean** (ZetaSurface/MotorCore.lean):
 - Block-diagonal motor proof infrastructure - ALL lemmas proven, no sorries
 - Key theorems: `actOn_comm`, `projection_cancellation`, `lifted_no_cancellation`, `motorOn_comm`
 
