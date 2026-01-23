@@ -38,6 +38,57 @@
 
 ---
 
+## 📋 AI2 NEXT TASK: ExplicitFormula.lean (3 sorries)
+
+**File**: `Riemann/ProofEngine/ExplicitFormula.lean`
+**Sorries**: Lines 108, 325, 442
+
+### ⚠️ MANDATORY: Create Plan FIRST
+
+Before writing ANY Lean code, create a plan with:
+1. Plain English goal for each sorry
+2. Atomic lemmas needed (1-3 lines each)
+3. Mathlib API for each atomic lemma
+4. Table format: `| Lemma | Mathlib API | Status |`
+
+### Sorry Analysis (AI1 notes):
+
+**Line 108** - `GeometricSieveContinuous`:
+- Goal: Prove foldl sum over ℂ is continuous
+- Pattern: Similar to `continuous_foldl_add` in AnalyticAxioms (just proven!)
+- Blocker: Type coercions ℕ → ℝ → ℂ cause unification issues
+- Strategy: Generalize with `init : ℝ → ℂ` parameter, use `Complex.continuous_ofReal`
+
+**Line 325** - `prime_powers_are_bounded`:
+- Goal: Bound difference between von Mangoldt and Geometric Sieve
+- Strategy: Triangle inequality + convergent series bound
+- Note: Sum over p^k (k≥2) converges for σ > 1/2
+
+**Line 442** - `finite_sum_is_bounded` (different from AnalyticAxioms version):
+- Goal: Continuity of `‖GeometricSieveSum‖`
+- Pattern: `Continuous.norm ∘ Continuous.neg ∘ foldl_continuous`
+- Depends on: Line 108 being solved first
+
+### Recommended Order:
+1. **Line 108** first (unblocks Line 442)
+2. **Line 442** (uses result from 108)
+3. **Line 325** (independent, harder)
+
+### Reference Implementation:
+See `AnalyticAxioms.lean:314-344` for `continuous_foldl_add_general` pattern:
+```lean
+private lemma continuous_foldl_add_general {t : ℝ} (l : List ℕ) (h_pos : ∀ p ∈ l, 0 < p)
+    (init : ℝ → ℝ) (h_init : Continuous init) :
+    Continuous (fun σ : ℝ => l.foldl (fun acc p => acc + ...) (init σ)) := by
+  induction l generalizing init with
+  | nil => exact h_init
+  | cons p ps ih => apply ih; apply Continuous.add h_init; ...
+```
+
+Adapt this for `ℂ` output type.
+
+---
+
 ### AI1 Progress (2026-01-23) - Productivity Improvements:
 
 **AnalyticAxioms.lean - 2 theorems PROVEN**:
