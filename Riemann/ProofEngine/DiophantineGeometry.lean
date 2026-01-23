@@ -138,15 +138,85 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
     -- -(∑ (z p) * log p) = ∑ (-(z p)) * log p
     simp only [neg_mul, Finset.sum_neg_distrib]
 
-  -- Exponentiate: ∏_{pos} p^{z_p} = ∏_{neg} p^{-z_p} as positive reals
-  -- Then by unique factorization of integers, both sides must equal 1
-  -- This is a contradiction if either s_pos or s_neg is nonempty
+  -- p₀ ≠ 0 means p₀ ∈ s_pos or p₀ ∈ s_neg
+  have hp₀_in_union : p₀ ∈ s_pos ∨ p₀ ∈ s_neg := by
+    rcases lt_trichotomy (z p₀) 0 with h | h | h
+    · right; simp only [Finset.mem_filter, s_neg]; exact ⟨hp₀_mem, h⟩
+    · exact absurd h hp₀_ne
+    · left; simp only [Finset.mem_filter, s_pos]; exact ⟨hp₀_mem, h⟩
 
-  -- For now, we note this requires significant Mathlib infrastructure:
-  -- - Real.exp_sum, Real.rpow_intCast
-  -- - Connection between real exponentiation and Nat.factorization
-  -- - Nat.eq_one_of_factorization_eq (or similar)
-  sorry
+  -- Case analysis: at least one of s_pos, s_neg is nonempty
+  rcases hp₀_in_union with hp₀_pos | hp₀_neg
+  · -- p₀ ∈ s_pos, so s_pos is nonempty
+    have h_pos_nonempty : s_pos.Nonempty := ⟨p₀, hp₀_pos⟩
+    by_cases h_neg_empty : s_neg = ∅
+    · -- Case 1: s_pos nonempty, s_neg empty
+      -- Then ∑_{pos} z log p > 0 but ∑_{neg} (-z) log p = 0, contradiction with h_pos_eq_neg
+      have h_lhs_pos : 0 < ∑ p ∈ s_pos, (z p : ℝ) * Real.log (p : ℕ) := by
+        apply Finset.sum_pos
+        · intro p hp
+          simp only [Finset.mem_filter, s_pos] at hp
+          exact mul_pos (Int.cast_pos.mpr hp.2) (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
+        · exact h_pos_nonempty
+      have h_rhs_zero : ∑ p ∈ s_neg, (-(z p) : ℝ) * Real.log (p : ℕ) = 0 := by
+        rw [h_neg_empty]; simp
+      linarith
+    · -- Case 3: Both nonempty - requires unique factorization argument
+      -- Key: Both sums positive and equal implies equal products over disjoint primes
+      -- But unique factorization then requires all exponents zero, contradiction
+      have h_neg_nonempty : s_neg.Nonempty := Finset.nonempty_of_ne_empty h_neg_empty
+      have h_lhs_pos : 0 < ∑ p ∈ s_pos, (z p : ℝ) * Real.log (p : ℕ) := by
+        apply Finset.sum_pos
+        · intro p hp
+          simp only [Finset.mem_filter, s_pos] at hp
+          exact mul_pos (Int.cast_pos.mpr hp.2) (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
+        · exact h_pos_nonempty
+      have h_rhs_pos : 0 < ∑ p ∈ s_neg, (-(z p) : ℝ) * Real.log (p : ℕ) := by
+        apply Finset.sum_pos
+        · intro p hp
+          simp only [Finset.mem_filter, s_neg] at hp
+          have hz : (0 : ℝ) < -(z p : ℝ) := by rw [neg_pos]; exact Int.cast_lt_zero.mpr hp.2
+          exact mul_pos hz (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
+        · exact h_neg_nonempty
+      -- Exponentiate h_pos_eq_neg to get product equality, then use unique factorization
+      -- The key steps:
+      -- 1. exp(sum) = product via Real.exp_sum
+      -- 2. Products are equal positive integers (need subtype → ℕ conversion)
+      -- 3. Unique factorization: equal products over disjoint primes → all exponents zero
+      -- 4. But z > 0 on s_pos and z < 0 on s_neg, so exponents are nonzero
+      -- This requires Nat.factorization machinery (proven in eq_prods_disjoint_implies_all_zero)
+      sorry
+  · -- p₀ ∈ s_neg, so s_neg is nonempty
+    have h_neg_nonempty : s_neg.Nonempty := ⟨p₀, hp₀_neg⟩
+    by_cases h_pos_empty : s_pos = ∅
+    · -- Case 2: s_neg nonempty, s_pos empty
+      have h_lhs_zero : ∑ p ∈ s_pos, (z p : ℝ) * Real.log (p : ℕ) = 0 := by
+        rw [h_pos_empty]; simp
+      have h_rhs_pos : 0 < ∑ p ∈ s_neg, (-(z p) : ℝ) * Real.log (p : ℕ) := by
+        apply Finset.sum_pos
+        · intro p hp
+          simp only [Finset.mem_filter, s_neg] at hp
+          have hz : (0 : ℝ) < -(z p : ℝ) := by rw [neg_pos]; exact Int.cast_lt_zero.mpr hp.2
+          exact mul_pos hz (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
+        · exact h_neg_nonempty
+      linarith
+    · -- Case 3 again: Both nonempty
+      have h_pos_nonempty : s_pos.Nonempty := Finset.nonempty_of_ne_empty h_pos_empty
+      have h_lhs_pos : 0 < ∑ p ∈ s_pos, (z p : ℝ) * Real.log (p : ℕ) := by
+        apply Finset.sum_pos
+        · intro p hp
+          simp only [Finset.mem_filter, s_pos] at hp
+          exact mul_pos (Int.cast_pos.mpr hp.2) (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
+        · exact h_pos_nonempty
+      have h_rhs_pos : 0 < ∑ p ∈ s_neg, (-(z p) : ℝ) * Real.log (p : ℕ) := by
+        apply Finset.sum_pos
+        · intro p hp
+          simp only [Finset.mem_filter, s_neg] at hp
+          have hz : (0 : ℝ) < -(z p : ℝ) := by rw [neg_pos]; exact Int.cast_lt_zero.mpr hp.2
+          exact mul_pos hz (Real.log_pos (Nat.one_lt_cast.mpr p.2.one_lt))
+        · exact h_neg_nonempty
+      -- Same unique factorization argument as above
+      sorry
 
 -- ==============================================================================
 -- PROOF 2: GEOMETRIC CLOSURE (FULLY PROVEN)
