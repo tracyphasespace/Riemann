@@ -463,7 +463,48 @@ theorem fta_all_exponents_zero (s : Finset {x : ℕ // x.Prime}) (z : {x : ℕ /
 
       have h_nat_prod : (toNatFinset s_pos).prod (fun n => n ^ e_pos n) =
                         (toNatFinset s_neg).prod (fun n => n ^ e_neg n) := by
-        sorry -- Pure casting boilerplate (same as Case 3 above)
+        -- Step 1: Real product equality from sum equality via exp
+        have h_real_prod : ∏ p ∈ s_pos, ((p : ℕ) : ℝ) ^ (z p : ℝ) =
+                           ∏ p ∈ s_neg, ((p : ℕ) : ℝ) ^ (-(z p) : ℝ) := by
+          rw [← exp_sum_mul_log' _ _ _ (fun p _ => Nat.cast_pos.mpr p.2.pos),
+              ← exp_sum_mul_log' _ _ _ (fun p _ => Nat.cast_pos.mpr p.2.pos),
+              h_pos_eq_neg]
+        -- Step 2: Use Atomic 9 (products over toNatFinset are Finset ℕ)
+        apply prod_eq_of_real_prod_eq
+        -- Step 3: Transform to mapped products and align with h_real_prod
+        simp only [toNatFinset, Finset.prod_map, Function.Embedding.coeFn_mk]
+        -- Step 4: Helper: e_pos matches z for elements in s_pos
+        have h_pos_match : ∀ x ∈ s_pos, (e_pos (x : ℕ) : ℝ) = (z x : ℝ) := by
+          intro x hx
+          have hx_pos : 0 < z x := by
+            simp only [s_pos, Finset.mem_filter] at hx
+            exact hx.2
+          have hmem : (x : ℕ) ∈ toNatFinset s_pos := by
+            simp only [toNatFinset, Finset.mem_map, Function.Embedding.coeFn_mk]
+            exact ⟨x, hx, rfl⟩
+          simp only [e_pos, hmem, ↓reduceDIte]
+          norm_cast
+          exact Int.toNat_of_nonneg (le_of_lt hx_pos)
+        -- Step 5: Helper: e_neg matches -z for elements in s_neg
+        have h_neg_match : ∀ x ∈ s_neg, (e_neg (x : ℕ) : ℝ) = (-(z x) : ℝ) := by
+          intro x hx
+          have hx_neg : z x < 0 := by
+            simp only [s_neg, Finset.mem_filter] at hx
+            exact hx.2
+          have h_neg_pos : 0 < -z x := by linarith
+          have hmem : (x : ℕ) ∈ toNatFinset s_neg := by
+            simp only [toNatFinset, Finset.mem_map, Function.Embedding.coeFn_mk]
+            exact ⟨x, hx, rfl⟩
+          simp only [e_neg, hmem, ↓reduceDIte]
+          norm_cast
+          exact Int.toNat_of_nonneg (le_of_lt h_neg_pos)
+        -- Step 6: Apply the helpers via prod_congr
+        calc ∏ x ∈ s_pos, ((x : ℕ) : ℝ) ^ (e_pos (x : ℕ) : ℝ)
+            = ∏ x ∈ s_pos, ((x : ℕ) : ℝ) ^ (z x : ℝ) := by
+              apply Finset.prod_congr rfl; intro x hx; congr 1; exact h_pos_match x hx
+          _ = ∏ x ∈ s_neg, ((x : ℕ) : ℝ) ^ (-(z x) : ℝ) := h_real_prod
+          _ = ∏ x ∈ s_neg, ((x : ℕ) : ℝ) ^ (e_neg (x : ℕ) : ℝ) := by
+              apply Finset.prod_congr rfl; intro x hx; congr 1; exact (h_neg_match x hx).symm
 
       -- For s_neg, use the symmetric argument
       have h_all_zero_neg : ∀ n ∈ toNatFinset s_neg, e_neg n = 0 := by
