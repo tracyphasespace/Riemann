@@ -283,13 +283,22 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 
 | Metric | Count |
 |--------|-------|
-| Essential files | **4** core + **9** ProofEngine (includes AnalyticBasics.lean) |
-| Total axioms | **16** (see `llm_input/AXIOM_REVIEW.md` for full list) |
-| Proven theorems | **13** (AnalyticBasics + Residues + GeometricSieve + Convexity) |
+| Essential files | **4** core + **10** ProofEngine (includes SpectralBridge.lean) |
+| Total axioms | **15** (see `llm_input/AXIOM_REVIEW.md` for full list) |
+| Proven theorems | **15** (AnalyticBasics + Residues + GeometricSieve + Convexity + SpectralBridge) |
 | Explicit hypotheses | **5** (passed as theorem arguments) |
 | Remaining sorries | **0** |
 
-**Recent Progress (2026-01-22):**
+**Recent Progress (2026-01-23):**
+- **SpectralBridge.lean** - M4 Partial Discharge (NEW):
+  - `K_is_diagonal` - K(s) acts diagonally on basis vectors: K(s)eₙ = λₙ(s)·eₙ
+  - `kernel_iff_zero_eigenvalue` - ker K(s) ≠ {0} ⟺ ∃n, λₙ(s) = 0
+  - Refined axiom `zeta_zero_implies_eigenvalue_zero` is purely arithmetic
+  - Uses `lp.single` for ℓ²(ℂ) basis vectors, `lp.coeFn_*` API for pointwise evaluation
+- **ScalarBridge.lean** - M3 Discharged via Mathlib's `riemannZeta_eulerProduct_tprod`
+- **BakerRepulsion.lean** - DELETED (axiom was mathematically false due to Kronecker's theorem)
+
+**Previous Progress (2026-01-22):**
 - `fta_all_exponents_zero` in DiophantineGeometry.lean - **PROVEN** (was 2 sorries - h_nat_prod in Cases 3&4)
 - `primeBivector_sq_proven` + `primeBivectors_commute_proven` in CliffordAxioms.lean - **PROVEN** (was 5 sorries)
 - `second_deriv_normSq_eq` in Convexity.lean - **PROVEN** (was 1 sorry)
@@ -310,7 +319,9 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 - NumericalAxioms.lean ✓
 - PrimeSumApproximation.lean ✓
 - Residues.lean ✓
+- ScalarBridge.lean ✓ (NEW)
 - SieveAxioms.lean ✓
+- SpectralBridge.lean ✓ (NEW)
 
 **MotorCore.lean** (ZetaSurface/MotorCore.lean):
 - Block-diagonal motor proof infrastructure - ALL lemmas proven, no sorries
@@ -1157,4 +1168,4 @@ example : (a + b) + c = a + (b + c) := by rw?  -- Suggests: rw [add_assoc]
 
 ---
 
-*Updated 2026-01-23 | BUILD PASSES | 18 AXIOMS | 5 Explicit Hypotheses | Core chain sorry-free | Two-AI workflow added*
+*Updated 2026-01-23 | BUILD PASSES | 15 AXIOMS | 5 Explicit Hypotheses | Core chain sorry-free | M4 partially discharged*
