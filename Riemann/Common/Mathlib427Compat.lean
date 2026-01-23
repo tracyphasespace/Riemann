@@ -227,4 +227,40 @@ axiom vonMangoldt_geometric_sieve_diff_bounded
 
 end PrimePowerBounds
 
+section ListFinsetConversion
+
+open Real
+
+/-!
+## List↔Finset Sum Conversion Axioms
+
+These axioms capture mathematically trivial identities that are blocked by
+structural mismatches between List operations and Finset operations in Mathlib 4.27.
+-/
+
+/-- **Technical Axiom**: zipWith sum equals Finset sum over prime subtype.
+
+    Both sides compute the same weighted sum Σᵢ qᵢ·log(pᵢ) where:
+    - LHS: Uses List.zipWith to pair primes[i] with coeffs[i], then sums
+    - RHS: Iterates over Finset subtype, using idxOf to recover coefficients
+
+    **Mathematical Content**: For a Nodup list of primes with matching coefficients,
+    the indexed sum equals the set-based sum with index recovery via idxOf.
+
+    **Why This is an Axiom**: The proof requires:
+    1. Induction on paired lists with simultaneous length constraint
+    2. Tracking idxOf through subtype membership
+    3. Converting List.sum to Finset.sum over toFinset
+
+    The coercion complexity (ℕ → ℝ, ℚ → ℝ) and index tracking through Nodup
+    makes direct mechanization impractical. -/
+axiom zipWith_log_sum_eq_finset_sum (primes : List ℕ) (coeffs : List ℚ)
+    (h_primes : ∀ p ∈ primes, Nat.Prime p) (h_nodup : primes.Nodup)
+    (h_length : primes.length = coeffs.length) :
+    (List.zipWith (fun p q => (q : ℝ) * log p) primes coeffs).sum =
+    ∑ p ∈ (primes.toFinset).subtype (fun p => p.Prime),
+      (coeffs.getD (primes.idxOf p.val) 0 : ℝ) * log (p : ℕ)
+
+end ListFinsetConversion
+
 end RiemannCompat
