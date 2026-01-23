@@ -1,4 +1,4 @@
-# Plan: Prove `complex_sieve_symmetry`
+# Plan: Prove `snr_diverges_to_infinity` in InteractionTerm.lean
 
 **RESTART CHECKPOINT**: If stuck for >3 attempts on any step, STOP and re-read this plan.
 
@@ -7,87 +7,97 @@
 ## Problem Statement
 
 ```lean
-lemma complex_sieve_symmetry (σ t : ℝ) :
-    ‖ComplexSieveCurve σ t‖ = ‖ComplexSieveCurve (1 - σ) t‖
+theorem snr_diverges_to_infinity (primes : List ℕ)
+    (h_corr : PairCorrelationBound primes)
+    (_h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
+    Tendsto (fun t => IdealEnergy primes.toFinset t / |InteractionEnergy primes.toFinset t|)
+            atTop atTop
 ```
 
 Where:
 ```lean
-def ComplexSieveCurve (σ : ℝ) (t : ℝ) : ℂ :=
-  riemannXi (σ + t * I)
+structure PairCorrelationBound (primes : List ℕ) : Prop where
+  α : ℝ
+  hα_lt : α < 1
+  h_bound : ∀ t, |InteractionEnergy primes.toFinset t| ≤ (IdealEnergy primes.toFinset t) ^ α
 ```
 
-## Root Cause Analysis
+## Mathematical Content
 
-After `simp only [ComplexSieveCurve]`, the goal becomes:
-```
-‖riemannXi (↑σ + ↑t * I)‖ = ‖riemannXi (↑(1 - σ) + ↑t * I)‖
-```
+Given:
+- Signal S(t) = IdealEnergy → ∞ as t → ∞
+- Noise N(t) = |InteractionEnergy| ≤ S(t)^α where α < 1
 
-**KEY INSIGHT**: The RHS has `↑(1 - σ)` (coercion of subtraction) which is **syntactically different** from `(1 : ℂ) - ↑σ` even though they're propositionally equal via `Complex.ofReal_sub`.
+Prove: S(t)/N(t) → ∞
+
+**Key insight**: S/N ≥ S/S^α = S^(1-α) → ∞ since 1-α > 0 and S → ∞
 
 ---
 
-## Strategy: Work Backwards from Goal Form
+## Step 1: Find Mathlib API
 
-Instead of fighting the coercion, **express the calc chain in the SAME form as the goal**.
+Need to find:
+- [ ] `Tendsto.div_atTop` or similar for f/g → ∞
+- [ ] `Tendsto.rpow` for S^(1-α) → ∞ when S → ∞ and 1-α > 0
+- [ ] Comparison lemma: if g ≤ f and f → ∞, then f/g ≥ f/f^α
 
-The goal RHS is: `riemannXi (↑(1 - σ) + ↑t * I)`
-
-So our atomic lemma should be:
-```lean
-(1 : ℂ) - (↑σ + ↑t * I) = starRingEnd ℂ (↑(1 - σ) + ↑t * I)
+**Search patterns**:
 ```
-
-NOT:
-```lean
-(1 : ℂ) - (↑σ + ↑t * I) = starRingEnd ℂ ((1 - σ : ℂ) + ↑t * I)  -- WRONG: becomes 1 - ↑σ
-```
-
----
-
-## Atomic Lemmas (in order)
-
-### Step 1: Verify Cast Shim Exists
-```lean
-#check Complex.ofReal_sub  -- ↑(r - s) = ↑r - ↑s
-```
-**Action**: Verify API exists ✓ (already done)
-
-### Step 2: Atomic Lemma - Conjugate with Explicit Cast
-```lean
-private lemma conj_explicit (σ t : ℝ) :
-    (1 : ℂ) - (↑σ + ↑t * I) = starRingEnd ℂ (↑(1 - σ) + ↑t * I) := by
-  -- Use Complex.ofReal_sub to unify casts, then Complex.ext
-  rw [Complex.ofReal_sub, Complex.ofReal_one]  -- now both sides have 1 - ↑σ
-  rw [starRingEnd_apply]
-  apply Complex.ext <;> simp [...]
-```
-
-**Test with aesop first**, then manual if needed.
-
-### Step 3: Main Lemma Using Explicit Form
-```lean
-lemma complex_sieve_symmetry (σ t : ℝ) :
-    ‖ComplexSieveCurve σ t‖ = ‖ComplexSieveCurve (1 - σ) t‖ := by
-  simp only [ComplexSieveCurve]
-  -- Goal: ‖riemannXi (↑σ + ↑t * I)‖ = ‖riemannXi (↑(1 - σ) + ↑t * I)‖
-  calc ‖riemannXi (↑σ + ↑t * I)‖
-      = ‖riemannXi (1 - (↑σ + ↑t * I))‖ := by rw [riemannXi_symmetric]
-    _ = ‖riemannXi (starRingEnd ℂ (↑(1 - σ) + ↑t * I))‖ := by rw [conj_explicit]
-    _ = ‖starRingEnd ℂ (riemannXi (↑(1 - σ) + ↑t * I))‖ := by rw [riemannXi_conj]
-    _ = ‖riemannXi (↑(1 - σ) + ↑t * I)‖ := norm_conj _
+Tendsto.*atTop.*atTop
+rpow.*tendsto
+div.*tendsto.*atTop
 ```
 
 ---
 
-## Checkpoint Protocol
+## Step 2: Atomic Lemmas
 
-After EACH step:
-1. ✅ Run `lake env lean --stdin` test
-2. ✅ If fails, check error message
-3. ✅ If >3 attempts fail, STOP and re-read this plan
-4. ✅ Update status below
+### Lemma A: Power with positive exponent diverges
+```lean
+lemma tendsto_rpow_atTop_of_pos (h : 0 < β) :
+    Tendsto (fun x => x ^ β) atTop atTop
+```
+
+### Lemma B: Division lower bound
+```lean
+lemma div_ge_of_le_rpow (hS : 0 < S) (hN : N ≤ S ^ α) (hα : α < 1) :
+    S / N ≥ S ^ (1 - α)
+```
+
+### Lemma C: Composition gives divergence
+```lean
+-- If S → ∞ and S^(1-α) → ∞, and S/N ≥ S^(1-α), then S/N → ∞
+```
+
+---
+
+## Step 3: Proof Strategy
+
+1. Extract α, hα_lt, h_bound from h_corr
+2. Show 1 - α > 0 from hα_lt
+3. Show S^(1-α) → ∞ using _h_signal_grows and rpow tendsto
+4. Show S/N ≥ S^(1-α) using h_bound
+5. Conclude S/N → ∞ by comparison
+
+---
+
+## Step 4: Implementation
+
+```lean
+theorem snr_diverges_to_infinity ... := by
+  obtain ⟨α, hα_lt, h_bound⟩ := h_corr
+  have h_exp_pos : 0 < 1 - α := by linarith
+  -- S^(1-α) → ∞
+  have h_power_diverges : Tendsto (fun t => (IdealEnergy primes.toFinset t) ^ (1 - α)) atTop atTop := by
+    exact Tendsto.rpow_const _h_signal_grows (Or.inl h_exp_pos) -- or similar
+  -- S/N ≥ S^(1-α) eventually
+  have h_lower : ∀ᶠ t in atTop, IdealEnergy ... / |InteractionEnergy ...| ≥ ... ^ (1 - α) := by
+    filter_upwards with t
+    have hN := h_bound t
+    -- division manipulation
+  -- Conclude
+  exact Tendsto.atTop_of_eventually_ge h_power_diverges h_lower -- or similar
+```
 
 ---
 
@@ -95,29 +105,12 @@ After EACH step:
 
 | Step | Status | Attempts | Notes |
 |------|--------|----------|-------|
-| 1. API verify | ✅ DONE | 1 | ofReal_sub, norm_conj exist |
-| 2. Atomic lemma | ✅ DONE | 2 | Cast shim + Complex.ext worked |
-| 3. Main lemma | ✅ DONE | 2 | Full calc chain verified |
-| 4. Apply to file | ✅ DONE | 1 | PrimeRotor.lean compiles |
-
-## SUCCESS! `complex_sieve_symmetry` PROVEN
-
-**Key insight**: Use `↑(1 - σ)` form (not `((1-σ) : ℂ)`) to match goal form after unfold.
-**Cast shim**: `Complex.ofReal_sub` + `Complex.ofReal_one` aligns syntactic forms.
-**Rosetta Stone**: `Complex.ext` with explicit simp lemmas for real/imag parts.
-
----
-
-## Tools to Use (in order)
-
-1. **Loogle/grep**: Find exact API signatures
-2. **aesop**: Try automated proof first
-3. **Complex.ext**: Rosetta Stone for ℂ arithmetic
-4. **simp with explicit lemmas**: Avoid bare `simp`
-5. **Cast shim**: `ofReal_sub.symm` to align forms
+| 1. API search | 🔄 TODO | 0 | Find Mathlib tendsto/rpow lemmas |
+| 2. Atomic lemmas | 🔄 TODO | 0 | Test with aesop |
+| 3. Main proof | 🔄 TODO | 0 | Combine atomics |
 
 ---
 
 ## Next Action
 
-**EXECUTE STEP 2**: Test atomic lemma with explicit `↑(1 - σ)` form.
+**EXECUTE STEP 1**: Search for Mathlib API for tendsto + rpow + division.

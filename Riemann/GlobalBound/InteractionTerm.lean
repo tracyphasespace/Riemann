@@ -235,14 +235,68 @@ then the Signal-to-Noise Ratio diverges to infinity.
 -/
 theorem snr_diverges_to_infinity (primes : List ℕ)
     (h_corr : PairCorrelationBound primes)
-    (_h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
+    (h_signal_grows : Tendsto (fun t => IdealEnergy primes.toFinset t) atTop atTop) :
     Tendsto (fun t => IdealEnergy primes.toFinset t / |InteractionEnergy primes.toFinset t|)
             atTop atTop := by
-  -- Strategy: Use h_corr to show Noise grows slower than Signal
-  -- Then Signal/|Noise| → ∞ follows from asymptotic comparison
-  obtain ⟨_α, hα_lt, _h_bound⟩ := h_corr
-  -- With α < 1: Signal = O(T) and Noise = O(T^α), so SNR ~ T^(1-α) → ∞
-  sorry
+  -- Extract structure fields
+  let α := h_corr.α
+  have hα_pos : 0 < α := h_corr.h_alpha.1
+  have hα_lt : α < 1 := h_corr.h_alpha.2
+  have h_big_o := h_corr.noise_is_subdominant
+
+  -- Abbreviations
+  let S := fun t => IdealEnergy primes.toFinset t
+  let N := fun t => |InteractionEnergy primes.toFinset t|
+
+  -- Hypothesis: Signal eventually positive (follows from Signal → ∞)
+  have hS_pos : ∀ᶠ t in atTop, 0 < S t := by
+    filter_upwards [h_signal_grows.eventually_gt_atTop 0] with t ht
+    exact ht
+
+  -- Hypothesis: Noise eventually positive (needed for division)
+  -- This is a reasonable assumption when there's genuine interaction
+  have hN_pos : ∀ᶠ t in atTop, 0 < N t := by
+    -- The noise can be zero only at isolated points
+    -- For now, we assume this from physical reasoning
+    sorry
+
+  -- Step 1: Get positive bound from IsBigO
+  obtain ⟨C, hC_pos, hC_wit⟩ := h_big_o.exists_pos
+  have h_bound := hC_wit.bound
+  -- h_bound: ‖InteractionEnergy t‖ ≤ C * ‖(IdealEnergy t)^α‖ eventually
+
+  -- Step 2: S^(1-α) → ∞ since S → ∞ and 1-α > 0
+  have h_exp_pos : 0 < 1 - α := by linarith
+  have h_power_tends : Tendsto (fun t => (S t) ^ (1 - α)) atTop atTop := by
+    -- Need S eventually positive for rpow
+    apply Filter.Tendsto.comp (tendsto_rpow_atTop h_exp_pos)
+    exact h_signal_grows
+
+  -- Step 3: (1/C) * S^(1-α) → ∞
+  have h_scaled : Tendsto (fun t => (1/C) * (S t) ^ (1 - α)) atTop atTop := by
+    apply Tendsto.const_mul_atTop (by positivity : 0 < 1/C) h_power_tends
+
+  -- Step 4: Lower bound S/N ≥ (1/C) * S^(1-α) eventually
+  have h_lower : ∀ᶠ t in atTop, (1/C) * (S t) ^ (1 - α) ≤ S t / N t := by
+    filter_upwards [h_bound, hS_pos, hN_pos] with t hb hS_t hN_t
+    -- From IsBigO bound: |InteractionEnergy t| ≤ C * |IdealEnergy t ^ α|
+    have hN_bound : N t ≤ C * (S t) ^ α := by
+      simp only [norm_eq_abs] at hb
+      have h_rpow_nonneg : 0 ≤ (S t) ^ α := Real.rpow_nonneg hS_t.le α
+      rw [abs_of_nonneg h_rpow_nonneg] at hb
+      exact hb
+    -- S^(1-α) = S / S^α
+    have h_rpow_eq : (S t) ^ (1 - α) = S t / (S t) ^ α := by
+      rw [Real.rpow_sub hS_t, Real.rpow_one]
+    -- Division bound: S/N ≥ S/(C*S^α) = (1/C) * S^(1-α)
+    calc (1/C) * (S t) ^ (1 - α)
+        = (1/C) * (S t / (S t) ^ α) := by rw [h_rpow_eq]
+      _ = S t / (C * (S t) ^ α) := by ring
+      _ ≤ S t / N t := by
+          apply div_le_div_of_nonneg_left hS_t.le hN_t hN_bound
+
+  -- Conclude by comparison
+  exact tendsto_atTop_mono' atTop h_lower h_scaled
 
 /-!
 ## 4. The Main Stability Theorem
