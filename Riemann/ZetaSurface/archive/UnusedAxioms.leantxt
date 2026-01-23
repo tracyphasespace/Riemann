@@ -1,0 +1,48 @@
+/-
+# Unused Axioms - Archived 2026-01-23
+
+These axioms were found to have 0 references in the codebase and were
+removed from the proof chain.
+
+## 1. equidistribution_bound (from BridgeObligations.lean:262)
+
+```lean
+/-- Quantitative equidistribution hypothesis -/
+axiom equidistribution_bound (x : ℝ) (t : ℝ) (hx : 1 < x) :
+    |∑ p ∈ Finset.filter Nat.Prime (Finset.range ⌊x⌋₊),
+      Real.cos (t * Real.log p)| ≤ Real.sqrt x * (Real.log x) ^ 2
+```
+
+**Purpose**: CLT-type bound on prime cosine sums.
+**Why Deleted**: Never used in any proof. The equidistribution property was
+intended for an alternative proof strategy that was never implemented.
+
+## 2. scalarPart (from CliffordFoundation.lean:60)
+
+```lean
+-- Extracts the scalar (real) part of a Clifford element
+-- (Implementation requires CliffordAlgebra.Proj)
+axiom scalarPart (n : ℕ) : ClElement n → ℝ
+```
+
+**Purpose**: Abstract interface for scalar projection from Clifford algebra.
+**Why Deleted**: The concrete Clifford implementation uses different approach
+(diagonal operators in ℓ²). This abstract interface was never connected to
+any proof chain.
+
+---
+
+## Verification
+
+Run this to confirm these axioms are still unused:
+```bash
+grep -rn "equidistribution_bound\|scalarPart" Riemann --include="*.lean" | grep -v archive | grep -v "-- "
+```
+
+If this returns no results (excluding comments), the axioms remain unused.
+
+---
+
+*Archived by: AI1 (Claude Opus 4.5)*
+*Date: 2026-01-23*
+-/

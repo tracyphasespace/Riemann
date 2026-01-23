@@ -258,10 +258,11 @@ Options:
 2. Isolate as explicit hypothesis (then RH is conditional)
 -/
 
-/-- Quantitative equidistribution hypothesis -/
-axiom equidistribution_bound (x : ℝ) (t : ℝ) (hx : 1 < x) :
-    |∑ p ∈ Finset.filter Nat.Prime (Finset.range ⌊x⌋₊),
-      Real.cos (t * Real.log p)| ≤ Real.sqrt x * (Real.log x) ^ 2
+-- DELETED (2026-01-23): equidistribution_bound - UNUSED (0 references in codebase)
+-- Archived to: ZetaSurface/archive/UnusedAxioms.leantxt
+-- axiom equidistribution_bound (x : ℝ) (t : ℝ) (hx : 1 < x) :
+--     |∑ p ∈ Finset.filter Nat.Prime (Finset.range ⌊x⌋₊),
+--       Real.cos (t * Real.log p)| ≤ Real.sqrt x * (Real.log x) ^ 2
 
 /-!
 ## Summary: Complete Proof Status
@@ -275,7 +276,7 @@ axiom equidistribution_bound (x : ℝ) (t : ℝ) (hx : 1 < x) :
 | M5a (Rayleigh) | Axiom | Discharge via bilinear algebra |
 | M5b (Positivity) | Axiom | Discharge via sum of squares |
 | M5c (Omega zero) | Axiom | Trivial once Omega defined |
-| Equidistribution | Axiom | Optional/conditional |
+| Equidistribution | ~~Axiom~~ | DELETED (unused) |
 
 **Theorem `RH_algebraic_core` is COMPLETE** modulo these 8 axioms.
 The axioms isolate exactly the bridge work needed for classical RH.
