@@ -34,30 +34,43 @@
 
 ---
 
-## WORK MODE: TWO-AI SYSTEMATIC (See CLAUDE.md for full details)
+## WORK MODE: PARALLEL WORKTREES (NEW 2026-01-23)
 
-**AI1 (Builder)**: Runs builds, debugs errors, owns build lock
-**AI2 (Scanner)**: Scans files, applies Loogle/exact?, annotates failures
+**AI1 and AI2 can now build simultaneously** using separate Git worktrees:
 
-### ⚠️ AI2 CRITICAL REMINDER ⚠️
-**DO NOT run `lake` or `lake build` without checking CLAUDE.md lock table first!**
-- Check: `pgrep -x lake || echo "No lake process running"`
-- Read CLAUDE.md lines 18-20 for lock status
-- If locked, DO NOT BUILD - just edit files and annotate
+| AI | Worktree Path | Branch |
+|----|---------------|--------|
+| **AI1** | `/home/tracy/development/Riemann/Lean` | `main` |
+| **AI2** | `/home/tracy/development/Riemann/Lean-AI2` | `ai2-batch` |
+
+**Key Change**: Each worktree has its own `.lake/build/` directory, so both AIs can run `lake build` without conflicts!
+
+### AI2 Instructions (Updated)
+1. **Work in the Lean-AI2 directory**: `cd /home/tracy/development/Riemann/Lean-AI2`
+2. **Run builds freely**: `lake build` - no lock needed!
+3. **Commit to ai2-batch branch**: Changes auto-save to `ai2-batch`
+4. **Push when done**: `git push origin ai2-batch`
+
+### Merge Protocol (AI1 runs this after AI2 pushes)
+```bash
+git fetch origin
+git merge ai2-batch  # Auto-merges if file sets are disjoint
+git push origin main
+```
 
 ---
 
-## FILE ASSIGNMENTS (2026-01-23) - AVOID CONFLICTS
+## FILE ASSIGNMENTS (2026-01-23) - PARALLEL WORKTREES
 
-### AI1 Exclusive Files (Builder - compile/debug focus):
+### AI1 Files (main worktree: `/home/tracy/development/Riemann/Lean`)
 | File | Sorries | Priority | Notes |
 |------|---------|----------|-------|
 | ExplicitFormula.lean | 3 | HIGH | Continuity + series bounds |
-| TraceAtFirstZero.lean | 2 | HIGH | Interval arithmetic |
+| TraceAtFirstZero.lean | 3 | HIGH | Interval arithmetic |
 | CliffordZetaMasterKey.lean | 4 | MED | Complex Clifford algebra |
 | AnalyticBridgeEuler.lean | 1 | LOW | Euler product work |
 
-### AI2 Exclusive Files (Scanner - API search focus):
+### AI2 Files (ai2-batch worktree: `/home/tracy/development/Riemann/Lean-AI2`)
 | File | Sorries | Priority | Notes |
 |------|---------|----------|-------|
 | AnalyticAxioms.lean | 1 | HIGH | Schwarz reflection - search Mathlib |
