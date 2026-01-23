@@ -344,9 +344,22 @@ This is a Lean 4 formalization of the Riemann Hypothesis using the CliffordRH Cl
 1. `AdmissiblePrimeApproximation s primes` - Explicit Formula error bounds
 2. `EnergyIsConvexAtHalf s.im` - Energy convexity at critical line
 
+**Consolidated Axiom Index**: See `ProofEngine/AllAxioms.lean` for a complete table of all 21 axioms and 5 hypotheses with their locations and purposes.
+
 **Philosophy**: Axioms capture genuine mathematical facts from analytic number theory
 that would require extensive Mathlib development to prove from scratch. This is
 preferable to scattered `sorry` statements that obscure the proof structure.
+
+**WARNING - Broken Axiom Files** (not on main build path):
+These files contain axioms but have broken proofs that prevent compilation:
+- `ProofEngine/ExplicitFormulaAxioms.lean` - finite_sum_approx_analytic_axiom
+- `ProofEngine/AnalyticBridge.lean` - rayleigh_decomposition_axiom
+- `GlobalBound/Ergodicity.lean` - prime_logs_linear_independent_axiom, etc.
+- `GlobalBound/ArithmeticGeometry.lean` - signal_diverges_axiom
+- `ZetaSurface/UniversalStiffness.lean` - universal_monotonicity_from_orthogonality_axiom
+
+These files are NOT imported by the main theorem chain, so the build passes. However,
+they represent incomplete work that should be fixed or archived.
 
 **GeometricBridge** (in `ProofEngine/GeometricBridge.lean`):
 
