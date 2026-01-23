@@ -3,6 +3,7 @@
 **Last Updated**: 2026-01-22 (fta_all_exponents_zero PROVEN!)
 **Build Status**: PASSING
 **Total Sorries**: ~35 actual in .lean files (verified 2026-01-22 build)
+**Note**: sandbox/ excluded from count (test files only)
 **Critical Path**: SORRY-FREE ✓
 
 ### Recent Proofs (AI1):
@@ -258,6 +259,35 @@ loogle "Tendsto ?f ?l atTop"  # → limit lemmas
 - Chain helpers together for final proof
 - Helps identify exactly which API is failing
 
+### 5. Type Mismatch Strategy (ℕ ↔ ℝ ↔ ℤ) ✓ NEW
+When stuck on casting issues between number types:
+1. **Work in ℝ first** - prove equality there (more lemmas available)
+2. **Use `Nat.cast_injective`** - transfer ℝ equality back to ℕ
+3. **`push_cast`** - distributes casts through products/sums
+4. **`norm_cast`** - normalizes cast expressions
+5. **`Int.toNat_of_nonneg`** - converts ℤ → ℕ when non-negative
+
+### 6. When Stuck, Try `aesop?` ✓ NEW
+- `aesop?` often finds non-obvious simplification strategies
+- Example: found `simp_all only [Real.rpow_natCast]` for product casting
+- Also try `exact?`, `apply?` before giving up
+
+### 7. Finset Product/Sum Lemma Pattern ✓ NEW
+```lean
+-- Standard induction pattern for Finset products
+induction s using Finset.induction_on with
+| empty => simp
+| insert a s' h_not_mem ih =>
+  rw [Finset.prod_insert h_not_mem, ...]
+  -- use ih for the tail
+```
+
+### 8. Two-AI Collaboration Pattern ✓ PROVEN
+The fta_all_exponents_zero success came from:
+- **AI2**: Built atomic helpers, identified exact blocker
+- **AI1**: Added bridge lemmas to complete proof
+- **Key**: Clear documentation of what's blocking enables targeted fixes
+
 ---
 
 ## Techniques Reference
@@ -294,6 +324,45 @@ filter_upwards [self_mem_nhdsWithin] with σ hσ
 -- or
 rw [Filter.Eventually, Filter.mem_nhds_iff] at h
 obtain ⟨s, hs_sub, hs_open, hx_s⟩ := h
+```
+
+### ℕ/ℝ Product Casting (FTA Bridge) ✓ NEW
+```lean
+-- Cast ℕ product to ℝ product with rpow (proven in DiophantineGeometry.lean)
+lemma cast_prod_pow_eq (s : Finset ℕ) (e : ℕ → ℕ) :
+    (↑(∏ n ∈ s, n ^ e n) : ℝ) = ∏ n ∈ s, (↑n : ℝ) ^ (↑(e n) : ℝ) := by
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s' h_not_mem ih =>
+    rw [Finset.prod_insert h_not_mem, Finset.prod_insert h_not_mem]
+    push_cast
+    have h_prod : (∏ x ∈ s', (↑x : ℝ) ^ e x) = ↑(∏ n ∈ s', n ^ e n) := by
+      simp only [Nat.cast_prod, Nat.cast_pow]
+    rw [h_prod, ih, ← Real.rpow_natCast]
+
+-- ℕ products equal if ℝ products equal (injectivity)
+lemma prod_eq_of_real_prod_eq (s t : Finset ℕ) (e f : ℕ → ℕ)
+    (h : ∏ n ∈ s, ((n : ℝ) ^ (e n : ℝ)) = ∏ n ∈ t, ((n : ℝ) ^ (f n : ℝ))) :
+    s.prod (fun n => n ^ e n) = t.prod (fun n => n ^ f n) := by
+  apply Nat.cast_injective (R := ℝ)
+  rw [cast_prod_pow_eq, cast_prod_pow_eq]
+  exact h
+```
+
+### Sum↔Product via exp/log (FTA Alternative)
+```lean
+-- exp(∑ z * log p) = ∏ p^z (for positive bases)
+exp_sum_mul_log' (s : Finset ι) (z : ι → ℝ) (p : ι → ℝ)
+    (hp : ∀ i ∈ s, 0 < p i) :
+    Real.exp (∑ i ∈ s, z i * Real.log (p i)) = ∏ i ∈ s, (p i) ^ (z i)
+-- Use: Convert sum equality to product equality, then apply casting lemmas
+```
+
+### Finset.prod_congr (Term-by-Term Matching)
+```lean
+-- When products differ only in term functions
+Finset.prod_congr rfl (fun x hx => by congr 1; exact h_match x hx)
+-- Use with norm_cast + Int.toNat_of_nonneg for exponent alignment
 ```
 
 ---
