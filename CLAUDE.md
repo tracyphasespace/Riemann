@@ -8,12 +8,13 @@
 4. [Proof Architecture](#proof-architecture)
 5. [Real vs Complex Architecture](#real-vs-complex-architecture)
 6. [Cl(3,3) Geometric Framework](#the-cl33-geometric-framework)
-7. [Mathlib 4.27 API Reference](#mathlib-4-api-reference-critical)
-8. [Mathlib 4.27 API Patterns](#mathlib-427-api-patterns)
-9. [Taylor's Theorem & Calculus API](#taylors-theorem--calculus-api)
-10. [Proof Search Tactics](#proof-search-tactics-lean-427)
-11. [Sorry Verification Protocol](#sorry-verification-protocol-critical)
-12. [Using Aristotle](#using-aristotle-harmonics-lean-424-agent)
+7. [Mathlib 4.27+ API Discovery](#mathlib-427-api-discovery-do-not-remove) ← **ESSENTIAL**
+8. [Mathlib 4 API Reference](#mathlib-4-api-reference-critical)
+9. [Mathlib 4.27 API Patterns](#mathlib-427-api-patterns)
+10. [Taylor's Theorem & Calculus API](#taylors-theorem--calculus-api)
+11. [Proof Search Tactics](#proof-search-tactics-lean-427)
+12. [Sorry Verification Protocol](#sorry-verification-protocol-critical)
+13. [Using Aristotle](#using-aristotle-harmonics-lean-424-agent)
 
 ---
 
@@ -247,6 +248,80 @@ f(x) = f(1-x) ⟹ f'(1/2) = 0
 ```lean
 Analytic > M ∧ |Finite + Analytic| < E ∧ M > E ⟹ Finite < 0
 -- Method: linarith
+```
+
+---
+
+## Mathlib 4.27+ API Discovery (DO NOT REMOVE)
+
+<!--
+WARNING TO AI ASSISTANTS: This section contains ESSENTIAL techniques for finding
+Mathlib APIs. DO NOT remove or "simplify" this section during document updates.
+These techniques were learned through painful trial and error.
+-->
+
+Loogle often lags behind rc1 versions. Use these four methods:
+
+### Method A: GitHub File Search (Most Effective)
+
+1. Go to [github.com/leanprover-community/mathlib4](https://github.com/leanprover-community/mathlib4)
+2. Press `t` (activates file finder)
+3. Type the concept name, e.g., `PrimeCounting`
+4. See result: `Mathlib/NumberTheory/Primes/Counting.lean`
+5. **Import**: Replace `/` with `.`: `import Mathlib.NumberTheory.Primes.Counting`
+
+### Method B: VS Code `apply?` with Hover
+
+```lean
+example (n : ℕ) : ℕ := by
+  apply?  -- Lean suggests: "exact Nat.primeCounting n"
+```
+Then **hover** over the suggested function to see its source file → add that import.
+
+### Method C: `#find` for Renamed Constants
+
+```lean
+import Mathlib.NumberTheory.Primes.Counting  -- Guess import first
+#find "primeCounting"  -- Lists all matching theorems/defs
+```
+
+### Method D: Local grep (Fastest, Works Offline)
+
+```bash
+grep -rn "primeCounting" .lake/packages/mathlib/ | head -20
+grep -rn "^def primeCounting\|^theorem primeCounting" .lake/packages/mathlib/
+```
+
+### Key 4.27 Migration Patterns
+
+| Old Location | New Location |
+|-------------|--------------|
+| `Data.Nat.Primes` | `NumberTheory.Primes.*` |
+| `Data.Nat.Basic` | `Algebra.Order.Ring.Nat` or `Data.Nat.Defs` |
+| `open BigOperators` (magic) | `import Mathlib.Algebra.BigOperators.Group.Finset` |
+| `List` returns | Often `Finset` now (use `.toList` if needed) |
+
+### BigOperators Import Fix
+
+```lean
+-- OLD (may not work):
+open BigOperators
+
+-- NEW (explicit import required):
+import Mathlib.Algebra.BigOperators.Group.Finset  -- For Σ, ∏ over Finset
+import Mathlib.Algebra.BigOperators.Group.List    -- For List.sum, List.prod
+
+open BigOperators Real Nat Topology Filter
+```
+
+### Finset vs List Migration
+
+```lean
+-- Nat.primesBelow now returns Finset, not List
+let primes := (Nat.primesBelow N).toList
+
+-- Check membership
+rw [Finset.mem_toList, Nat.mem_primesBelow] at hp
 ```
 
 ---
@@ -535,4 +610,13 @@ example : (a + b) + c = a + (b + c) := by rw?  -- Suggests: rw [add_assoc]
 
 ---
 
-*Updated 2026-01-23 | Status & coordination: see llm_input/Communications.md*
+## Related Documents
+
+- **llm_input/Communications.md** - Build status, locks, coordination
+- **llm_input/NS.md** - Navier-Stokes project guide (lessons learned from RH)
+- **llm_input/AXIOM_REVIEW.md** - Complete axiom documentation
+- **Riemann/ProofEngine/PROOF_CERTIFICATE.txt** - Axiom dependencies for key theorems
+
+---
+
+*Updated 2026-01-24 | RH Build: PASSING | 0 sorries | 15 axioms | Next: Navier-Stokes (see NS.md)*
