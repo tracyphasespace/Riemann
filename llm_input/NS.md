@@ -158,6 +158,94 @@ grep -rn "lemma_name" .lake/packages/mathlib/
 
 ---
 
+## Mathlib 4.27+ API Discovery (DO NOT REMOVE)
+
+<!--
+WARNING TO AI ASSISTANTS: This section contains ESSENTIAL techniques for finding
+Mathlib APIs. DO NOT remove or "simplify" this section during document updates.
+These techniques were learned through painful trial and error.
+-->
+
+Loogle often lags behind rc1 versions. Use these four methods:
+
+### Method A: GitHub File Search (Most Effective)
+
+The file path directly maps to the import path.
+
+1. Go to [github.com/leanprover-community/mathlib4](https://github.com/leanprover-community/mathlib4)
+2. Press `t` (activates file finder)
+3. Type the concept name, e.g., `PrimeCounting`
+4. See result: `Mathlib/NumberTheory/Primes/Counting.lean`
+5. **Import**: Replace `/` with `.`: `import Mathlib.NumberTheory.Primes.Counting`
+
+### Method B: VS Code `apply?` with Hover
+
+Works offline, always matches your actual Mathlib version.
+
+```lean
+example (n : ℕ) : ℕ := by
+  apply?  -- Lean suggests: "exact Nat.primeCounting n"
+```
+
+Then **hover** over the suggested function to see its source file → add that import.
+
+### Method C: `#find` for Renamed Constants
+
+When you know part of the old name:
+
+```lean
+import Mathlib.NumberTheory.Primes.Counting  -- Guess import first
+#find "primeCounting"  -- Lists all matching theorems/defs
+```
+
+### Method D: Local grep (Fastest, Works Offline)
+
+```bash
+# Find all occurrences with context
+grep -rn "primeCounting" .lake/packages/mathlib/ | head -20
+
+# Find definition specifically
+grep -rn "^def primeCounting\|^theorem primeCounting" .lake/packages/mathlib/
+```
+
+### Key 4.27 Migration Patterns
+
+| Old Location | New Location |
+|-------------|--------------|
+| `Data.Nat.Primes` | `NumberTheory.Primes.*` |
+| `Data.Nat.Basic` | `Algebra.Order.Ring.Nat` or `Data.Nat.Defs` |
+| `open BigOperators` (magic) | `import Mathlib.Algebra.BigOperators.Group.Finset` |
+| `List` returns | Often `Finset` now (use `.toList` if needed) |
+
+### BigOperators Import Fix
+
+```lean
+-- OLD (may not work):
+open BigOperators
+
+-- NEW (explicit import required):
+import Mathlib.Algebra.BigOperators.Group.Finset  -- For Σ, ∏ over Finset
+import Mathlib.Algebra.BigOperators.Group.List    -- For List.sum, List.prod
+
+open BigOperators Real Nat Topology Filter
+```
+
+### Finset vs List Migration
+
+```lean
+-- Nat.primesBelow now returns Finset, not List
+-- OLD: let primes := Nat.primesBelow N
+-- NEW:
+let primes := (Nat.primesBelow N).toList
+
+-- Check membership
+-- OLD: p ∈ primes
+-- NEW:
+rw [Finset.mem_toList, Nat.mem_primesBelow] at hp
+```
+
+---
+
 ## Atomic Lemma Decomposition
 
 **Each helper lemma must be:**
