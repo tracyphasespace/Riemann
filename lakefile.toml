@@ -15,5 +15,10 @@ name = "mathlib"
 scope = "leanprover-community"
 version = "v4.27.0-rc1"
 
+[[require]]
+name = "lean4checker"
+scope = "leanprover"
+rev = "bump_to_v4.27.0-rc1"
+
 [[lean_lib]]
 name = "Riemann"
