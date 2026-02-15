@@ -936,24 +936,15 @@ abbrev zero_implies_kernel_axiom (s : ℂ) (hs_strip : 0 < s.re ∧ s.re < 1) :
   fun h => let ⟨v, hv_ne, hv_ker, _, _⟩ := zero_implies_symmetric_kernel s hs_strip h
            ⟨v, hv_ne, hv_ker⟩
 
-/--
-**AXIOM**: Backward direction of kernel↔zero correspondence.
-If there exists a nonzero kernel element, then ζ(s) = 0.
+-- DELETED (2026-02-13): kernel_implies_zero_axiom — NOT needed for RH proof.
+-- The backward direction (kernel → zero) was kept for logical completeness
+-- but added an unnecessary axiom. Only the forward direction is used.
+-- See AXIOM_TRIAGE_2026_02_13.md.
 
-This is NOT needed for the RH proof (which only uses the forward direction).
-Kept for logical completeness of the ↔ statement in `zero_iff_kernel`.
--/
-axiom kernel_implies_zero_axiom (s : ℂ) (hs_strip : 0 < s.re ∧ s.re < 1)
-    (v : Cl_inf) (hv_ne : v ≠ 0) (hv_ker : inKernel v s) :
-    riemannZeta s = 0
-
-theorem zero_iff_kernel (s : ℂ) (hs_strip : 0 < s.re ∧ s.re < 1) :
-    riemannZeta s = 0 ↔ ∃ v : Cl_inf, v ≠ 0 ∧ inKernel v s := by
-  constructor
-  · exact zero_implies_kernel_axiom s hs_strip
-  · -- Backward direction: uses kernel_implies_zero_axiom
-    intro ⟨v, hv_ne, hv_ker⟩
-    exact kernel_implies_zero_axiom s hs_strip v hv_ne hv_ker
+/-- Forward direction only: ζ(s)=0 implies kernel exists -/
+theorem zero_implies_kernel (s : ℂ) (hs_strip : 0 < s.re ∧ s.re < 1) :
+    riemannZeta s = 0 → ∃ v : Cl_inf, v ≠ 0 ∧ inKernel v s :=
+  zero_implies_kernel_axiom s hs_strip
 
 /--
 **The Riemann Hypothesis** (MAIN THEOREM - SYMMETRIZED VERSION)
@@ -1044,11 +1035,11 @@ The coefficient difference p^{-s} - p^{-(1-s)} naturally factors as (σ - 1/2) �
 | `zero_implies_kernel_axiom` | M4: ζ(s)=0 → kernel exists | BridgeObligations |
 | `rayleigh_Phi_pos` | Φ > 0 for v ≠ 0 in critical strip | Stiffness positivity |
 
-## Remaining Sorries (Updated 2026-01-23)
+## Remaining Sorries (Updated 2026-02-13)
 
 | Theorem | Status | Notes |
 |---------|--------|-------|
-| `zero_iff_kernel` (backward) | sorry | Not needed for RH |
+| ~~`zero_iff_kernel` (backward)~~ | DELETED | Was unnecessary axiom, removed 2026-02-13 |
 
 **DELETED** (were FALSE or dependent on false statements):
 - `coeff_sym_factorization_axiom` - FALSE when s.re = 1/2 and s.im ≠ 0

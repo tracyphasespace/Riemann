@@ -1,0 +1,5 @@
+-- Sandbox test file (no active code)
+-- Schwarz reflection for riemannZeta: requires Mathlib infrastructure
+-- (Mellin transform conjugation for real kernels, not yet in Mathlib 4.27)
+-- Tracked as completedRiemannZeta₀_conj_axiom in AristotleContributions.lean.
+-- See llm_input/AXIOM_TRIAGE_2026_02_13.md for status.

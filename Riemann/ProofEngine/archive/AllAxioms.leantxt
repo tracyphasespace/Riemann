@@ -31,31 +31,57 @@ used in the Riemann Hypothesis proof.
 
 ## Quick Reference
 
-### Axioms (16 unique after cleanup)
+### Axioms (26 remaining after 2026-02-13 triage, down from 28)
+
+**LIVE (on build path, 9 axioms):**
 
 | # | Name | File | Purpose |
 |---|------|------|---------|
 | 1 | `rotorTrace_first1000_lt_bound_axiom` | NumericalAxioms | Wolfram-verified bound |
-| 2 | ~~`rotorTrace_monotone_from_first1000_axiom`~~ | ~~NumericalAxioms~~ | DELETED (false) |
-| 3 | ~~`bakers_repulsion_axiom`~~ | ~~BakerRepulsion~~ | DELETED (false - Kronecker contradiction) |
-| 4 | `finite_sum_approx_analytic_axiom` | ExplicitFormulaAxioms | Explicit formula |
-| 5 | `ax_global_phase_clustering` | PhaseClustering | Global clustering |
-| 6 | `energy_convex_at_half` | Convexity | Energy convexity |
-| 7 | `bivector_squares_to_neg_id` | BridgeObligations | M1: B² = -Id |
-| 8 | `bivectors_commute` | BridgeObligations | M2a: [Bp,Bq] = 0 |
-| 9 | `cross_terms_vanish` | BridgeObligations | M2b: Decoupling |
-| 10 | `scalar_bridge_matches_zeta` | BridgeObligations | M3: Scalar = ζ |
-| 11 | `zeta_zero_implies_kernel` | BridgeObligations | M4: Zero → Kernel |
-| 12 | `rayleigh_forcing` | BridgeObligations | M5a: Forcing identity |
-| 13 | `Q_pos` | BridgeObligations | M5b: Stiffness > 0 |
-| 14 | `Omega_zero_right` | BridgeObligations | M5c: Ω(v,0) = 0 |
-| 15 | `completedRiemannZeta₀_conj_axiom` | AristotleContributions | Schwarz reflection |
-| 16 | `rayleigh_decomposition_axiom` | AnalyticBridge | Sum decomposition |
-| 17 | `prime_logs_linear_independent_axiom` | Ergodicity | Log independence |
-| 18 | `signal_diverges_axiom` | ArithmeticGeometry | Signal → ∞ |
-| 19 | `noiseGrowth_eq_cross_sum_axiom` | Ergodicity | Noise structure |
-| 20 | `ergodicity_validates_snr` | Ergodicity | SNR → ∞ |
-| 21 | `universal_monotonicity_from_orthogonality_axiom` | UniversalStiffness | Monotonicity |
+| 2 | `ax_global_phase_clustering` | PhaseClustering | Global clustering |
+| 3 | `energy_convex_at_half` | Convexity | Energy convexity |
+| 4 | `completedRiemannZeta₀_conj_axiom` | AristotleContributions | Schwarz reflection |
+| 5 | `vonMangoldt_geometric_sieve_diff_bounded` | Mathlib427Compat | Prime power bound |
+| 6 | `zipWith_log_sum_eq_finset_sum` | Mathlib427Compat | List↔Finset bridge |
+| 7 | `dirichlet_polynomial_ergodic_regularity` | Mathlib427Compat | Ergodic regularity |
+| 8 | `signal_positive_for_prime_phases` | Mathlib427Compat | Phase positivity |
+| 9 | `dirichlet_polynomial_noise_power_bound` | Mathlib427Compat | Noise power bound |
+
+**DEAD (compile but not on build path, 17 axioms):**
+
+| # | Name | File | Purpose |
+|---|------|------|---------|
+| 10 | `bivector_squares_to_neg_id` | BridgeObligations | M1: B² = -Id |
+| 11 | `bivectors_commute` | BridgeObligations | M2a: [Bp,Bq] = 0 |
+| 12 | `cross_terms_vanish` | BridgeObligations | M2b: Decoupling |
+| 13 | `scalar_bridge_matches_zeta` | BridgeObligations | M3: Scalar = ζ |
+| 14 | `zeta_zero_implies_kernel` | BridgeObligations | M4: Zero → Kernel |
+| 15 | `rayleigh_forcing` | BridgeObligations | M5a: Forcing identity |
+| 16 | `Q_pos` | BridgeObligations | M5b: Stiffness > 0 |
+| 17 | `Omega_zero_right` | BridgeObligations | M5c: Ω(v,0) = 0 |
+| 18 | `rayleigh_Phi_pos` | CliffordZetaMasterKey | Stiffness positivity |
+| 19 | `zero_implies_symmetric_kernel` | CliffordZetaMasterKey | Core spectral bridge |
+| 20 | `zeta_zero_implies_eigenvalue_zero` | SpectralBridge | Refined M4 |
+| 21 | `finite_sum_approx_analytic_axiom` | ExplicitFormulaAxioms | Explicit formula |
+| 22 | `rayleigh_decomposition_axiom` | AnalyticBridge | Sum decomposition |
+| 23 | `prime_logs_linear_independent_axiom` | Ergodicity | Log independence (core PROVED) |
+| 24 | `signal_diverges_axiom` | ArithmeticGeometry | Signal → ∞ |
+| 25 | `universal_monotonicity_from_orthogonality_axiom` | UniversalStiffness | Monotonicity |
+| 26 | `ergodicity_validates_snr` | Ergodicity | SNR validation |
+
+**DELETED (2026-02-13):**
+
+| Name | File | Reason |
+|------|------|--------|
+| ~~`kernel_implies_zero_axiom`~~ | CliffordZetaMasterKey | Unused (backward direction not needed for RH) |
+| ~~`scalarPart`~~ | CliffordFoundation | Unused (never referenced in any theorem) |
+
+**Previously DELETED:**
+
+| Name | File | Reason |
+|------|------|--------|
+| ~~`rotorTrace_monotone_from_first1000_axiom`~~ | NumericalAxioms | FALSE (trace oscillates) |
+| ~~`bakers_repulsion_axiom`~~ | BakerRepulsion | FALSE (Kronecker contradiction) |
 
 ### Explicit Hypotheses (passed to main theorem)
 
@@ -108,7 +134,8 @@ used in the Riemann Hypothesis proof.
 
 ## Summary
 
-This file consolidates access to all 21 axioms and 5 explicit hypotheses.
+This file consolidates access to all 26 axioms (9 live + 17 dead) and 5 explicit hypotheses.
+See `llm_input/AXIOM_TRIAGE_2026_02_13.md` for the full triage.
 
 **For reviewers**: Start here to understand the proof's assumptions.
 

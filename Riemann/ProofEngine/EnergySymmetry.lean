@@ -421,17 +421,109 @@ theorem convexity_implies_norm_strict_min (t : ℝ)
   h_norm_min
 
 /-!
-## 4. Summary
+## 5. Analytic RH: Pure Energy Minimization
+
+The clean reformulation eliminates all discrete hypotheses (prime lists,
+rotor sums, approximation bounds) in favor of a single analytic condition
+on the energy surface |ξ(σ + it)|².
+-/
+
+/--
+**Analytic Strict Minimum at Half**: The ZetaEnergy has a strict global minimum
+at σ = 1/2 on the critical strip (0,1).
+
+This is the pure analytic hypothesis that replaces the discrete
+`NormStrictMinAtHalf` and `ZeroHasMinNorm` from the Clifford rotor framework.
+-/
+def AnalyticStrictMinAtHalf (t : ℝ) : Prop :=
+  ∀ σ : ℝ, 0 < σ → σ < 1 → σ ≠ 1/2 →
+    ZetaEnergy t (1/2) < ZetaEnergy t σ
+
+/--
+**Strict Convexity of ZetaEnergy on the Critical Strip.**
+The sufficient analytic condition: |ξ(σ + it)|² is strictly convex in σ on (0,1).
+-/
+def EnergyStrictlyConvexOnStrip (t : ℝ) : Prop :=
+  StrictConvexOn ℝ (Ioo 0 1) (fun σ => ZetaEnergy t σ)
+
+/--
+**Strict convexity + proved symmetry → unique minimum at 1/2.**
+
+For any σ ≠ 1/2 in (0,1), write 1/2 = (σ + (1-σ))/2.
+By strict convexity: E(1/2) < (E(σ) + E(1-σ))/2.
+By proved symmetry E(1-σ) = E(σ): E(1/2) < E(σ).
+-/
+theorem strict_convex_implies_analytic_min (t : ℝ)
+    (h_conv : EnergyStrictlyConvexOnStrip t) :
+    AnalyticStrictMinAtHalf t := by
+  intro σ hσ_pos hσ_lt hσ_ne
+  have hσ_mem : σ ∈ Ioo (0:ℝ) 1 := ⟨hσ_pos, hσ_lt⟩
+  have h_one_minus : 1 - σ ∈ Ioo (0:ℝ) 1 := ⟨by linarith, by linarith⟩
+  have h_ne : σ ≠ 1 - σ := fun h => hσ_ne (by linarith)
+  -- Strict convexity at midpoint: E((σ+(1-σ))/2) < (E(σ)+E(1-σ))/2
+  have h_sc := h_conv.2 hσ_mem h_one_minus h_ne
+    (by norm_num : (0:ℝ) < 1/2) (by norm_num : (0:ℝ) < 1/2)
+    (by norm_num : (1:ℝ)/2 + 1/2 = 1)
+  -- Simplify smul to mul and rewrite midpoint to 1/2
+  simp only [smul_eq_mul] at h_sc
+  have h_mid : (1:ℝ)/2 * σ + 1/2 * (1 - σ) = 1/2 := by ring
+  rw [h_mid] at h_sc
+  -- By proved symmetry E(σ) = E(1-σ), so RHS = E(σ)
+  linarith [zeta_energy_symmetric t σ]
+
+/--
+**THE ANALYTIC RH THEOREM**
+
+If ζ(s) = 0 in the critical strip and ZetaEnergy has a strict minimum at 1/2,
+then s.re = 1/2.
+
+**Proof**:
+1. ζ(s) = 0 → ξ(s) = 0 (bridge to Xi function)
+2. ξ(s) = 0 → E(s.im, s.re) = 0 (energy vanishes at zero)
+3. E ≥ 0 always (norm squared is nonneg)
+4. E(1/2) < E(s.re) from strict minimum hypothesis
+5. Contradiction: 0 ≤ E(1/2) < E(s.re) = 0
+
+Only 3 hypotheses: ζ(s) = 0, s ∈ strip, energy minimized at 1/2.
+No discrete sums, no prime lists, no approximation bounds.
+-/
+theorem RH_from_AnalyticEnergy (s : ℂ) (h_zero : riemannZeta s = 0)
+    (h_strip : 0 < s.re ∧ s.re < 1)
+    (h_strict_min : AnalyticStrictMinAtHalf s.im) :
+    s.re = 1 / 2 := by
+  by_contra h_neq
+  -- ζ(s) = 0 → ξ(s) = 0 in the critical strip
+  have h_xi_zero := riemannXi_zero_of_zeta_zero s h_zero h_strip
+  -- ξ(s) = 0 → E(s.im, s.re) = 0 (rewrite s = s.re + s.im * I)
+  have h_energy_zero : ZetaEnergy s.im s.re = 0 := by
+    rw [ZetaEnergy_eq_zero_iff, Complex.re_add_im]
+    exact h_xi_zero
+  -- E(1/2) < E(s.re) from strict minimum hypothesis
+  have h_lt := h_strict_min s.re h_strip.1 h_strip.2 h_neq
+  -- E(1/2) ≥ 0 (norm squared is nonneg)
+  have h_nonneg := ZetaEnergy_nonneg s.im (1/2)
+  -- Contradiction: 0 ≤ E(1/2) < E(s.re) = 0
+  linarith
+
+/-!
+## 6. Summary
 
 The key results established:
-1. `riemannXi_symmetric`: ξ(s) = ξ(1-s)
-2. `zeta_energy_symmetric`: E(σ,t) = E(1-σ,t)
-3. `energy_deriv_zero_at_half`: E'(1/2) = 0
-4. `symmetry_and_convexity_imply_local_min`: E''(1/2) > 0 → local min at 1/2
+1. `riemannXi_symmetric`: ξ(s) = ξ(1-s) — PROVEN
+2. `zeta_energy_symmetric`: E(σ,t) = E(1-σ,t) — PROVEN
+3. `energy_deriv_zero_at_half`: E'(1/2) = 0 — PROVEN
+4. `symmetry_and_convexity_imply_local_min`: E''(1/2) > 0 → local min — PROVEN
+5. `strict_convex_implies_analytic_min`: strict convexity → unique min at 1/2 — PROVEN
+6. `RH_from_AnalyticEnergy`: energy min at 1/2 → RH — PROVEN
 
-These reduce the RH to proving:
-- The energy convexity hypothesis: E''(1/2) > 0
-- The finite sum approximates the analytic energy closely enough
+**Hierarchy of conditions** (each implies the next):
+- `EnergyStrictlyConvexOnStrip t` (strict convexity of |ξ|² on (0,1))
+  → `AnalyticStrictMinAtHalf t` (unique minimum at 1/2)
+    → RH at height t
+
+**Remaining hypothesis**: One of:
+- `AnalyticStrictMinAtHalf s.im` — most general
+- `EnergyStrictlyConvexOnStrip s.im` — most structural (strict convexity)
 -/
 
 end ProofEngine.EnergySymmetry

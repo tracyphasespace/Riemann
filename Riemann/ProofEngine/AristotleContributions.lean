@@ -7,7 +7,7 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 ## Contributions Summary
 
 1. **Conjugate Symmetry**: Λ(s̄) = Λ̄(s)
-   - Status: BROKEN - see comments below
+   - Status: PROVED via Mellin conjugation for real kernels
 
 2. **Norm at Zero**: At ζ(s) = 0, the rotor sum norm is small
    - Status: PROVEN (conditional on approximation bound).
@@ -21,7 +21,7 @@ import Mathlib.Data.List.Basic
 
 noncomputable section
 
-open Complex Real Topology Filter
+open Complex Real Topology Filter MeasureTheory Set HurwitzZeta
 
 namespace Aristotle
 
@@ -73,54 +73,54 @@ theorem norm_approx_zero_at_zeta_zero (s : ℂ) (primes : List ℕ)
   norm_num
 
 /-!
-## 3. Conjugate Symmetry
-
-**BROKEN**: The proof below assumes `completedRiemannZeta_conj` exists in Mathlib.
-This lemma does NOT exist in Mathlib as of v4.27.0.
-
-The comment "Mathlib provides `completedRiemannZeta_conj` directly" is FALSE.
-
-**To fix**: Either:
-1. Prove `completedRiemannZeta_conj` from scratch using the Schwarz reflection principle
-2. Or keep delegating to a local axiom/sorry until Mathlib adds this lemma
-
-The mathematical argument is:
-- Λ(s) = π^(-s/2) * Γ(s/2) * ζ(s)
-- Each component respects conjugation:
-  - π^(-s̄/2) = conj(π^(-s/2)) (since π is real)
-  - Γ(s̄/2) = conj(Γ(s/2)) (Schwarz reflection for Γ)
-  - ζ(s̄) = conj(ζ(s)) (needs proof - Schwarz reflection for ζ)
--/
-
-/--
-**Axiom: Schwarz Reflection for Completed Zeta**
+## 3. Conjugate Symmetry — PROVED
 
 Λ₀(conj s) = conj(Λ₀(s))
 
-**Mathematical Background**:
-- `completedRiemannZeta₀ s = (hurwitzEvenFEPair 0).Λ₀ (s/2) / 2`
-- Λ₀ is defined via Mellin transform of Jacobi theta
-- Jacobi theta θ(t) = Σ exp(-πn²t) is real-valued for t > 0
-- For real-valued f: M[f](conj s) = conj(M[f](s))
-- The Gamma factor satisfies `Complex.Gamma_conj`
+Proved via Mellin transform conjugation for real-valued kernels,
+following the `Complex.GammaIntegral_conj` pattern from Mathlib.
 
-**Why This is an Axiom**: Proving in Lean requires:
-- `WeakFEPair.Λ₀_conj` (not in Mathlib 4.27)
-- Mellin transform conjugation lemma for real kernels
-- Careful tracking through hurwitzEvenFEPair definition
+**Definition chain** (all Mathlib):
+- `completedRiemannZeta₀ s = completedHurwitzZetaEven₀ 0 s`
+- `completedHurwitzZetaEven₀ 0 s = ((hurwitzEvenFEPair 0).Λ₀ (s / 2)) / 2`
+- `Λ₀ = mellin P.f_modif`
 
-This is a standard property of Λ₀ (see Titchmarsh §2.6).
+**Key fact**: `(hurwitzEvenFEPair 0).f_modif` is real-valued (built from
+`ofReal ∘ evenKernel 0`, with real corrections), so its Mellin transform
+commutes with complex conjugation.
 -/
-axiom completedRiemannZeta₀_conj_axiom (s : ℂ) :
-    completedRiemannZeta₀ (starRingEnd ℂ s) = starRingEnd ℂ (completedRiemannZeta₀ s)
+
+/-- Mellin transform commutes with conjugation for functions satisfying
+`conj(f(x)) = f(x)` on `Ioi 0`. Follows `Complex.GammaIntegral_conj`. -/
+private lemma mellin_conj_of_real_valued {f : ℝ → ℂ}
+    (hf : ∀ x, 0 < x → starRingEnd ℂ (f x) = f x) (s : ℂ) :
+    mellin f (starRingEnd ℂ s) = starRingEnd ℂ (mellin f s) := by
+  simp only [mellin, smul_eq_mul]
+  rw [← integral_conj]
+  refine setIntegral_congr_fun measurableSet_Ioi fun t ht => ?_
+  have hne := ofReal_ne_zero.mpr (ne_of_gt ht)
+  rw [map_mul, hf t ht, cpow_def_of_ne_zero hne, cpow_def_of_ne_zero hne,
+    ← exp_conj, map_mul, ← ofReal_log (le_of_lt ht), conj_ofReal, map_sub, map_one]
+
+/-- The `f_modif` of `hurwitzEvenFEPair 0` is real-valued: each piece is built
+from `ofReal` of real quantities. -/
+private lemma hurwitzEvenFEPair_zero_f_modif_conj (x : ℝ) :
+    starRingEnd ℂ ((hurwitzEvenFEPair 0).f_modif x) = (hurwitzEvenFEPair 0).f_modif x := by
+  simp only [WeakFEPair.f_modif, Pi.add_apply, map_add, Set.indicator_apply]
+  congr 1 <;> split_ifs <;>
+    simp only [hurwitzEvenFEPair, Function.comp_apply, map_sub, conj_ofReal,
+      map_zero, smul_eq_mul, mul_one, one_mul, ite_true, map_one]
 
 theorem completedRiemannZeta₀_conj (s : ℂ) :
-    completedRiemannZeta₀ (starRingEnd ℂ s) = starRingEnd ℂ (completedRiemannZeta₀ s) :=
-  completedRiemannZeta₀_conj_axiom s
+    completedRiemannZeta₀ (starRingEnd ℂ s) = starRingEnd ℂ (completedRiemannZeta₀ s) := by
+  unfold completedRiemannZeta₀ completedHurwitzZetaEven₀ WeakFEPair.Λ₀
+  rw [show starRingEnd ℂ s / 2 = starRingEnd ℂ (s / 2) from by
+    rw [map_div₀, map_ofNat]]
+  rw [mellin_conj_of_real_valued (fun x hx => hurwitzEvenFEPair_zero_f_modif_conj x)]
+  rw [map_div₀, map_ofNat]
 
 /-!
 **Corollary**: The completed zeta norm is preserved under argument conjugation.
-This depends on `completedRiemannZeta₀_conj` above which is broken.
 -/
 theorem completedRiemannZeta₀_norm_conj (s : ℂ) :
     ‖completedRiemannZeta₀ (starRingEnd ℂ s)‖ = ‖completedRiemannZeta₀ s‖ := by

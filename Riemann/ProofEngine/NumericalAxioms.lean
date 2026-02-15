@@ -2,6 +2,7 @@ import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.NumberTheory.SmoothNumbers
 import Riemann.ZetaSurface.CliffordRH
+import Riemann.ProofEngine.RotorTraceComputation
 
 noncomputable section
 open Real
@@ -17,27 +18,18 @@ def rotorTerm (σ t : ℝ) (p : ℕ) : ℝ :=
   Real.log p * (p : ℝ) ^ (-σ) * Real.cos (t * Real.log p)
 
 /--
-**Numerical Axiom: Trace Negativity at First Zero**
+**Trace Negativity at First Zero** (PROVEN — formerly an axiom)
 
 At the first zeta zero height t ≈ 14.134725, with σ = 1/2,
 the rotor trace over primes below 7920 is strictly less than -5.
 
-**Numerical Verification**: Wolfram Cloud computation gives trace ≈ -5.955.
-Interval arithmetic confirms the bound rigorously.
-
-**Why This is an Axiom**: Proving this in Lean would require:
-- Native interval arithmetic library
-- Certified computation of cos, log, and power functions
-- Summation over ~1000 prime terms with error tracking
-
-The numerical value is verified externally and used as a computational anchor.
+Proved via LeanCert interval arithmetic over 1000 prime terms
+with manual range reduction and taylorDepth 30.
+See `RotorTraceComputation.lean` for the full proof.
 -/
-axiom rotorTrace_first1000_lt_bound_axiom :
-    CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList < -5
-
 theorem rotorTrace_first1000_lt_bound_proven :
     CliffordRH.rotorTrace (1 / 2) 14.134725 (Nat.primesBelow 7920).toList < -5 :=
-  rotorTrace_first1000_lt_bound_axiom
+  RotorTraceComputation.rotorTrace_primesBelow_lt
 
 /-!
 ## DELETED: rotorTrace_monotone_from_first1000_axiom

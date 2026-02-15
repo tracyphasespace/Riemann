@@ -86,24 +86,17 @@ lemma foldl_sq_eq (primes : List ℕ) (σ t : ℝ) :
   ext acc p
   ring
 
-/--
-**Axiom: Global Phase Clustering (The Explicit Formula)**
-This is the key axiom that encapsulates the von Mangoldt Explicit Formula.
-If ζ(s) = 0 for s in the critical strip, then the weighted cosine sum
-is negative for ALL σ ∈ (0, 1), not just near s.re.
+/-!
+## DELETED: ax_global_phase_clustering (2026-02-13)
 
-This axiom will be reduced by:
-1. Proving the Explicit Formula connects finite sums to ζ'/ζ
-2. Showing pole domination extends globally via error bounds
-3. Or verifying numerically for sufficiently many zeros
+**WHY DELETED**: Dead code. The main theorem `Clifford_RH_Derived` computed
+`_h_mono := derived_monotonicity ...` but never used the result (underscore prefix).
+The proof only uses `h_norm_min` and `h_zero_norm` via `RH_from_NormMinimization`.
+
+The axiom encapsulated the von Mangoldt Explicit Formula: at a zeta zero,
+the weighted cosine sum Σ (log p)² p^(-σ) cos(t log p) < 0 for all σ ∈ (0,1).
+This remains mathematically interesting but is not on the proof path.
 -/
-axiom ax_global_phase_clustering (s : ℂ)
-    (h_zero : riemannZeta s = 0)
-    (h_strip : 0 < s.re ∧ s.re < 1)
-    (h_simple : deriv riemannZeta s ≠ 0)
-    (primes : List ℕ)
-    (h_large : primes.length > 1000) :
-    ∀ σ, σ ∈ Set.Ioo 0 1 → NegativePhaseClustering σ s.im primes
 
 /-!
 ## 1. The Analytic Machinery: Pole of ζ'/ζ
@@ -279,22 +272,5 @@ theorem local_clustering_at_zero (ρ : ℂ) (h_zero : riemannZeta ρ = 0)
   -- Use the lemma to convert between the two sum formulations
   rw [← weightedCosSum_eq_clustering_sum]
   exact h_neg σ hσ
-
-/--
-**Theorem: Global Phase Clustering from Local**
-This is the main theorem used by ProofEngine and ZetaLinkClifford.
-It converts the local clustering (in δ-neighborhood of the zero) to the
-global condition (for all σ in (0,1)).
-
-**NOTE**: This now uses the axiom `ax_global_phase_clustering`.
-The reduction of this axiom to helper lemmas is future work.
--/
-theorem axiom_replacement (s : ℂ) (h_zero : riemannZeta s = 0)
-    (h_strip : 0 < s.re ∧ s.re < 1)
-    (h_simple : deriv riemannZeta s ≠ 0)
-    (primes : List ℕ)
-    (h_large : primes.length > 1000) :
-    ∀ σ, σ ∈ Set.Ioo 0 1 → NegativePhaseClustering σ s.im primes :=
-  ax_global_phase_clustering s h_zero h_strip h_simple primes h_large
 
 end ProofEngine.PhaseClustering

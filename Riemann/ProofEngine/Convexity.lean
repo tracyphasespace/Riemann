@@ -192,22 +192,16 @@ def ZetaUpperBound (t : ℝ) : Prop :=
 abbrev EnergyIsConvexAtHalf (t : ℝ) : Prop :=
   ProofEngine.EnergySymmetry.EnergyIsConvexAtHalf t
 
-/--
-**Axiom: Energy Convexity at Critical Line**
-The energy |Λ(1/2 + it)|² is convex (second derivative > 0) for |t| ≥ 1.
+/-!
+## DELETED: energy_convex_at_half (2026-02-13)
 
-This axiom combines:
-1. SecondDerivBound: Upper bound on Λ''
-2. FirstDerivLowerBound: Lower bound on |Λ'| at critical line
-3. ZetaUpperBound: Upper bound on |Λ| at critical line
+**WHY DELETED**: Dead code. The main theorem `Clifford_RH_Derived` takes
+`_h_convex : EnergyIsConvexAtHalf s.im` as an unused hypothesis (underscore prefix).
+The proof path uses `h_norm_min` directly via `RH_from_NormMinimization`.
 
-Together these establish the positivity of the second derivative of ‖Λ‖².
-For |t| < 1, this requires direct numerical verification.
+The axiom asserted: for |t| ≥ 1, given SecondDerivBound, FirstDerivLowerBound,
+and ZetaUpperBound, the energy |Λ(1/2+it)|² is convex (d²E/dσ² > 0).
+The predicate definitions above are retained for reference.
 -/
-axiom energy_convex_at_half (t : ℝ) (ht : 1 ≤ |t|)
-    (h1 : SecondDerivBound t)
-    (h2 : FirstDerivLowerBound t)
-    (h3 : ZetaUpperBound t) :
-    EnergyIsConvexAtHalf t
 
 end ProofEngine.Convexity

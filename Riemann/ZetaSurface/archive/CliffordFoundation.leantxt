@@ -36,9 +36,7 @@ Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 
 import Mathlib.LinearAlgebra.CliffordAlgebra.Basic
 import Mathlib.Data.Real.Basic
-
 import Riemann.ProofEngine.CliffordAxioms
-import Mathlib.Data.Real.Basic
 
 noncomputable section
 
@@ -55,9 +53,13 @@ def primeBivector (n : ℕ) (i : Fin n) : ClElement n :=
 -- The Clifford product
 def clMul (n : ℕ) (x y : ClElement n) : ClElement n := x * y
 
--- Extracts the scalar (real) part of a Clifford element
--- (Implementation requires CliffordAlgebra.Proj)
-axiom scalarPart (n : ℕ) : ClElement n → ℝ
+-- DELETED (2026-02-13): scalarPart axiom removed — was never used in any theorem.
+-- The scalar part of a Clifford element is the grade-0 projection.
+-- For Cl(n,n), this requires the full ℕ-grading (not just even/odd) which
+-- Mathlib 4.27 only provides as ZMod 2-grading via CliffordAlgebra.evenOdd.
+-- The scalar projection approach in CliffordRH.lean sidesteps this entirely
+-- by directly defining the scalar traces as real-valued sums.
+-- See CliffordFoundation.lean §4 docstring for the explanation.
 
 /-!
 ## 2. Key Theorems: The Physics (PROVEN)

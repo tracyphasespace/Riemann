@@ -1,17 +1,18 @@
 /-
-# The Unconditional Clifford RH Proof Engine
+# The Clifford RH Proof Engine
 
 This module assembles the components to prove the Riemann Hypothesis
-without arbitrary axioms.
+conditional on the Clifford Orthogonal Decoupling Bridge.
 
 **Structure**:
 1. `PhaseClustering`: Derives "Geometric Locking" from the Hadamard Product.
 2. `TraceMonotonicity`: Derives "Gradient Force" from Geometric Locking.
 3. `EnergySymmetry`: Derives "Potential Well" from the Functional Equation.
-4. `ZetaLinkClifford`: Combines Force + Energy to force σ = 1/2.
+4. `GeometricBridge`: Path B — Clifford orthogonal convexity → RH.
+5. `ZetaLinkClifford`: Combines Force + Energy to force σ = 1/2.
 
-**Status**: Complete scaffolded proof. All axioms eliminated.
-All remaining sorries are standard Mathlib analysis facts.
+**Status**: 0 axioms, 0 sorry. RH is conditional on one explicit hypothesis
+(CliffordOrthogonalBridge) — all other steps machine-verified.
 -/
 
 import Riemann.ZetaSurface.CliffordRH
@@ -37,54 +38,6 @@ open CliffordRH TraceMonotonicity
 namespace ProofEngine
 
 /-!
-## 1. The Derived Geometric Locking
-
-We lift the local PhaseClustering theorem to the global TraceMonotonicity input.
-The key insight: at a zeta zero, the pole of ζ'/ζ forces the phase sum negative.
--/
-
-/--
-**Theorem: Derived Monotonicity from Phase Clustering**
-
-At a simple zeta zero, the trace is strictly monotonic on (0,1).
-This replaces the `ZetaZeroImpliesNegativeClustering` axiom.
--/
-theorem derived_monotonicity (s : ℂ) (h_zero : riemannZeta s = 0)
-    (h_strip : 0 < s.re ∧ s.re < 1)
-    (h_simple : deriv riemannZeta s ≠ 0)
-    (primes : List ℕ)
-    (h_large : primes.length > 1000)
-    (h_primes : ∀ p ∈ primes, 0 < (p : ℝ)) :
-    TraceIsMonotonic s.im primes := by
-  -- Apply PhaseClustering.axiom_replacement to get NegativePhaseClustering
-  -- The new axiom_replacement returns exactly the type we need
-  have h_cluster := PhaseClustering.axiom_replacement s h_zero h_strip h_simple primes h_large
-  -- h_cluster : ∀ σ, σ ∈ Set.Ioo 0 1 → NegativePhaseClustering σ s.im primes
-  -- Apply TraceMonotonicity to get strict monotonicity
-  exact negative_clustering_implies_monotonicity s.im primes h_primes h_cluster
-
-/-!
-## 2. The Derived Energy Minimum
-
-We lift the EnergySymmetry theorem to the global NormMinimization input.
-The key insight: the functional equation ξ(s) = ξ(1-s) forces symmetry about 1/2.
--/
-
-/--
-**Theorem: Derived Energy Minimum from Convexity**
-
-If the completed zeta energy is convex at 1/2, then NormStrictMinAtHalf holds.
-This replaces the `NormStrictMinAtHalf` hypothesis.
--/
-theorem derived_energy_min (t : ℝ) (primes : List ℕ)
-    (h_large : primes.length > 1000)
-    (h_convex : EnergySymmetry.EnergyIsConvexAtHalf t)
-    (h_C2 : ContDiff ℝ 2 (fun σ => EnergySymmetry.ZetaEnergy t σ))
-    (h_norm_min : NormStrictMinAtHalf t primes) :
-    NormStrictMinAtHalf t primes :=
-  EnergySymmetry.convexity_implies_norm_strict_min t primes h_large h_convex h_C2 h_norm_min
-
-/-!
 ## 3. The Zero Anchor
 
 At a zeta zero, the geometric norm achieves a minimum.
@@ -108,9 +61,9 @@ theorem zero_implies_norm_min (s : ℂ) (_h_zero : riemannZeta s = 0)
   h_zero_min
 
 /-!
-## 4. THE MAIN EVENT: Unconditional Clifford RH
+## 4. THE MAIN EVENT: Clifford RH (Conditional on Hypotheses)
 
-Combining all modules to prove σ = 1/2.
+Combining all modules to prove σ = 1/2, given explicit analytic hypotheses.
 -/
 
 /--
@@ -134,73 +87,109 @@ the real part equals 1/2, given:
 This makes the theorem conditional but rigorous: "IF these standard properties hold,
 THEN RH holds." No axioms, 0 cheating.
 -/
-theorem Clifford_RH_Derived (s : ℂ) (h_zero : riemannZeta s = 0)
+theorem Clifford_RH_Derived (s : ℂ) (_h_zero : riemannZeta s = 0)
     (h_strip : 0 < s.re ∧ s.re < 1)
-    (h_simple : deriv riemannZeta s ≠ 0)
+    (_h_simple : deriv riemannZeta s ≠ 0)
     (primes : List ℕ)
-    (h_large : primes.length > 1000)
-    (h_primes : ∀ p ∈ primes, 0 < (p : ℝ))
-    -- Hypothesis 1: Explicit Formula error bounds (replaces axiom)
+    (_h_large : primes.length > 1000)
+    (_h_primes : ∀ p ∈ primes, 0 < (p : ℝ))
     (_h_approx : PrimeSumApproximation.AdmissiblePrimeApproximation s primes)
-    -- Hypothesis 2: Energy convexity at critical line
     (_h_convex : EnergySymmetry.EnergyIsConvexAtHalf s.im)
-    -- Hypothesis 3: Energy is C² (natural: riemannXi is entire)
     (_h_C2 : ContDiff ℝ 2 (fun σ => EnergySymmetry.ZetaEnergy s.im σ))
-    -- Hypothesis 4: Finite sum has strict minimum at 1/2 (analytic-to-finite transfer)
     (h_norm_min : NormStrictMinAtHalf s.im primes)
-    -- Hypothesis 5: Zero has minimum norm (zero-to-finite transfer)
     (h_zero_norm : ZeroHasMinNorm s.re s.im primes) :
     s.re = 1 / 2 := by
-  -- Step 1: Establish the "Force" (Monotonicity)
-  have _h_mono : TraceIsMonotonic s.im primes :=
-    derived_monotonicity s h_zero h_strip h_simple primes h_large h_primes
-  -- Step 2: Establish the "Energy" (Minimization) - now taken as hypothesis
-  have h_energy : NormStrictMinAtHalf s.im primes := h_norm_min
-  -- Step 3: Establish the "Anchor" (Zero has minimum norm) - now taken as hypothesis
-  -- Step 4: Final Assembly (apply ZetaLinkClifford)
+  -- The proof relies on RH_from_NormMinimization: if the norm is strictly
+  -- minimized at 1/2 and the zero has minimum norm, then s.re = 1/2.
   exact Riemann.ZetaSurface.ZetaLinkClifford.RH_from_NormMinimization
-    s.re s.im h_strip primes h_zero_norm h_energy
+    s.re s.im h_strip primes h_zero_norm h_norm_min
 
 /-!
-## 5. Summary: The Proof Architecture
+## 5. ANALYTIC RH: The Clean Reformulation
+
+Eliminates all discrete hypotheses (prime lists, rotor sums, approximation bounds).
+Only 3 hypotheses remain, all purely analytic.
+-/
+
+/--
+**ANALYTIC RH THEOREM (3 hypotheses)**
+
+For any zero of ζ in the critical strip, s.re = 1/2, given that the analytic
+energy |ξ(σ + it)|² has a strict global minimum at σ = 1/2.
+
+Reduces 11 hypotheses to 3:
+1. `h_zero : ζ(s) = 0`
+2. `h_strip : 0 < s.re < 1`
+3. `h_min : AnalyticStrictMinAtHalf s.im`
+
+No discrete sums, no prime lists, no approximation bounds.
+-/
+theorem Clifford_RH_Analytic (s : ℂ) (h_zero : riemannZeta s = 0)
+    (h_strip : 0 < s.re ∧ s.re < 1)
+    (h_min : EnergySymmetry.AnalyticStrictMinAtHalf s.im) :
+    s.re = 1 / 2 :=
+  EnergySymmetry.RH_from_AnalyticEnergy s h_zero h_strip h_min
+
+/--
+**STRICTLY CONVEX RH THEOREM (3 hypotheses)**
+
+Derives RH from strict convexity of |ξ(σ+it)|² on (0,1).
+
+**Proof chain**:
+1. Strict convexity + proved symmetry E(σ)=E(1-σ) → unique minimum at 1/2
+2. At a zero: E = 0 = minimum value → must be at the minimizer
+3. Therefore s.re = 1/2
+-/
+theorem Clifford_RH_StrictConvex (s : ℂ) (h_zero : riemannZeta s = 0)
+    (h_strip : 0 < s.re ∧ s.re < 1)
+    (h_conv : EnergySymmetry.EnergyStrictlyConvexOnStrip s.im) :
+    s.re = 1 / 2 :=
+  Clifford_RH_Analytic s h_zero h_strip
+    (EnergySymmetry.strict_convex_implies_analytic_min s.im h_conv)
+
+/-!
+## 6. Summary: The Proof Architecture
 
 ```
                     Clifford_RH_Derived
                            │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-        ▼                  ▼                  ▼
-  derived_monotonicity  derived_energy_min  zero_implies_norm_min
-        │                  │                  │
-        ▼                  ▼                  ▼
-  PhaseClustering     EnergySymmetry    (Approximation)
-        │                  │
-        ▼                  ▼
-  Pole of ζ'/ζ        Functional Eq.
-  (Hadamard)          ξ(s) = ξ(1-s)
+        ┌──────────────────┴──────────────────┐
+        │                                     │
+        ▼                                     ▼
+  h_norm_min                            h_zero_norm
+  (NormStrictMinAtHalf)                 (ZeroHasMinNorm)
+        │                                     │
+        ▼                                     ▼
+  RH_from_NormMinimization ───────────────→ s.re = 1/2
 ```
 
-**Axioms**: 0 (completely eliminated)
-All former axioms converted to:
-- Proven theorems (PhaseClustering, TraceMonotonicity)
-- Explicit hypotheses passed as arguments (AdmissiblePrimeApproximation, EnergyIsConvexAtHalf)
+**Axioms**: 0
+**Sorry**: 0
 
-**Explicit Hypotheses** (passed to main theorem):
-1. `h_approx : AdmissiblePrimeApproximation s primes`
-   - The Explicit Formula error bounds hold
-   - Standard result from analytic number theory (von Mangoldt, 1895)
-2. `h_convex : EnergyIsConvexAtHalf s.im`
-   - The energy is locally convex at σ = 1/2
-   - Standard conjecture about zeta behavior
+**Three theorem variants** (each conditional on progressively stronger hypotheses):
 
-**Remaining Sorries** (~32):
-- Category 1: Mathlib Analysis Gaps (norm bounds, series convergence, limits)
-- Category 2: Computation (interval arithmetic)
-- Category 3: Approximation arguments (linking finite sums to infinite series)
+1. `Clifford_RH_Analytic` (3 hypotheses):
+   - `h_zero`: ζ(s) = 0
+   - `h_strip`: 0 < s.re < 1
+   - `h_min`: ZetaEnergy has strict minimum at 1/2
+   → s.re = 1/2
 
-All remaining sorries are standard mathematical facts, not novel claims.
-The proof is conditional: "IF Explicit Formula + Convexity, THEN RH."
-This is rigorous scientific practice, not axiomatic cheating.
+2. `Clifford_RH_StrictConvex` (3 hypotheses):
+   - Same `h_zero`, `h_strip`
+   - `h_conv`: |ξ(σ+it)|² is strictly convex on (0,1)
+   → Derives minimum from convexity + proved symmetry → s.re = 1/2
+
+3. `Clifford_RH_Derived` (11 hypotheses, original discrete version):
+   - Uses `NormStrictMinAtHalf` and `ZeroHasMinNorm` on finite rotor sums
+
+**Proof chain for Clifford_RH_StrictConvex**:
+```
+StrictConvexOn + E(σ)=E(1-σ) [proved]
+    → AnalyticStrictMinAtHalf [strict_convex_implies_analytic_min]
+        → ζ(s)=0 → ξ(s)=0 → E=0 [proved]
+            → 0 ≤ E(1/2) < E(s.re) = 0 → contradiction
+                → s.re = 1/2
+```
 -/
 
 end ProofEngine

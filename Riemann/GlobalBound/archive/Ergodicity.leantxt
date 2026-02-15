@@ -41,13 +41,24 @@ namespace GlobalBound
 ## 1. Linear Independence of Prime Logs
 -/
 
-/-- **Prime Logs Linear Independence** (Axiom with proven core)
+/-- **Prime Logs Linear Independence** (Axiom — core math PROVEN, List↔Finset bridge pending)
 
 The logarithms of distinct primes are linearly independent over ℚ.
 
 The core theorem `LinearIndependenceSolved.log_primes_linear_independent` proves
 `LinearIndependent ℚ (fun (p : {x : ℕ // x.Prime}) => Real.log p)` via the Fundamental
-Theorem of Arithmetic. This axiom provides a List-based interface. -/
+Theorem of Arithmetic. This axiom provides a List-based interface.
+
+**Discharge Strategy** (2026-02-13):
+1. Lift `primes : List ℕ` to `s : Finset {x : ℕ // x.Prime}` via `List.pmap`
+2. Define `g : {x // x.Prime} → ℚ` from `coeffs` via `primes.indexOf?`
+3. Show `List.zipWith sum = ∑ x ∈ s, g x • log x` (List↔Finset, main technical work)
+4. Apply `linearIndependent_iff'.mp log_primes_linear_independent s g`
+5. Convert `∀ x ∈ s, g x = 0` back to `∀ q ∈ coeffs, q = 0`
+
+**Status**: The MATH is proved. The remaining work is purely structural
+(List.zipWith.sum ↔ Finset.sum conversion with index tracking).
+See `AXIOM_TRIAGE_2026_02_13.md` for full triage. -/
 axiom prime_logs_linear_independent_axiom (primes : List ℕ) (coeffs : List ℚ)
     (h_primes : ∀ p ∈ primes, Nat.Prime p) (h_nodup : primes.Nodup)
     (h_length : primes.length = coeffs.length)
